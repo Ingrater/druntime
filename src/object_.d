@@ -28,6 +28,7 @@ private
     import rt.util.string;
     import rt.util.console;
     debug(PRINTF) import core.stdc.stdio;
+    version(NOGCSAFE) import core.memory;
 
     extern (C) void onOutOfMemoryError();
     extern (C) Object _d_newclass(TypeInfo_Class ci);
@@ -1257,6 +1258,7 @@ class Throwable : Object
     {
         this.msg = msg;
         this.next = next;
+        asm { int 3; }
         //this.info = _d_traceContext();
     }
 
@@ -1265,6 +1267,7 @@ class Throwable : Object
         this(msg, next);
         this.file = file;
         this.line = line;
+        asm { int 3; }
         //this.info = _d_traceContext();
     }
 
@@ -1929,6 +1932,7 @@ extern(C) void _checkModCtors()
     // Create an array of modules that will determine the order of construction
     // (and destruction in reverse).
     auto dtors = _moduleinfo_dtors = new ModuleInfo*[_moduleinfo_array.length];
+  
     size_t dtoridx = 0;
 
     // this pointer will identify the module where the cycle was detected.
@@ -2190,6 +2194,19 @@ extern (C) void _moduleDtor()
         {
             (*m.dtor)();
         }
+    }
+    version(NOGCSAFE)
+    {
+      if(_moduleinfo_dtors.ptr !is null)
+      {
+        GC.free(_moduleinfo_dtors.ptr);
+        _moduleinfo_dtors = [];
+      }
+      if(_moduleinfo_tlsdtors.ptr !is null)
+      {
+        GC.free(_moduleinfo_tlsdtors.ptr);
+        _moduleinfo_tlsdtors = [];
+      }
     }
     debug(PRINTF) printf("_moduleDtor() done\n");
 }

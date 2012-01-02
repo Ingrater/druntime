@@ -83,6 +83,9 @@ extern (C) void _moduleDtor();
 extern (C) void thread_joinAll();
 extern (C) void rt_lifetimeInit();
 
+extern(C) void _initMemoryTracking();
+extern(C) void _deinitMemoryTracking();
+
 version (OSX)
 {
     // The bottom of the stack
@@ -266,6 +269,7 @@ extern (C) bool rt_init(ExceptionHandler dg = null)
     {
         gc_init();
         initStaticDataGC();
+        _initMemoryTracking();
         version (Windows)
             _minit();
         rt_lifetimeInit();
@@ -302,6 +306,7 @@ extern (C) bool rt_term(ExceptionHandler dg = null)
         thread_joinAll();
         _d_isHalting = true;
         _moduleDtor();
+        _deinitMemoryTracking();
         gc_term();
         return true;
     }
@@ -517,6 +522,7 @@ extern (C) int main(int argc, char** argv)
     {
         gc_init();
         initStaticDataGC();
+        _initMemoryTracking();
         version (Windows)
             _minit();
         rt_lifetimeInit();
@@ -530,6 +536,7 @@ extern (C) int main(int argc, char** argv)
         thread_joinAll();
         _d_isHalting = true;
         _moduleDtor();
+        _deinitMemoryTracking();
         gc_term();
     }
 

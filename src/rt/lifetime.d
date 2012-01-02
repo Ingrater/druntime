@@ -386,7 +386,8 @@ else
         // allocate the block cache for the first time
         immutable size = BlkInfo.sizeof * N_CACHE_BLOCKS;
         __blkcache_storage = cast(BlkInfo *)malloc(size);
-        memset(__blkcache_storage, 0, size);
+        auto temp = __blkcache_storage;
+        memset(temp, 0, size);
     }
     return __blkcache_storage;
 }
@@ -404,7 +405,8 @@ static ~this()
     // free the blkcache
     if(__blkcache_storage)
     {
-        free(__blkcache_storage);
+        auto temp = __blkcache_storage;
+        free(temp);
         __blkcache_storage = null;
     }
 }
@@ -1152,7 +1154,10 @@ extern (C) void rt_finalize(void* p, bool det = true)
         if (*pc)
         {
             ClassInfo c = **pc;
-            byte[]    w = c.init;
+            version(NOGCSAFE) {}
+            else {
+              byte[]    w = c.init;
+            }
 
             try
             {
@@ -1170,15 +1175,16 @@ extern (C) void rt_finalize(void* p, bool det = true)
                 }
                 if ((cast(void**)p)[1]) // if monitor is not null
                     _d_monitordelete(cast(Object)p, det);
-                (cast(byte*) p)[0 .. w.length] = w[];
+                *pc = null; //zero vptr
+                version(NOGCSAFE)
+                {}
+                else {
+                  (cast(byte*) p)[0 .. w.length] = w[];
+                }
             }
             catch (Throwable e)
             {
                 onFinalizeError(**pc, e);
-            }
-            finally
-            {
-                *pc = null; // zero vptr
             }
         }
     }

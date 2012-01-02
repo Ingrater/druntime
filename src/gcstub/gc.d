@@ -25,10 +25,14 @@
  */
 module gc.gc;
 
+import core.allocator;
+import core.stdc.stdlib;
+import core.stdc.stdio;
+
 private
 {
    import core.stdc.stdlib;
-   import core.stdc.stdio;
+   import core.stdc.string;
 
    enum BlkAttr : uint
     {
@@ -203,7 +207,8 @@ extern (C) void* gc_malloc( size_t sz, uint ba = 0 )
 {
     if( proxy is null )
     {
-        void* p = malloc( sz );
+        //printf("gcstub malloc %d\n",sz);
+        void* p = StdAllocator.AllocateMemory( sz );
 
         if( sz && p is null )
             onOutOfMemoryError();
@@ -229,7 +234,8 @@ extern (C) void* gc_calloc( size_t sz, uint ba = 0 )
 {
     if( proxy is null )
     {
-        void* p = calloc( 1, sz );
+        void* p = StdAllocator.AllocateMemory( sz );
+        memset(p, 0, sz);
 
         if( sz && p is null )
             onOutOfMemoryError();
@@ -242,7 +248,7 @@ extern (C) void* gc_realloc( void* p, size_t sz, uint ba = 0 )
 {
     if( proxy is null )
     {
-        p = realloc( p, sz );
+        p = StdAllocator.ReallocateMemory( p, sz );
 
         if( sz && p is null )
             onOutOfMemoryError();
@@ -268,7 +274,7 @@ extern (C) size_t gc_reserve( size_t sz )
 extern (C) void gc_free( void* p )
 {
     if( proxy is null )
-        return free( p );
+        return StdAllocator.FreeMemory( p );
     return proxy.gc_free( p );
 }
 

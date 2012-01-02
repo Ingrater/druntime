@@ -23,6 +23,12 @@ import core.sys.windows.dbghelp;
 import core.sys.windows.windows;
 import core.stdc.stdio;
 
+version(NOGCSAFE)
+{
+  import core.allocator;
+  import core.refcounted;
+}
+
 
 extern(Windows)
 {
@@ -67,19 +73,29 @@ struct MODULEENTRY32
 
 private
 {
-    string generateSearchPath()
+    version(NOGCSAFE)
+    {
+      alias RCArray!char path_t; 
+    }
+    else
+    {
+      alias string path_t;
+    }
+  
+    path_t generateSearchPath()
     {
         __gshared string[3] defaultPathList = ["_NT_SYMBOL_PATH",
                                                "_NT_ALTERNATE_SYMBOL_PATH",
                                                "SYSTEMROOT"];
 
-        string         path;
+        path_t         path;
         char[MAX_PATH] temp;
         DWORD          len;
 
         if( (len = GetCurrentDirectoryA( temp.length, temp.ptr )) > 0 )
         {
-            path ~= temp[0 .. len] ~ ";";
+            path ~= temp[0 .. len];
+            path ~= ";";
         }
         if( (len = GetModuleFileNameA( null,temp.ptr,temp.length )) > 0 )
         {
@@ -93,16 +109,19 @@ private
             }
             if( len > 0 )
             {
-                path ~= temp[0 .. len] ~ ";";
+                path ~= temp[0 .. len];
+                path ~= ";";
             }
         }
         foreach( e; defaultPathList )
         {
             if( (len = GetEnvironmentVariableA( e.ptr, temp.ptr, temp.length )) > 0 )
             {
-                path ~= temp[0 .. len] ~ ";";
+                path ~= temp[0 .. len];
+                path ~= ";";
             }
         }
+        path ~= "\0";
         return path;
     }
 
@@ -225,7 +244,17 @@ public:
         if( initialized )
             m_trace = trace();
     }
-
+  
+    version(NOGCSAFE)
+    {
+      alias RCArray!char line_t;
+      alias RCArray!(RCArray!char) trace_t;
+    }
+    else
+    {
+      alias char[] line_t;
+      alias char[][] trace_t;
+    }
 
     int opApply( scope int delegate(ref char[]) dg )
     {
@@ -235,15 +264,22 @@ public:
                         });
     }
 
-
     int opApply( scope int delegate(ref size_t, ref char[]) dg )
     {
         int result;
 
         foreach( i, e; m_trace )
         {
+          version(NOGCSAFE)
+          {
+            auto temp = e[];
+            if( (result = dg(i, temp )) != 0)
+              break;
+          }
+          else {
             if( (result = dg( i, e )) != 0 )
                 break;
+          }
         }
         return result;
     }
@@ -251,31 +287,69 @@ public:
 
     override string toString()
     {
-        string result;
-
-        foreach( e; m_trace )
+        //TODO implement
+        version(NOGCSAFE)
+          return "Not implemented yet";
+        else
         {
-            result ~= e ~ "\n";
+          string result;
+
+          foreach( e; m_trace )
+          {
+              result ~= e;
+              result ~= "\n";
+          }
+          return result;
         }
-        return result;
+    }
+    
+    static long[] traceAddresses(long[] addresses, bool allocateIfToSmall = true)
+    {
+      synchronized( StackTrace.classinfo )
+      {
+        return traceAddressesNoSync(addresses,allocateIfToSmall);
+      }
+    }
+    
+    static trace_t resolveAddresses(long[] addresses)
+    {
+      synchronized( StackTrace.classinfo )
+      {
+        return resolveAddressesNoSync(addresses);
+      }
+    }
+
+private:
+    version(NOGCSAFE)
+    {
+      RCArray!(RCArray!char) m_trace;
+    } 
+    else {
+      char[][] m_trace;
     }
 
 
-private:
-    char[][] m_trace;
-
-
-    static char[][] trace()
+    static trace_t trace()
     {
         synchronized( StackTrace.classinfo )
         {
-            return traceNoSync();
+            long[10] addressesBuffer;
+            long[] addresses = traceAddressesNoSync(addressesBuffer,true);
+            auto result = resolveAddressesNoSync(addresses);
+            version(NOGCSAFE)
+            {
+              if(addresses.ptr != addressesBuffer.ptr)
+              {
+                StdAllocator.FreeMemory(addresses.ptr);
+              }
+            }
+            return result;
         }
     }
-    
-    
-    static char[][] traceNoSync()
+  
+    static long[] traceAddressesNoSync(long[] addresses, bool allocateIfToSmall = true)
     {
+        assert(addresses.length > 0,"need at least space to write 1 address");
         auto         dbghelp  = DbgHelp.get();
         auto         hThread  = GetCurrentThread();
         auto         hProcess = GetCurrentProcess();
@@ -283,6 +357,9 @@ private:
         DWORD        imageType;
         char[][]     trace;
         CONTEXT      c;
+        version(NOGCSAFE){
+          bool         allocated = false;
+        }
 
         c.ContextFlags = CONTEXT_FULL;
         RtlCaptureContext( &c );
@@ -294,24 +371,11 @@ private:
         stackframe.AddrFrame.Offset = cast(DWORD64) c.Ebp;
         stackframe.AddrFrame.Mode   = ADDRESS_MODE.AddrModeFlat;
         stackframe.AddrStack.Offset = cast(DWORD64) c.Esp;
-        stackframe.AddrStack.Mode   = ADDRESS_MODE.AddrModeFlat;
-
-        auto symbolSize = IMAGEHLP_SYMBOL64.sizeof + MAX_NAMELEN;
-        auto symbol     = cast(IMAGEHLP_SYMBOL64*) calloc( symbolSize, 1 );
-
-        static assert((IMAGEHLP_SYMBOL64.sizeof + MAX_NAMELEN) <= uint.max, "symbolSize should never exceed uint.max");
-
-        symbol.SizeOfStruct  = cast(DWORD)symbolSize;
-        symbol.MaxNameLength = MAX_NAMELEN;
-
-        IMAGEHLP_LINE64 line;
-        line.SizeOfStruct = IMAGEHLP_LINE64.sizeof;
-
-        IMAGEHLP_MODULE64 moduleInfo;
-        moduleInfo.SizeOfStruct = IMAGEHLP_MODULE64.sizeof;
+        stackframe.AddrStack.Mode   = ADDRESS_MODE.AddrModeFlat; 
 
         //printf( "Callstack:\n" );
-        for( int frameNum = 0; ; frameNum++ )
+        size_t frameNum = 0;
+        for( ; ; frameNum++ )
         {
             if( dbghelp.StackWalk64( imageType,
                                      hProcess,
@@ -326,50 +390,135 @@ private:
                 //printf( "End of Callstack\n" );
                 break;
             }
-
+          
             if( stackframe.AddrPC.Offset == stackframe.AddrReturn.Offset )
             {
                 //printf( "Endless callstack\n" );
-                trace ~= "...".dup;
                 break;
             }
-
-            if( stackframe.AddrPC.Offset != 0 )
+            
+            //Skip first stack frame
+            if(frameNum == 0)
+              continue;
+            
+            if(frameNum-1 >= addresses.length)
             {
-                DWORD64 offset;
-
-                if( dbghelp.SymGetSymFromAddr64( hProcess,
-                                                 stackframe.AddrPC.Offset,
-                                                 &offset,
-                                                 symbol ) == TRUE )
+              if(allocateIfToSmall)
+              {
+                version(NOGCSAFE)
                 {
-                    DWORD    displacement;
-                    char[]   lineBuf;
-                    char[20] temp;
+                  if(allocated)
+                  {
+                    long* mem = cast(long*)StdAllocator.ReallocateMemory(addresses.ptr,addresses.length * 2 * long.sizeof);
+                    addresses = mem[0..(addresses.length * 2)];
+                  }
+                  else
+                  {
+                    long* mem = cast(long*)StdAllocator.AllocateMemory(addresses.length * 2 * long.sizeof);
+                    addresses = mem[0..(addresses.length * 2)];
+                    allocated = true;
+                  }
+                }
+                else {
+                  long[] mem = new long[addresses.length * 2];
+                  mem[0..addresses.length] = addresses[];
+                  addresses = mem;
+                }
+              }
+              else {
+                return addresses;
+              }
+            }
+            
+            addresses[frameNum-1] = stackframe.AddrPC.Offset;
+        }
+        if(frameNum < 1)
+          frameNum = 1;
+        return addresses[0..(frameNum-1)];
+    }
+    
+    static trace_t resolveAddressesNoSync(long[] addresses)
+    {
+      trace_t trace;
+      auto dbghelp    = DbgHelp.get();
+      auto hProcess   = GetCurrentProcess();
+      auto symbolSize = IMAGEHLP_SYMBOL64.sizeof + MAX_NAMELEN;
+      version(DUMA)
+        auto symbol   = cast(IMAGEHLP_SYMBOL64*) _duma_calloc( symbolSize, 1, __FILE__, __LINE__);
+      else
+        auto symbol   = cast(IMAGEHLP_SYMBOL64*) calloc( symbolSize, 1 );
 
-                    if( dbghelp.SymGetLineFromAddr64( hProcess, stackframe.AddrPC.Offset, &displacement, &line ) == TRUE )
-                    {
-                        char[2048] demangleBuf;
-                        auto       symbolName = (cast(char*) symbol.Name.ptr)[0 .. strlen(symbol.Name.ptr)];
+      static assert((IMAGEHLP_SYMBOL64.sizeof + MAX_NAMELEN) <= uint.max, "symbolSize should never exceed uint.max");
 
-                        // displacement bytes from beginning of line
-                        trace ~= line.FileName[0 .. strlen( line.FileName )] ~
-                                 "(" ~ format( temp[], line.LineNumber ) ~ "): " ~
-                                 demangle( symbolName, demangleBuf );
+      symbol.SizeOfStruct  = cast(DWORD)symbolSize;
+      symbol.MaxNameLength = MAX_NAMELEN;
+
+      IMAGEHLP_LINE64 line;
+      line.SizeOfStruct = IMAGEHLP_LINE64.sizeof;
+
+      IMAGEHLP_MODULE64 moduleInfo;
+      moduleInfo.SizeOfStruct = IMAGEHLP_MODULE64.sizeof;
+        
+      foreach(address; addresses)
+      {
+        if( address != 0 )
+        {
+            DWORD64 offset;
+
+            if( dbghelp.SymGetSymFromAddr64( hProcess,
+                                             address,
+                                             &offset,
+                                             symbol ) == TRUE )
+            {
+                DWORD    displacement;
+                char[]   lineBuf;
+                char[20] temp;
+
+                if( dbghelp.SymGetLineFromAddr64( hProcess, address, &displacement, &line ) == TRUE )
+                {                  
+                    version(NOGCSAFE){
+                      //TODO non leaking demangling
+                      RCArray!char cur;
+                      auto         symbolName = (cast(char*) symbol.Name.ptr)[0 .. strlen(symbol.Name.ptr)];
+                      
+                      cur ~= line.FileName[0 .. strlen( line.FileName )];
+                      cur ~= "(";
+                      cur ~= format( temp[], line.LineNumber );
+                      cur ~= "):";
+                      cur ~= symbolName;
+                      trace ~= cur;
+                    }
+                    else {
+                      char[2048] demangleBuf;
+                      auto       symbolName = (cast(char*) symbol.Name.ptr)[0 .. strlen(symbol.Name.ptr)];
+                      
+                      // displacement bytes from beginning of line
+                      trace ~= line.FileName[0 .. strlen( line.FileName )] ~
+                               "(" ~ format( temp[], line.LineNumber ) ~ "): " ~
+                               demangle( symbolName, demangleBuf );
                     }
                 }
-                else
+            }
+            else
+            {
+                char[22] temp;
+                auto     val = format( temp[], address, 16 );
+                version(NOGCSAFE)
                 {
-                    char[22] temp;
-                    auto     val = format( temp[], stackframe.AddrPC.Offset, 16 );
-                    trace ~= val.dup;
+                  trace ~= RCArray!char(val);
+                }
+                else {
+                  trace ~= val.dup;
                 }
             }
         }
+      }
+      version(DUMA)
+        _duma_free( symbol, __FILE__, __LINE__ );
+      else
         free( symbol );
-        return trace;
+      return trace;        
     }
-
 
     // TODO: Remove this in favor of an external conversion.
     static char[] format( char[] buf, ulong val, uint base = 10 )
@@ -414,7 +563,7 @@ shared static this()
 
     auto hProcess = GetCurrentProcess();
     auto pid      = GetCurrentProcessId();
-    auto symPath  = generateSearchPath() ~ 0;
+    auto symPath  = generateSearchPath();
     auto ret      = dbghelp.SymInitialize( hProcess,
                                            symPath.ptr,
                                            FALSE );

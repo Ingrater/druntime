@@ -83,6 +83,7 @@ class FiberException : Exception
 private
 {
     import core.sync.mutex;
+    version(NOGCSAFE) import core.refcounted;
 
     //
     // from core.memory
@@ -167,6 +168,9 @@ version( Windows )
         {
             Thread  obj = cast(Thread) arg;
             assert( obj );
+            
+            //version(NOGCSAFE)
+              //auto keepAlive = SmartPtr!Thread(obj);
 
             assert( obj.m_curr is &obj.m_main );
             obj.m_main.bstack = getStackBottom();
@@ -631,6 +635,10 @@ else
 // Thread
 ///////////////////////////////////////////////////////////////////////////////
 
+version(NOGCSAFE)
+  alias RefCounted ThreadBase;
+else
+  alias Object ThreadBase;
 
 /**
  * This class encapsulates all threading functionality for the D
@@ -672,7 +680,7 @@ else
  *
  * ----------------------------------------------------------------------------
  */
-class Thread
+class Thread /*: ThreadBase*/
 {
     ///////////////////////////////////////////////////////////////////////////
     // Initialization
@@ -1380,6 +1388,10 @@ private:
     //
     final void run()
     {
+        version(NOGCSAFE)
+        {
+          //auto keepAlive = SmartPtr!Thread(this);
+        }
         switch( m_call )
         {
         case Call.FN:

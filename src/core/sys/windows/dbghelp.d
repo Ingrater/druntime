@@ -218,11 +218,12 @@ struct DbgHelp
         return null;
     }
 
-    shared static ~this()
+    //If we release this here it is already released when we need it for memory tracking
+    /*shared static ~this()
     {
         if( sm_hndl != sm_hndl.init )
             FreeLibrary( sm_hndl );
-    }
+    }*/
 
 private:
     __gshared DbgHelp sm_inst;
