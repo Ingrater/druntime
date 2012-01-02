@@ -172,6 +172,7 @@ MANIFEST= \
 	src\rt\memory.d \
 	src\rt\memory_osx.d \
 	src\rt\memset.d \
+	src\rt\minfo.d \
 	src\rt\minit.asm \
 	src\rt\monitor.c \
 	src\rt\monitor_.d \
@@ -242,7 +243,6 @@ SRCS= \
 	src\core\hashmap.d \
 	\
 	src\core\stdc\config.d \
-	src\core\stdc\ctype.d \
 	src\core\stdc\errno.d \
 	src\core\stdc\math.d \
 	src\core\stdc\signal.d \
@@ -298,6 +298,7 @@ SRCS= \
 	src\rt\llmath.d \
 	src\rt\memory.d \
 	src\rt\memset.d \
+	src\rt\minfo.d \
 	src\rt\obj.d \
 	src\rt\qsort.d \
 	src\rt\switch_.d \
@@ -392,7 +393,6 @@ IMPORTS=\
 	\
 	$(IMPDIR)\core\stdc\complex.di \
 	$(IMPDIR)\core\stdc\config.di \
-	$(IMPDIR)\core\stdc\ctype.di \
 	$(IMPDIR)\core\stdc\errno.di \
 	$(IMPDIR)\core\stdc\fenv.di \
 	$(IMPDIR)\core\stdc\float_.di \
@@ -589,9 +589,6 @@ $(IMPDIR)\core\stdc\complex.di : src\core\stdc\complex.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
 
 $(IMPDIR)\core\stdc\config.di : src\core\stdc\config.d
-	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
-
-$(IMPDIR)\core\stdc\ctype.di : src\core\stdc\ctype.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
 
 $(IMPDIR)\core\stdc\errno.di : src\core\stdc\errno.d

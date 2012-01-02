@@ -1767,19 +1767,6 @@ struct ModuleInfo
         return rt.minfo.moduleinfos_apply(dg);
   
     }
-    version(NOGCSAFE)
-    {
-      if(_moduleinfo_dtors.ptr !is null)
-      {
-        GC.free(_moduleinfo_dtors.ptr);
-        _moduleinfo_dtors = [];
-      }
-      if(_moduleinfo_tlsdtors.ptr !is null)
-      {
-        GC.free(_moduleinfo_tlsdtors.ptr);
-        _moduleinfo_tlsdtors = [];
-      }
-    }
 }
 
 
