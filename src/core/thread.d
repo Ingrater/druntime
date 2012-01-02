@@ -169,8 +169,8 @@ version( Windows )
             Thread  obj = cast(Thread) arg;
             assert( obj );
             
-            //version(NOGCSAFE)
-              //auto keepAlive = SmartPtr!Thread(obj);
+            version(NOGCSAFE)
+              auto keepAlive = SmartPtr!Thread(obj);
 
             assert( obj.m_curr is &obj.m_main );
             obj.m_main.bstack = getStackBottom();
@@ -680,7 +680,7 @@ else
  *
  * ----------------------------------------------------------------------------
  */
-class Thread /*: ThreadBase*/
+class Thread : ThreadBase
 {
     ///////////////////////////////////////////////////////////////////////////
     // Initialization
@@ -1390,7 +1390,7 @@ private:
     {
         version(NOGCSAFE)
         {
-          //auto keepAlive = SmartPtr!Thread(this);
+          auto keepAlive = SmartPtr!Thread(this);
         }
         switch( m_call )
         {

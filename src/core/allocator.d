@@ -118,6 +118,12 @@ struct StdAllocator
   
   static void DeinitMemoryTracking()
   {
+    //Set the allocation mutex to null so that any allocations that happen during
+    //resolving don't get added to the hashmap to prevent recursion and changing of
+    //the hashmap while it is in use
+    auto temp = m_allocMutex;
+    m_allocMutex = null;
+    
     printf("deinitializing memory tracking\n");
     printf("Found %d memory leaks",m_memoryMap.count);
     foreach(ref leak; m_memoryMap)
@@ -131,8 +137,6 @@ struct StdAllocator
         printf("%s\n",line.ptr);
       }
     }
-    auto temp = m_allocMutex;
-    m_allocMutex = null;
     Delete(temp);
     Delete(m_memoryMap);
   }
