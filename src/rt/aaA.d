@@ -388,12 +388,12 @@ body
  * If key is not in aa[], do nothing.
  */
 
-void _aaDel(AA aa, TypeInfo keyti, ...)
+bool _aaDel(AA aa, TypeInfo keyti, ...)
 {
     return _aaDelX(aa, keyti, cast(void*)(&keyti + 1));
 }
 
-void _aaDelX(AA aa, TypeInfo keyti, void* pkey)
+bool _aaDelX(AA aa, TypeInfo keyti, void* pkey)
 {
     aaA *e;
 
@@ -413,12 +413,13 @@ void _aaDelX(AA aa, TypeInfo keyti, void* pkey)
                     *pe = e.next;
                     aa.a.nodes--;
                     gc_free(e);
-                    break;
+                    return true;
                 }
             }
             pe = &e.next;
         }
     }
+    return false;
 }
 
 
@@ -662,7 +663,6 @@ BB* _d_assocarrayliteralT(TypeInfo_AssociativeArray ti, size_t length, ...)
     //printf("tivalue = %.*s\n", ti.next.classinfo.name);
     if (length == 0 || valuesize == 0 || keysize == 0)
     {
-        ;
     }
     else
     {
@@ -741,7 +741,6 @@ BB* _d_assocarrayliteralTX(TypeInfo_AssociativeArray ti, void[] keys, void[] val
     assert(length == values.length);
     if (length == 0 || valuesize == 0 || keysize == 0)
     {
-        ;
     }
     else
     {
