@@ -20,7 +20,13 @@ private import rt.util.hash;
 
 class TypeInfo_Aq : TypeInfo
 {
-    override string toString() { return "cfloat[]"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("cfloat[]");
+      else
+        return "cfloat[]"; 
+    }
 
     override hash_t getHash(in void* p)
     {   cfloat[] s = *cast(cfloat[]*)p;

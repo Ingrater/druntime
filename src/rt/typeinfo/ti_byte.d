@@ -17,7 +17,13 @@ module rt.typeinfo.ti_byte;
 
 class TypeInfo_g : TypeInfo
 {
-    override string toString() { return "byte"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("byte");
+      else
+        return "byte"; 
+    }
 
     override hash_t getHash(in void* p)
     {

@@ -19,5 +19,11 @@ private import rt.typeinfo.ti_float;
 
 class TypeInfo_o : TypeInfo_f
 {
-    override string toString() { return "ifloat"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("ifloat");
+      else
+        return "ifloat"; 
+    }
 }

@@ -19,7 +19,13 @@ private import rt.util.hash;
 
 class TypeInfo_m : TypeInfo
 {
-    override string toString() { return "ulong"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("ulong");
+      else
+        return "ulong"; 
+    }
 
     override hash_t getHash(in void* p)
     {

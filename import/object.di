@@ -17,6 +17,11 @@ private
     extern(C) void rt_finalize(void *ptr, bool det=true);
 }
 
+version(NOGCSAFE)
+{
+  import core.refcounted;
+}
+
 alias typeof(int.sizeof)                    size_t;
 alias typeof(cast(void*)0 - cast(void*)0)   ptrdiff_t;
 alias ptrdiff_t                             sizediff_t;
@@ -28,9 +33,23 @@ alias immutable(char)[]  string;
 alias immutable(wchar)[] wstring;
 alias immutable(dchar)[] dstring;
 
+version(NOGCSAFE)
+{
+  alias RCArray!(immutable(char)) rcstring;
+}
+
+version(NOGCSAFE)
+{
+  alias rcstring to_string_t;
+}
+else
+{
+  alias string to_string_t;
+}
+
 class Object
 {
-    string   toString();
+    to_string_t   toString();
     hash_t   toHash();
     int      opCmp(Object o);
     equals_t opEquals(Object o);
@@ -296,9 +315,9 @@ class Throwable : Object
 {
     interface TraceInfo
     {
-        int opApply(scope int delegate(ref char[]));
-        int opApply(scope int delegate(ref size_t, ref char[]));
-        string toString();
+        int opApply(scope int delegate(ref string));
+        int opApply(scope int delegate(ref size_t, ref string));
+        to_string_t toString();
     }
 
     string      msg;
@@ -309,7 +328,7 @@ class Throwable : Object
 
     this(string msg, Throwable next = null);
     this(string msg, string file, size_t line, Throwable next = null);
-    override string toString();
+    override to_string_t toString();
 }
 
 

@@ -20,7 +20,13 @@ private import rt.util.hash;
 
 class TypeInfo_Al : TypeInfo
 {
-    override string toString() { return "long[]"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("long[]");
+      else
+        return "long[]"; 
+    }
 
     override hash_t getHash(in void* p)
     {   long[] s = *cast(long[]*)p;
@@ -91,7 +97,13 @@ class TypeInfo_Al : TypeInfo
 
 class TypeInfo_Am : TypeInfo_Al
 {
-    override string toString() { return "ulong[]"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("ulong[]");
+      else
+        return "ulong[]"; 
+    }
 
     override int compare(in void* p1, in void* p2)
     {

@@ -17,7 +17,13 @@ module rt.typeinfo.ti_void;
 
 class TypeInfo_v : TypeInfo
 {
-    override string toString() { return "void"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("void");
+      else
+        return "void"; 
+    }
 
     override hash_t getHash(in void* p)
     {

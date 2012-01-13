@@ -19,5 +19,11 @@ private import rt.typeinfo.ti_real;
 
 class TypeInfo_j : TypeInfo_e
 {
-    override string toString() { return "ireal"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("ireal");
+      else
+        return "ireal"; 
+    }
 }

@@ -241,6 +241,7 @@ SRCS= \
 	src\core\allocator.d \
 	src\core\refcounted.d \
 	src\core\hashmap.d \
+	src\core\traits.d \
 	\
 	src\core\stdc\config.d \
 	src\core\stdc\errno.d \
@@ -390,6 +391,7 @@ IMPORTS=\
 	$(IMPDIR)\core\allocator.di \
 	$(IMPDIR)\core\refcounted.di \
 	$(IMPDIR)\core\hashmap.di \
+	$(IMPDIR)\core\traits.di \
 	\
 	$(IMPDIR)\core\stdc\complex.di \
 	$(IMPDIR)\core\stdc\config.di \
@@ -518,6 +520,9 @@ $(DOCDIR)\core_refcounted.html : src\core\refcounted.d
 $(DOCDIR)\core_hashmap.html : src\core\hashmap.d
   $(DMD) -c -d -o- -Isrc -Iimport -Df$@ $(DOCFMT) $**
 
+$(DOCDIR)\core_traits.html : src\core\traits.d
+  $(DMD) -c -d -o- -Isrc -Iimport -Df$@ $(DOCFMT) $**
+
 $(DOCDIR)\core_sync_barrier.html : src\core\sync\barrier.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Df$@ $(DOCFMT) $**
 
@@ -583,6 +588,9 @@ $(IMPDIR)\core\refcounted.di : src\core\refcounted.d
   $(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
 
 $(IMPDIR)\core\hashmap.di : src\core\hashmap.d
+  $(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
+
+$(IMPDIR)\core\traits.di : src\core\traits.d
   $(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
 
 $(IMPDIR)\core\stdc\complex.di : src\core\stdc\complex.d

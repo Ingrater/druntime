@@ -17,7 +17,13 @@ module rt.typeinfo.ti_float;
 
 class TypeInfo_f : TypeInfo
 {
-    override string toString() { return "float"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("float");
+      else
+        return "float"; 
+    }
 
     override hash_t getHash(in void* p)
     {

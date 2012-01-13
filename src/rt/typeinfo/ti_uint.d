@@ -17,7 +17,13 @@ module rt.typeinfo.ti_uint;
 
 class TypeInfo_k : TypeInfo
 {
-    override string toString() { return "uint"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("uint");
+      else
+        return "uint"; 
+    }
 
     override hash_t getHash(in void* p)
     {

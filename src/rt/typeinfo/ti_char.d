@@ -17,7 +17,13 @@ module rt.typeinfo.ti_char;
 
 class TypeInfo_a : TypeInfo
 {
-    override string toString() { return "char"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("char");
+      else
+        return "char"; 
+    }
 
     override hash_t getHash(in void* p)
     {

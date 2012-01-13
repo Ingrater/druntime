@@ -367,7 +367,9 @@ extern (C) bool runModuleUnitTests()
                     }
                     catch( Throwable e )
                     {
-                        console( e.toString() )( "\n" );
+                        auto temp = e.toString();
+                        string stemp = temp[];
+                        console( stemp )( "\n" );
                         failed++;
                     }
                 }

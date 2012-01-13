@@ -20,7 +20,13 @@ private import rt.util.hash;
 
 class TypeInfo_Ai : TypeInfo
 {
-    override string toString() { return "int[]"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("int[]");
+      else
+        return "int[]"; 
+    }
 
     override hash_t getHash(in void* p)
     {   int[] s = *cast(int[]*)p;
@@ -100,7 +106,13 @@ unittest
 
 class TypeInfo_Ak : TypeInfo_Ai
 {
-    override string toString() { return "uint[]"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("uint[]");
+      else
+        return "uint[]"; 
+    }
 
     override int compare(in void* p1, in void* p2)
     {
@@ -133,7 +145,13 @@ class TypeInfo_Ak : TypeInfo_Ai
 
 class TypeInfo_Aw : TypeInfo_Ak
 {
-    override string toString() { return "dchar[]"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("dchar[]");
+      else
+        return "dchar[]"; 
+    }
 
     @property override TypeInfo next() nothrow pure
     {

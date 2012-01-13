@@ -17,7 +17,13 @@ module rt.typeinfo.ti_dchar;
 
 class TypeInfo_w : TypeInfo
 {
-    override string toString() { return "dchar"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("dchar");
+      else
+        return "dchar"; 
+    }
 
     override hash_t getHash(in void* p)
     {

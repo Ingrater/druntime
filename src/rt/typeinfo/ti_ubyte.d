@@ -17,7 +17,13 @@ module rt.typeinfo.ti_ubyte;
 
 class TypeInfo_h : TypeInfo
 {
-    override string toString() { return "ubyte"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("ubyte");
+      else
+        return "ubyte"; 
+    }
 
     override hash_t getHash(in void* p)
     {
@@ -51,5 +57,11 @@ class TypeInfo_h : TypeInfo
 
 class TypeInfo_b : TypeInfo_h
 {
-    override string toString() { return "bool"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("bool");
+      else
+        return "bool"; 
+    }
 }

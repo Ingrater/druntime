@@ -17,7 +17,13 @@ module rt.typeinfo.ti_short;
 
 class TypeInfo_s : TypeInfo
 {
-    override string toString() { return "short"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("short");
+      else
+        return "short"; 
+    }
 
     override hash_t getHash(in void* p)
     {

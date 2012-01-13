@@ -20,7 +20,13 @@ private import rt.util.hash;
 
 class TypeInfo_Ad : TypeInfo
 {
-    override string toString() { return "double[]"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("double[]");
+      else
+        return "double[]"; 
+    }
 
     override hash_t getHash(in void* p)
     {   double[] s = *cast(double[]*)p;
@@ -96,7 +102,13 @@ class TypeInfo_Ad : TypeInfo
 
 class TypeInfo_Ap : TypeInfo_Ad
 {
-    override string toString() { return "idouble[]"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("idouble[]");
+      else
+        return "idouble[]"; 
+    }
 
     @property override TypeInfo next() nothrow pure
     {

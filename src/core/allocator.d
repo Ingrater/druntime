@@ -28,6 +28,8 @@ version(DUMA)
   }
 }
 
+extern (C) void rt_finalize(void *data, bool det=true);
+
 version(Windows)
 {
   import core.sys.windows.stacktrace;
@@ -204,7 +206,7 @@ struct StdAllocator
           // TODO implement for linux / osx
           version(Windows)
           {
-            info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false).length;
+            info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false,0).length;
           }
 
           //printf("realloc adding %x(%d)\n",mem,size);
@@ -319,18 +321,69 @@ void Delete(T)(T mem)
   AllocatorDelete!(T,StdAllocator)(mem);
 }
 
-void AllocatorDelete(T,AT)(T obj) if(is(T == class))
+void AllocatorDelete(T,AT)(T obj)
 {
-  clear(obj);
-  AT.FreeMemory(cast(void*)obj);
+  static if(is(T == class))
+  {
+    rt_finalize(cast(void*)obj);
+    AT.FreeMemory(cast(void*)obj);
+  }
+  else static if(is(T P == U*, U))
+  {
+    static if(is(U == struct) && is(typeof(obj.__dtor())))
+    {
+      obj.__dtor();
+    }
+    AT.FreeMemory(cast(void*)obj);
+  }
+  else static if(is(T P == U[], U))
+  {
+    static if(is(U == struct) && is(typeof(obj[0].__dtor())))
+    {
+      foreach(ref e; obj)
+      {
+        e.__dtor();
+      }
+    }
+  
+    AT.FreeMemory(cast(void*)obj.ptr);    
+  }
 }
 
-void AllocatorDelete(T,AT)(T mem) if(is(T : T*))
+auto NewArray(T)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT){
+  return AllocatorNewArray!(T,StdAllocator)(size,init);
+}
+
+auto AllocatorNewArray(T,AT)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT)
 {
-  static if(is(T : U*) && is(U == struct) && is(typeof(mem.__dtor())))
-  {
-    mem.__dtor();
-  }
+  size_t memSize = T.sizeof * size;
+  void* mem = AT.AllocateMemory(memsize);
   
-  AT.FreeMemory(cast(void*)mem);  
+  T[] data = (cast(T*)mem)[0..size];
+  final switch(init)
+  {
+    case InitializeMemoryWith.NOTHING:
+      break;
+    case InitializeMemoryWith.INIT:
+      static if(is(T == struct))
+      {
+        T temp;
+        foreach(ref e;data)
+        {
+          memcpy(&e,&temp,T.sizeof);
+        }
+      }
+      else 
+      {
+        foreach(ref e; data)
+        {
+          e = T.init;
+        }
+      }
+      break;
+    case InitializeMemoryWith.NULL:
+      memset(mem,0,memsize);
+      break;
+  }
+  return data;
 }

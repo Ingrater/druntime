@@ -17,7 +17,13 @@ module rt.typeinfo.ti_wchar;
 
 class TypeInfo_u : TypeInfo
 {
-    override string toString() { return "wchar"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("wchar");
+      else
+        return "wchar"; 
+    }
 
     override hash_t getHash(in void* p)
     {

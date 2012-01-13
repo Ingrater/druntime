@@ -247,8 +247,8 @@ public:
   
     version(NOGCSAFE)
     {
-      alias RCArray!char line_t;
-      alias RCArray!(RCArray!char) trace_t;
+      alias RCArray!(immutable(char)) line_t;
+      alias RCArray!(line_t) trace_t;
     }
     else
     {
@@ -256,15 +256,15 @@ public:
       alias char[][] trace_t;
     }
 
-    int opApply( scope int delegate(ref char[]) dg )
+    int opApply( scope int delegate(ref string) dg )
     {
-        return opApply( (ref size_t, ref char[] buf)
+        return opApply( (ref size_t, ref string buf)
                         {
                             return dg( buf );
                         });
     }
 
-    int opApply( scope int delegate(ref size_t, ref char[]) dg )
+    int opApply( scope int delegate(ref size_t, ref string) dg )
     {
         int result;
 
@@ -277,7 +277,8 @@ public:
               break;
           }
           else {
-            if( (result = dg( i, e )) != 0 )
+            auto temp = cast(string)e;
+            if( (result = dg( i, temp )) != 0 )
                 break;
           }
         }
@@ -285,11 +286,20 @@ public:
     }
 
 
-    override string toString()
+    override to_string_t toString()
     {
         //TODO implement
         version(NOGCSAFE)
-          return "Not implemented yet";
+        {
+          rcstring result;
+          
+          foreach( e; m_trace)
+          {
+            result ~= e;
+            result ~= "\n";
+          }
+          return result;
+        }
         else
         {
           string result;
@@ -303,11 +313,11 @@ public:
         }
     }
     
-    static long[] traceAddresses(long[] addresses, bool allocateIfToSmall = true)
+    static long[] traceAddresses(long[] addresses, bool allocateIfToSmall = true, int skip = 0)
     {
       synchronized( StackTrace.classinfo )
       {
-        return traceAddressesNoSync(addresses,allocateIfToSmall);
+        return traceAddressesNoSync(addresses,allocateIfToSmall,skip);
       }
     }
     
@@ -320,13 +330,7 @@ public:
     }
 
 private:
-    version(NOGCSAFE)
-    {
-      RCArray!(RCArray!char) m_trace;
-    } 
-    else {
-      char[][] m_trace;
-    }
+    trace_t m_trace;
 
 
     static trace_t trace()
@@ -346,8 +350,13 @@ private:
             return result;
         }
     }
+    
+    static void ContextHelper( ref CONTEXT c )
+    {
+      RtlCaptureContext( &c );
+    }
   
-    static long[] traceAddressesNoSync(long[] addresses, bool allocateIfToSmall = true)
+    static long[] traceAddressesNoSync(long[] addresses, bool allocateIfToSmall = true, int skip = 0)
     {
         assert(addresses.length > 0,"need at least space to write 1 address");
         auto         dbghelp  = DbgHelp.get();
@@ -362,7 +371,8 @@ private:
         }
 
         c.ContextFlags = CONTEXT_FULL;
-        RtlCaptureContext( &c );
+        ContextHelper( c );
+        //RtlCaptureContext( &c );
 
         //x86
         imageType                   = IMAGE_FILE_MACHINE_I386;
@@ -398,10 +408,10 @@ private:
             }
             
             //Skip first stack frame
-            if(frameNum == 0)
+            if(frameNum < skip)
               continue;
             
-            if(frameNum-1 >= addresses.length)
+            if(frameNum-skip >= addresses.length)
             {
               if(allocateIfToSmall)
               {
@@ -430,11 +440,11 @@ private:
               }
             }
             
-            addresses[frameNum-1] = stackframe.AddrPC.Offset;
+            addresses[frameNum-skip] = stackframe.AddrPC.Offset;
         }
-        if(frameNum < 1)
-          frameNum = 1;
-        return addresses[0..(frameNum-1)];
+        if(frameNum < skip)
+          frameNum = skip;
+        return addresses[0..(frameNum-skip)];
     }
     
     static trace_t resolveAddressesNoSync(long[] addresses)
@@ -473,13 +483,14 @@ private:
                 DWORD    displacement;
                 char[]   lineBuf;
                 char[20] temp;
+                
+                auto         symbolName = (cast(char*) symbol.Name.ptr)[0 .. strlen(symbol.Name.ptr)];
 
                 if( dbghelp.SymGetLineFromAddr64( hProcess, address, &displacement, &line ) == TRUE )
                 {                  
                     version(NOGCSAFE){
                       //TODO non leaking demangling
-                      RCArray!char cur;
-                      auto         symbolName = (cast(char*) symbol.Name.ptr)[0 .. strlen(symbol.Name.ptr)];
+                      line_t cur;
                       
                       cur ~= line.FileName[0 .. strlen( line.FileName )];
                       cur ~= "(";
@@ -490,13 +501,21 @@ private:
                     }
                     else {
                       char[2048] demangleBuf;
-                      auto       symbolName = (cast(char*) symbol.Name.ptr)[0 .. strlen(symbol.Name.ptr)];
                       
                       // displacement bytes from beginning of line
                       trace ~= line.FileName[0 .. strlen( line.FileName )] ~
                                "(" ~ format( temp[], line.LineNumber ) ~ "): " ~
                                demangle( symbolName, demangleBuf );
                     }
+                }
+                else {
+                  version(NOGCSAFE)
+                  {
+                    trace ~= line_t(symbolName);
+                  }
+                  else {
+                    trace ~= symbolName;
+                  }
                 }
             }
             else
@@ -505,12 +524,22 @@ private:
                 auto     val = format( temp[], address, 16 );
                 version(NOGCSAFE)
                 {
-                  trace ~= RCArray!char(val);
+                  trace ~= line_t(val);
                 }
                 else {
                   trace ~= val.dup;
                 }
             }
+        }
+        else {
+          version(NOGCSAFE)
+          {
+            trace ~= line_t("unknown");
+          }
+          else 
+          {
+            trace ~= "unkown".dup;
+          }
         }
       }
       version(DUMA)

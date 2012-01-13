@@ -20,7 +20,13 @@ private import rt.util.hash;
 
 class TypeInfo_Ae : TypeInfo
 {
-    override string toString() { return "real[]"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("real[]");
+      else
+        return "real[]"; 
+    }
 
     override hash_t getHash(in void* p)
     {   real[] s = *cast(real[]*)p;
@@ -96,7 +102,13 @@ class TypeInfo_Ae : TypeInfo
 
 class TypeInfo_Aj : TypeInfo_Ae
 {
-    override string toString() { return "ireal[]"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("ireal[]");
+      else
+        return "ireal[]"; 
+    }
 
     @property override TypeInfo next() nothrow pure
     {

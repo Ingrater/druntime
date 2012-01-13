@@ -441,7 +441,7 @@ extern (C) int main(int argc, char** argv)
             }
             if (t.msg)
             {
-                console(": ")(t.msg);
+                console(": ")(t.msg[]);
             }
             console("\n");
         }

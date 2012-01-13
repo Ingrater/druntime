@@ -20,7 +20,13 @@ private import rt.util.hash;
 
 class TypeInfo_As : TypeInfo
 {
-    override string toString() { return "short[]"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("short[]");
+      else
+        return "short[]"; 
+    }
 
     override hash_t getHash(in void* p)
     {   short[] s = *cast(short[]*)p;
@@ -89,7 +95,13 @@ class TypeInfo_As : TypeInfo
 
 class TypeInfo_At : TypeInfo_As
 {
-    override string toString() { return "ushort[]"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("ushort[]");
+      else
+        return "ushort[]";
+    }
 
     override int compare(in void* p1, in void* p2)
     {
@@ -122,7 +134,13 @@ class TypeInfo_At : TypeInfo_As
 
 class TypeInfo_Au : TypeInfo_At
 {
-    override string toString() { return "wchar[]"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("wchar[]");
+      else
+        return "wchar[]"; 
+    }
 
     @property override TypeInfo next() nothrow pure
     {

@@ -19,7 +19,13 @@ private import rt.util.hash;
 
 class TypeInfo_c : TypeInfo
 {
-    override string toString() { return "creal"; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t("creal");
+      else
+        return "creal"; 
+    }
 
     override hash_t getHash(in void* p)
     {

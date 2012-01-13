@@ -19,5 +19,11 @@ private import rt.typeinfo.ti_double;
 
 class TypeInfo_p : TypeInfo_d
 {
-    override string toString() { return "idouble"; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t("idouble");
+      else
+        return "idouble"; 
+    }
 }

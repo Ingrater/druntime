@@ -3,6 +3,7 @@ module core.refcounted;
 public import core.allocator;
 import core.atomic;
 import core.stdc.string; // for memcpy
+import core.traits;
 
 abstract class RefCountedBase
 {
@@ -106,10 +107,10 @@ struct SmartPtr(T)
       ptr.RemoveReference();
   }
   
-  static if(is(null_t))
+  static if(!is(typeof(null) == void*))
   {
     pragma(msg,"we have a null_t");
-    void opAssign(null_t obj)
+    void opAssign(typeof(null) obj)
     {
       if(ptr !is null)
         ptr.RemoveReference();
@@ -159,10 +160,23 @@ final class RCArrayData(T,AT = StdAllocator) : RefCountedImpl!AT
 private:
   T[] data;
   
+  alias StripModifier!(T) BT; //Base Type
+  
 public:
   this()
   {
     assert(0,"should never be called");
+  }
+
+  static if(is(T == struct) && is(typeof(T.__dtor())))
+  {
+    ~this()
+    {
+      foreach(ref e; data)
+      {
+        e.__dtor();
+      }
+    }
   }
   
   static auto AllocateArray(InitializeMemoryWith meminit = InitializeMemoryWith.INIT)
@@ -190,15 +204,15 @@ public:
     {
       if(doInit)
       {
-        auto arrayData = (cast(T*)(mem + headerSize))[0..size];
-        foreach(ref T e; arrayData)
+        auto arrayData = (cast(BT*)(mem + headerSize))[0..size];
+        foreach(ref BT e; arrayData)
         {
           // If it is a struct cant use the assignment operator
           // otherwise the assignment operator might work on a non initialized instance
-          static if(is(T == struct))
-            memcpy(&e,&T.init,T.sizeof);
+          static if(is(BT == struct))
+            memcpy(&e,&BT.init,BT.sizeof);
           else
-            e = T.init;
+            e = BT.init;
         }
       }
     }   
@@ -233,15 +247,15 @@ public:
     {
       if(doInit)
       {
-        auto arrayData = (cast(T*)(mem + headerSize))[result.data.length..newSize];
-        foreach(ref T e; arrayData)
+        auto arrayData = (cast(BT*)(mem + headerSize))[result.data.length..newSize];
+        foreach(ref BT e; arrayData)
         {
           // If it is a struct we can not use the assignment operator
           // as the assignment operator will be calle don a non initialized instance
-          static if(is(T == struct))
-            memcpy(&e,&T.init,T.sizeof);
+          static if(is(BT == struct))
+            memcpy(&e,&BT.init,T.sizeof);
           else
-            e = T.init;
+            e = BT.init;
         }
       }
     }   
@@ -279,6 +293,8 @@ struct RCArray(T,AT = StdAllocator)
   private data_t m_DataObject;
   private T[] m_Data;
   
+  alias StripModifier!(T) BT; //base type
+  
   
   this(size_t size){
     m_DataObject = data_t.AllocateArray(size);
@@ -287,27 +303,38 @@ struct RCArray(T,AT = StdAllocator)
   }
   
   private void ConstructFromArray(U)(U init) 
-    if(is(U : T[]) || is(U : immutable(T[])) || is(U : const(T[])))
+    if(is(U : BT[]) || is(U : immutable(BT)[]) || is(U : const(BT)[]))
   {
     m_DataObject = data_t.AllocateArray(init.length,false);
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
-    m_Data[] = cast(T[])init[];
+    auto mem = cast(BT[])m_Data;
+    mem[] = cast(BT[])init[];
   }
   
-  this(T[] init) 
+  static if(IsPOD!(BT))
   {
-    ConstructFromArray(init);
-  }
   
-  this(const(T[]) init)
-  {
-    ConstructFromArray(init);
+    this(BT[] init) 
+    {
+      ConstructFromArray(init);
+    }
+    
+    this(const(BT[]) init)
+    {
+      ConstructFromArray(init);
+    }
+    
+    this(immutable(BT[]) init)
+    {
+      ConstructFromArray(init);
+    }
   }
-  
-  this(immutable(T[]) init)
-  {
-    ConstructFromArray(init);
+  else {
+    this(T[] init)
+    {
+      ConstructFromArray(init);
+    }
   }
   
   //post blit constructor
@@ -365,7 +392,8 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.RemoveReference();
   }
   
-  void opAssign(this_t rh) 
+  // TODO replace this bullshit with a template once it is supported by dmd
+  void opAssign(this_t rh)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -374,6 +402,47 @@ struct RCArray(T,AT = StdAllocator)
     if(m_DataObject !is null)
       m_DataObject.AddReference();
   }
+  
+  void opAssign(T[] rh)
+  {
+    if(m_DataObject !is null)
+      m_DataObject.RemoveReference();
+    auto newData = data_t.AllocateArray(rh.length,false);
+    auto mem = cast(BT[])newData.data;
+    mem[] = rh[];
+    m_DataObject = newData;
+    m_DataObject.AddReference();
+    m_Data = newData.data;
+  }
+  
+  static if(IsPOD!(BT) && !is(T == BT))
+  {
+    void opAssign(BT[] rh)
+    {
+      if(m_DataObject !is null)
+        m_DataObject.RemoveReference();
+      auto newData = data_t.AllocateArray(rh.length,false);
+      auto mem = cast(BT[])newData.data;
+      mem[] = rh[];
+      m_DataObject = newData;
+      m_DataObject.AddReference();
+      m_Data = newData.data;      
+    }
+  }
+  
+  /*void opAssign(U)(U rh) if(is(U == T[]) || 
+                            (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
+                           )
+  {
+    if(m_DataObject !is null)
+      m_DataObject.RemoveReference();
+    auto newData = data_t.AllocateArray(rh.length,false);
+    auto mem = cast(BT[])newData.data;
+    mem[] = rh[];
+    m_DataObject = newData;
+    m_DataObject.AddReference();
+    m_Data = newData.data;
+  }*/
   
   /*void opAssign(ref shared(this_t) rh) shared
   {
@@ -389,14 +458,16 @@ struct RCArray(T,AT = StdAllocator)
   {
     assert(m_Data !is null,"nothing to duplicate");
     auto copy = data_t.AllocateArray(m_Data.length,false);
-    copy.data[0..m_Data.length] = m_Data[0..$];
+    auto mem = cast(BT[])copy.data;
+    mem[0..m_Data.length] = m_Data[0..$];
     return this_t(copy);
   }
   
-  immutable(this_t) idup()
+  //TODO fix
+  /*immutable(this_t) idup()
   {
     return cast(immutable(this_t))dup();
-  }
+  }*/
   
   ref T opIndex(size_t index)
   {
@@ -442,26 +513,27 @@ struct RCArray(T,AT = StdAllocator)
     return immutable(this_t)(m_DataObject, m_Data[start..end]);
   }
   
-  void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == this_t) || is(U : T[]) || is(U : immutable(T[]))))
+  void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == this_t) || is(U : BT[]) || is(U : const(BT)[]) || is(U : immutable(BT)[])))
   {
     // We own the data and therefore can do whatever we want with it
     if(m_DataObject !is null && m_DataObject.refcount == 1)
     {
       m_DataObject = m_DataObject.Resize!(InitializeMemoryWith.NOTHING)
                                          (m_Data.length + rh.length);
-      m_DataObject.data[m_Data.length..$] = rh[];
+      (cast(BT[])m_DataObject.data)[m_Data.length..$] = rh[];
       m_Data = m_DataObject.data;
     }
     else { // we have to copy the data
       auto newData = data_t.AllocateArray(m_Data.length + rh.length, false);
+      auto mem = cast(BT[])newData.data;
       if(m_DataObject !is null)
       {
         m_DataObject.RemoveReference();
-        newData.data[0..m_Data.length] = m_Data[];
-        newData.data[m_Data.length..$] = rh[];
+        mem[0..m_Data.length] = m_Data[];
+        mem[m_Data.length..$] = rh[];
       }
       else
-        newData.data[0..$] = rh[];
+        mem[0..$] = rh[];
 
       m_DataObject = newData;
       m_DataObject.AddReference();
@@ -469,26 +541,27 @@ struct RCArray(T,AT = StdAllocator)
     }
   }
   
-  void opOpAssign(string op,U)(U rh) if(op == "~" && is(U == T))
+  void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == T) || IsPOD!(BT) && is(U == BT)))
   {
     //We own the data
     if(m_DataObject !is null && m_DataObject.refcount == 1)
     {
       m_DataObject = m_DataObject.Resize(m_Data.length + 1);
-      m_DataObject.data[m_Data.length] = rh;
+      (cast(BT[])m_DataObject.data)[m_Data.length] = rh;
       m_Data = m_DataObject.data;
     }
     else { // we have to copy the data
       auto newData = data_t.AllocateArray(m_Data.length + 1);
       if(m_DataObject !is null)
       {
-        newData.data[0..m_Data.length] = m_Data[];
-        newData.data[m_Data.length] = rh;
+        auto mem = cast(BT[])newData.data;
+        mem[0..m_Data.length] = m_Data[];
+        mem[m_Data.length] = rh;
         m_DataObject.RemoveReference();
       }
       else
       {
-        newData.data[m_Data.length] = rh;
+        (cast(BT[])newData.data)[m_Data.length] = rh;
       }
       m_DataObject = newData;
       m_DataObject.AddReference();
@@ -500,6 +573,44 @@ struct RCArray(T,AT = StdAllocator)
   {
     static assert(0,U.stringof);
   }*/
+  
+  this_t opBinary(string op,U)(auto ref U rh) if(op == "~" && (is(U == this_t) || 
+                                      is(U == T[]) || 
+                                      (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT))))
+                                     ))
+  {
+    auto result = this_t(this.length + rh.length);
+    auto mem = cast(BT[])result[];
+    mem[0..this.length] = this[];
+    mem[this.length..$] = rh[];
+    return result;
+  }
+  
+  this_t opBinary(string op,U)(auto ref U rh) if(op == "~" && (is(U == T) || 
+                                                 (IsPOD!(BT) && (is(U == BT) || is(U == const(BT)) || is(U == immutable(BT))))
+                                                ))
+  {
+    auto result = this_t(this.length + 1);
+    auto mem = cast(BT[])result[];
+    mem[0..this.length] = this[];
+    mem[this.length] = rh;
+    return result;
+  }
+  
+  this_t opBinaryRight(string op,U)(U lh) if(op == "~" && (
+                                      is(U == T[]) || 
+                                      (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT))))
+                                     ))
+  {
+    return lh.opBinary!(op)(this);
+  }
+  
+  this_t opBinaryRight(string op,U)(U lh) if(op == "~" && (is(U == T) || 
+                                                 (IsPOD!(BT) && (is(U == BT) || is(U == const(BT)) || is(U == immutable(BT))))
+                                                ))
+  {
+    return lh.opBinary!(op)(this);
+  }
   
   int opApply( scope int delegate(ref T) dg )
   {
@@ -523,6 +634,11 @@ struct RCArray(T,AT = StdAllocator)
               break;
       }
       return result;
+  }
+  
+  bool opCast(U)() if(is(U == bool))
+  {
+    return m_DataObject !is null; 
   }
   
   @property auto ptr()

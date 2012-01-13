@@ -29,7 +29,11 @@ private
     import rt.util.console;
     import rt.minfo;
     debug(PRINTF) import core.stdc.stdio;
-    version(NOGCSAFE) import core.memory;
+    version(NOGCSAFE)
+    {
+      import core.memory;
+      import core.refcounted;
+    }
 
     extern (C) void onOutOfMemoryError();
     extern (C) Object _d_newclass(TypeInfo_Class ci);
@@ -63,6 +67,19 @@ alias bool equals_t;
 alias immutable(char)[]  string;
 alias immutable(wchar)[] wstring;
 alias immutable(dchar)[] dstring;
+version(NOGCSAFE)
+{
+  alias RCArray!(immutable(char)) rcstring;
+}
+
+version(NOGCSAFE)
+{
+  alias rcstring to_string_t;
+}
+else
+{
+  alias string to_string_t;
+}
 
 /**
  * All D class objects inherit from Object.
@@ -72,8 +89,11 @@ class Object
     /**
      * Convert Object to a human readable string.
      */
-    string toString()
+    to_string_t toString()
     {
+      version(NOGCSAFE)
+        return rcstring(this.classinfo.name);
+      else
         return this.classinfo.name;
     }
 
@@ -231,8 +251,8 @@ class TypeInfo
 {
     override hash_t toHash()
     {
-        auto data = this.toString();
-        return hashOf(data.ptr, data.length);
+      auto data = this.toString();
+      return hashOf(data.ptr, data.length);
     }
 
     override int opCmp(Object o)
@@ -242,7 +262,10 @@ class TypeInfo
         TypeInfo ti = cast(TypeInfo)o;
         if (ti is null)
             return 1;
-        return dstrcmp(this.toString(), ti.toString());
+        version(NOGCSAFE)
+          return dstrcmp(this.toString()[],ti.toString()[]);
+        else
+          return dstrcmp(this.toString(), ti.toString());
     }
 
     override equals_t opEquals(Object o)
@@ -254,7 +277,10 @@ class TypeInfo
         if (this is o)
             return true;
         TypeInfo ti = cast(TypeInfo)o;
-        return ti && this.toString() == ti.toString();
+        version(NOGCSAFE)
+          return ti && this.toString()[] == ti.toString()[];
+        else
+          return ti && this.toString() == ti.toString();
     }
 
     /// Returns a hash of the instance of a type.
@@ -315,7 +341,13 @@ class TypeInfo
 
 class TypeInfo_Typedef : TypeInfo
 {
-    override string toString() { return name; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t(name);
+      else
+        return name; 
+    }
 
     override equals_t opEquals(Object o)
     {
@@ -354,7 +386,10 @@ class TypeInfo_Enum : TypeInfo_Typedef
 
 class TypeInfo_Pointer : TypeInfo
 {
-    override string toString() { return m_next.toString() ~ "*"; }
+    override to_string_t toString() 
+    { 
+      return m_next.toString() ~ "*"; 
+    }
 
     override equals_t opEquals(Object o)
     {
@@ -404,7 +439,7 @@ class TypeInfo_Pointer : TypeInfo
 
 class TypeInfo_Array : TypeInfo
 {
-    override string toString() { return value.toString() ~ "[]"; }
+    override to_string_t toString() { return value.toString() ~ "[]"; }
 
     override equals_t opEquals(Object o)
     {
@@ -488,10 +523,10 @@ class TypeInfo_Array : TypeInfo
 
 class TypeInfo_StaticArray : TypeInfo
 {
-    override string toString()
+    override to_string_t toString()
     {
         char[20] tmp = void;
-        return cast(string)(value.toString() ~ "[" ~ tmp.intToString(len) ~ "]");
+        return value.toString() ~ "[" ~ cast(string)tmp.intToString(len) ~ "]";
     }
 
     override equals_t opEquals(Object o)
@@ -605,9 +640,9 @@ class TypeInfo_StaticArray : TypeInfo
 
 class TypeInfo_AssociativeArray : TypeInfo
 {
-    override string toString()
+    override to_string_t toString()
     {
-        return cast(string)(next.toString() ~ "[" ~ key.toString() ~ "]");
+        return (next.toString() ~ "[" ~ key.toString() ~ "]");
     }
 
     override equals_t opEquals(Object o)
@@ -647,9 +682,9 @@ class TypeInfo_AssociativeArray : TypeInfo
 
 class TypeInfo_Function : TypeInfo
 {
-    override string toString()
+    override to_string_t toString()
     {
-        return cast(string)(next.toString() ~ "()");
+        return next.toString() ~ "()";
     }
 
     override equals_t opEquals(Object o)
@@ -673,9 +708,9 @@ class TypeInfo_Function : TypeInfo
 
 class TypeInfo_Delegate : TypeInfo
 {
-    override string toString()
+    override to_string_t toString()
     {
-        return cast(string)(next.toString() ~ " delegate()");
+        return next.toString() ~ " delegate()";
     }
 
     override equals_t opEquals(Object o)
@@ -718,7 +753,13 @@ class TypeInfo_Delegate : TypeInfo
  */
 class TypeInfo_Class : TypeInfo
 {
-    override string toString() { return info.name; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t(info.name);
+      else
+        return info.name; 
+    }
 
     override equals_t opEquals(Object o)
     {
@@ -854,7 +895,13 @@ alias TypeInfo_Class ClassInfo;
 
 class TypeInfo_Interface : TypeInfo
 {
-    override string toString() { return info.name; }
+    override to_string_t toString() 
+    {
+      version(NOGCSAFE)
+        return to_string_t(info.name);
+      else
+        return info.name; 
+    }
 
     override equals_t opEquals(Object o)
     {
@@ -918,7 +965,13 @@ class TypeInfo_Interface : TypeInfo
 
 class TypeInfo_Struct : TypeInfo
 {
-    override string toString() { return name; }
+    override to_string_t toString() 
+    { 
+      version(NOGCSAFE)
+        return to_string_t(name);
+      else
+        return name; 
+    }
 
     override equals_t opEquals(Object o)
     {
@@ -1046,9 +1099,12 @@ class TypeInfo_Tuple : TypeInfo
 {
     TypeInfo[] elements;
 
-    override string toString()
+    override to_string_t toString()
     {
-        string s = "(";
+        version(NOGCSAFE)
+          to_string_t s = to_string_t("(");
+        else
+          string s = "(";
         foreach (i, element; elements)
         {
             if (i)
@@ -1125,8 +1181,11 @@ class TypeInfo_Tuple : TypeInfo
 
 class TypeInfo_Const : TypeInfo
 {
-    override string toString()
+    override to_string_t toString()
     {
+      version(NOGCSAFE)
+        return to_string_t("const(") ~ base.toString() ~ ")";
+      else
         return cast(string) ("const(" ~ base.toString() ~ ")");
     }
 
@@ -1168,24 +1227,33 @@ class TypeInfo_Const : TypeInfo
 
 class TypeInfo_Invariant : TypeInfo_Const
 {
-    override string toString()
+    override to_string_t toString()
     {
+      version(NOGCSAFE)
+        return to_string_t("immutable(") ~ base.toString() ~ ")";
+      else
         return cast(string) ("immutable(" ~ base.toString() ~ ")");
     }
 }
 
 class TypeInfo_Shared : TypeInfo_Const
 {
-    override string toString()
+    override to_string_t toString()
     {
+      version(NOGCSAFE)
+        return to_string_t("shared(") ~ base.toString() ~ ")";
+      else
         return cast(string) ("shared(" ~ base.toString() ~ ")");
     }
 }
 
 class TypeInfo_Inout : TypeInfo_Const
 {
-    override string toString()
+    override to_string_t toString()
     {
+      version(NOGCSAFE)
+        return to_string_t("inout(") ~ base.toString() ~ ")";
+      else
         return cast(string) ("inout(" ~ base.toString() ~ ")");
     }
 }
@@ -1244,12 +1312,12 @@ class Throwable : Object
 {
     interface TraceInfo
     {
-        int opApply(scope int delegate(ref char[]));
-        int opApply(scope int delegate(ref size_t, ref char[]));
-        string toString();
+        int opApply(scope int delegate(ref string));
+        int opApply(scope int delegate(ref size_t, ref string));
+        to_string_t toString();
     }
 
-    string      msg;
+    to_string_t msg;
     string      file;
     size_t      line;
     TraceInfo   info;
@@ -1272,30 +1340,45 @@ class Throwable : Object
         //this.info = _d_traceContext();
     }
 
-    override string toString()
+    override to_string_t toString()
     {
         char[20] tmp = void;
-        char[]   buf;
+        version(NOGCSAFE)
+          to_string_t buf;
+        else
+          char[]   buf;
 
         if (file)
         {
-           buf ~= this.classinfo.name ~ "@" ~ file ~ "(" ~ tmp.intToString(line) ~ ")";
+          version(NOGCSAFE)
+            buf ~= to_string_t(this.classinfo.name) ~ "@" ~ file ~ "(" ~ tmp.intToString(line) ~ ")";
+          else
+            buf ~= this.classinfo.name ~ "@" ~ file ~ "(" ~ tmp.intToString(line) ~ ")";
         }
         else
-        {
-            buf ~= this.classinfo.name;
+        { 
+           buf ~= this.classinfo.name;
         }
         if (msg)
         {
+          version(NOGCSAFE)
+            buf ~= to_string_t(": ") ~ msg;
+          else
             buf ~= ": " ~ msg;
         }
         if (info)
         {
             buf ~= "\n----------------";
             foreach (t; info)
-                buf ~= "\n" ~ t;
+            {
+                buf ~= "\n";
+                buf ~= t;
+            }
         }
-        return cast(string) buf;
+        version(NOGCSAFE)
+          return buf;
+        else
+          return cast(string) buf;
     }
 }
 

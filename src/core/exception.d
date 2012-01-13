@@ -151,8 +151,11 @@ class FinalizeError : Error
         info = ci;
     }
 
-    override string toString()
+    override to_string_t toString()
     {
+      version(NOGCSAFE)
+        return to_string_t("An exception was thrown while finalizing an instance of class ") ~ info.name;
+      else
         return "An exception was thrown while finalizing an instance of class " ~ info.name;
     }
 }
@@ -234,8 +237,11 @@ class OutOfMemoryError : Error
         super( "Memory allocation failed", file, line, next );
     }
 
-    override string toString()
+    override to_string_t toString()
     {
+      version(NOGCSAFE)
+        return msg ? super.toString() : to_string_t("Memory allocation failed");
+      else
         return msg ? super.toString() : "Memory allocation failed";
     }
 }
@@ -275,8 +281,11 @@ class InvalidMemoryOperationError : Error
         super( "Invalid memory operation", file, line, next );
     }
 
-    override string toString()
+    override to_string_t toString()
     {
+      version(NOGCSAFE)
+        return msg ? super.toString() : to_string_t("Invalid memory operation");
+      else
         return msg ? super.toString() : "Invalid memory operation";
     }
 }
