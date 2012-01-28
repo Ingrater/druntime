@@ -109,7 +109,6 @@ struct SmartPtr(T)
   
   static if(!is(typeof(null) == void*))
   {
-    pragma(msg,"we have a null_t");
     void opAssign(typeof(null) obj)
     {
       if(ptr !is null)
@@ -161,12 +160,8 @@ private:
   T[] data;
   
   alias StripModifier!(T) BT; //Base Type
-  
-public:
-  this()
-  {
-    assert(0,"should never be called");
-  }
+
+protected:
 
   static if(is(T == struct) && is(typeof(T.__dtor())))
   {
@@ -286,6 +281,10 @@ public:
   
 }
 
+enum IsStatic {
+  Yes
+}
+
 struct RCArray(T,AT = StdAllocator)
 {
   alias RCArrayData!(T,AT) data_t;
@@ -300,6 +299,16 @@ struct RCArray(T,AT = StdAllocator)
     m_DataObject = data_t.AllocateArray(size);
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
+  }
+
+  static if(IsPOD!(BT))
+  {
+    this(T[] data, IsStatic isStatic)
+    {
+      assert(isStatic == IsStatic.Yes);
+      m_Data = data;
+      m_DataObject = null;
+    }
   }
   
   private void ConstructFromArray(U)(U init) 
@@ -347,14 +356,16 @@ struct RCArray(T,AT = StdAllocator)
   this(ref immutable(this_t) rh) immutable
   {
     m_DataObject = rh.m_DataObject;
-    (cast(data_t)m_DataObject).AddReference();
+    if(m_DataObject !is null)
+      (cast(data_t)m_DataObject).AddReference();
     m_Data = rh.m_Data;
   }
   
   this(ref const(this_t) rh) const
   {
     m_DataObject = rh.m_DataObject;
-    (cast(data_t)m_DataObject).AddReference();
+    if(m_DataObject !is null)
+      (cast(data_t)m_DataObject).AddReference();
     m_Data = rh.m_Data;
   }
   
@@ -368,21 +379,24 @@ struct RCArray(T,AT = StdAllocator)
   private this(data_t dataObject, T[] data)
   {
     m_DataObject = dataObject;
-    m_DataObject.AddReference();
+    if(m_DataObject !is null)
+      m_DataObject.AddReference();
     m_Data = data;
   }
   
   private this(const(data_t) dataObject, const(T[]) data) const
   {
     m_DataObject = dataObject;
-    (cast(data_t)m_DataObject).AddReference();
+    if(m_DataObject !is null)
+      (cast(data_t)m_DataObject).AddReference();
     m_Data = data;
   }
   
   private this(immutable(data_t) dataObject, immutable(T[]) data) immutable
   {
     m_DataObject = dataObject;
-    (cast(data_t)m_DataObject).AddReference();
+    if(m_DataObject !is null)
+      (cast(data_t)m_DataObject).AddReference();
     m_Data = data;
   }
     
@@ -491,25 +505,21 @@ struct RCArray(T,AT = StdAllocator)
   
   T[] opSlice()
   {
-    assert(m_DataObject !is null,"can not slice empty array");
-    return m_DataObject.data;
+    return m_Data;
   }
   
   this_t opSlice(size_t start, size_t end)
   {
-    assert(m_DataObject !is null,"can not slice empty array");
     return this_t(m_DataObject,m_Data[start..end]);
   }
   
   const(this_t) opSlice(size_t start, size_t end) const
   {
-    assert(m_DataObject !is null, "can not slice empty array");
     return const(this_t)(m_DataObject, m_Data[start..end]);
   }
   
   immutable(this_t) opSlice(size_t start, size_t end) immutable
   {
-    assert(m_DataObject !is null, "can not slice empty array");
     return immutable(this_t)(m_DataObject, m_Data[start..end]);
   }
   
@@ -526,11 +536,12 @@ struct RCArray(T,AT = StdAllocator)
     else { // we have to copy the data
       auto newData = data_t.AllocateArray(m_Data.length + rh.length, false);
       auto mem = cast(BT[])newData.data;
-      if(m_DataObject !is null)
+      if(m_Data.length > 0)
       {
-        m_DataObject.RemoveReference();
         mem[0..m_Data.length] = m_Data[];
         mem[m_Data.length..$] = rh[];
+        if(m_DataObject !is null)
+          m_DataObject.RemoveReference();
       }
       else
         mem[0..$] = rh[];
@@ -552,12 +563,13 @@ struct RCArray(T,AT = StdAllocator)
     }
     else { // we have to copy the data
       auto newData = data_t.AllocateArray(m_Data.length + 1);
-      if(m_DataObject !is null)
+      if(m_Data.length > 0)
       {
         auto mem = cast(BT[])newData.data;
         mem[0..m_Data.length] = m_Data[];
         mem[m_Data.length] = rh;
-        m_DataObject.RemoveReference();
+        if(m_DataObject !is null)
+          m_DataObject.RemoveReference();
       }
       else
       {
@@ -602,14 +614,22 @@ struct RCArray(T,AT = StdAllocator)
                                       (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT))))
                                      ))
   {
-    return lh.opBinary!(op)(this);
+    auto result = this_t(this.length + lh.length);
+    auto mem = cast(BT[])result[];
+    mem[0..rh.length] = rh[];
+    mem[rh.length..$] = this[];
+    return result;
   }
   
   this_t opBinaryRight(string op,U)(U lh) if(op == "~" && (is(U == T) || 
                                                  (IsPOD!(BT) && (is(U == BT) || is(U == const(BT)) || is(U == immutable(BT))))
                                                 ))
   {
-    return lh.opBinary!(op)(this);
+    auto result = this_t(this.length + 1);
+    auto mem = cast(BT[])result[];
+    mem[0] = lh;
+    mem[1..$] = this[];
+    return result;
   }
   
   int opApply( scope int delegate(ref T) dg )
@@ -652,7 +672,77 @@ struct RCArray(T,AT = StdAllocator)
   }
 }
 
-version(unittest)
+RCArray!(immutable(char)) _T(immutable(char)[] data)
 {
-  import std.stdio;
+  return RCArray!(immutable(char))(data,IsStatic.Yes);
+}
+
+unittest 
+{
+  struct AllocCounter 
+  {
+    int m_iNumAllocations = 0;
+    int m_iNumDeallocations = 0;
+
+    void* OnAllocateMemory(size_t size, size_t alignment)
+    {
+      m_iNumAllocations++;
+      return null;
+    }
+
+    bool OnFreeMemory(void* ptr)
+    {
+      m_iNumDeallocations++;
+      return false;
+    }
+
+    void* OnReallocateMemory(void* ptr, size_t size)
+    {
+      m_iNumAllocations++;
+      m_iNumDeallocations++;
+      return null;
+    }
+  }
+
+  AllocCounter counter;
+
+  StdAllocator.OnAllocateMemoryCallback = &counter.OnAllocateMemory;
+  StdAllocator.OnReallocateMemoryCallback = &counter.OnReallocateMemory;
+  StdAllocator.OnFreeMemoryCallback = &counter.OnFreeMemory;
+
+  assert(counter.m_iNumAllocations == counter.m_iNumDeallocations);
+
+  {
+    int iStartCountAlloc = counter.m_iNumAllocations;
+    int iStartCountFree = counter.m_iNumDeallocations;
+    auto staticString = _T("Hello World");
+    assert(staticString == "Hello World");
+    int iEndCountAlloc = counter.m_iNumAllocations;
+    int iEndCountFree = counter.m_iNumDeallocations;
+    assert(iEndCountAlloc == iStartCountAlloc);
+    assert(iEndCountFree == iStartCountFree);
+  }
+
+  /*{
+    int iStartCountAlloc = m_iNumAllocations;
+    auto staticString = _T("Hello") ~ _T(" World");
+  }*/
+
+}
+
+class RCException : Throwable
+{
+  this(RCArray!(immutable(char)) msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+  {
+    this.rcmsg = msg;
+    super(msg[], file, line, next);
+  }
+
+  this(RCArray!(immutable(char)) msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+  {
+    this.rcmsg = msg;
+    super(msg[], file, line, next);
+  }
+
+  protected RCArray!(immutable(char)) rcmsg;
 }

@@ -107,9 +107,28 @@ struct StdAllocator
       this.size = size;
     }
   }
+
+  //this should return NULL when the standard allocator should be used
+  //if this does not return NULL the returned memory is used instead
+  //Needs to be thread safe !
+  alias void* delegate(size_t size, size_t alignment) OnAllocateMemoryDelegate;
+
+  //This should return true if it frees the memory, otherwise the standard allocator will free it
+  //Needs to be thread safe !
+  alias bool delegate(void* ptr) OnFreeMemoryDelegate;
+
+  //This should return NULL if it did not reallocate the memory
+  //otherwise the standard allocator will reallocate the memory
+  //Needs to be thread safe !
+  alias void* delegate(void* ptr, size_t newSize) OnReallocateMemoryDelegate;
+
   
-  __gshared Mutex m_allocMutex;
-  __gshared Hashmap!(void*, MemoryBlockInfo, PointerHashPolicy, TrackingAllocator) m_memoryMap;
+  private __gshared Mutex m_allocMutex;
+  private __gshared Hashmap!(void*, MemoryBlockInfo, PointerHashPolicy, TrackingAllocator) m_memoryMap;
+  __gshared OnAllocateMemoryDelegate OnAllocateMemoryCallback;
+  __gshared OnFreeMemoryDelegate OnFreeMemoryCallback;
+  __gshared OnReallocateMemoryDelegate OnReallocateMemoryCallback;
+
   
   static void InitMemoryTracking()
   {
@@ -145,10 +164,14 @@ struct StdAllocator
   
   static void* AllocateMemory(size_t size, size_t alignment = 0)
   {
-    version(DUMA)
-      void* mem = _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
-    else
-      void* mem = malloc(size);
+    void* mem = (OnFreeMemoryCallback is null) ? null : OnAllocateMemoryCallback(size,alignment);
+    if(mem is null)
+    {
+      version(DUMA)
+        mem = _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
+      else
+        mem = malloc(size);
+    }
     if(m_allocMutex !is null)
     {
       synchronized(m_allocMutex)
@@ -180,19 +203,24 @@ struct StdAllocator
           oldSize = m_memoryMap[ptr].size;
           assert( oldSize < size, "trying to realloc smaller size");
         }
-        
-        version(DUMA)
-        {
-          void* mem = _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
-          if( ptr !is null)
+
+        void *mem = (OnReallocateMemoryCallback is null) ? null : OnReallocateMemoryCallback(ptr,size);
+
+        if(mem is null)
+        {      
+          version(DUMA)
           {
-            _duma_memcpy(mem,ptr,oldSize,__FILE__,__LINE__);
-            _duma_free(ptr,__FILE__,__LINE__);
+            mem = _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
+            if( ptr !is null)
+            {
+              _duma_memcpy(mem,ptr,oldSize,__FILE__,__LINE__);
+              _duma_free(ptr,__FILE__,__LINE__);
+            }
           }
-        }
-        else
-        {
-          void* mem = realloc(ptr,size);
+          else
+          {
+            mem = realloc(ptr,size);
+          }
         }
         
         if(mem != ptr)
@@ -220,14 +248,18 @@ struct StdAllocator
         return mem;
       }
     }
-    version(DUMA)
+
+    void *mem = (OnReallocateMemoryCallback is null) ? null : OnReallocateMemoryCallback(ptr,size);
+    if(mem is null)
     {
-      void* mem = _duma_realloc(ptr,size,__FILE__,__LINE__);
-      assert(cast(size_t)mem / size_t.sizeof == 0,"alignment changed");
-    }
-    else
-    {
-      void* mem = realloc(ptr,size);
+      version(DUMA)
+      {
+        throw new Error("Nested duma reallocate");
+      }
+      else
+      {
+        mem = realloc(ptr,size);
+      }
     }
     return mem;
   }
@@ -246,10 +278,13 @@ struct StdAllocator
         }
       }
     }
-    version(DUMA)
-      _duma_free(ptr,__FILE__,__LINE__);
-    else
-      free(ptr);
+    if(OnFreeMemoryCallback is null || !OnFreeMemoryCallback(ptr))
+    {
+      version(DUMA)
+        _duma_free(ptr,__FILE__,__LINE__);
+      else
+        free(ptr);
+    }
   }
 }
 

@@ -84,7 +84,11 @@ template IsPOD(T)
   {
     enum bool IsPOD = false;
   }
-  else { //TODO add checking for structs
+  else static if(is(T == struct)) //TODO better checking for structs
+  {
+    enum bool IsPOD = false;
+  }
+  else {
     enum bool IsPOD = true;
   }
 }

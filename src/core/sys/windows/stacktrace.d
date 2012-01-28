@@ -288,7 +288,6 @@ public:
 
     override to_string_t toString()
     {
-        //TODO implement
         version(NOGCSAFE)
         {
           rcstring result;
@@ -487,7 +486,8 @@ private:
                 auto         symbolName = (cast(char*) symbol.Name.ptr)[0 .. strlen(symbol.Name.ptr)];
 
                 if( dbghelp.SymGetLineFromAddr64( hProcess, address, &displacement, &line ) == TRUE )
-                {                  
+                {     
+                    char[2048] demangleBuf;
                     version(NOGCSAFE){
                       //TODO non leaking demangling
                       line_t cur;
@@ -496,12 +496,13 @@ private:
                       cur ~= "(";
                       cur ~= format( temp[], line.LineNumber );
                       cur ~= "):";
-                      cur ~= symbolName;
+                      char[] demangledName = demangle( symbolName, demangleBuf );
+                      cur ~= demangledName;
+                      if(demangledName.ptr != demangleBuf.ptr)
+                        StdAllocator.FreeMemory(demangledName.ptr);
                       trace ~= cur;
                     }
                     else {
-                      char[2048] demangleBuf;
-                      
                       // displacement bytes from beginning of line
                       trace ~= line.FileName[0 .. strlen( line.FileName )] ~
                                "(" ~ format( temp[], line.LineNumber ) ~ "): " ~
