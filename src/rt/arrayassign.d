@@ -27,7 +27,7 @@ private
  * ti is the element type.
  * Handles overlapping copies.
  */
-extern (C) void[] _d_arrayassign(TypeInfo ti, void[] from, void[] to)
+export extern (C) void[] _d_arrayassign(TypeInfo ti, void[] from, void[] to)
 {
     debug(PRINTF) printf("_d_arrayassign(from = %p,%d, to = %p,%d) size = %d\n", from.ptr, from.length, to.ptr, to.length, ti.tsize());
 
@@ -83,7 +83,7 @@ extern (C) void[] _d_arrayassign(TypeInfo ti, void[] from, void[] to)
  * array of the same element type.
  * ti is the element type.
  */
-extern (C) void[] _d_arrayctor(TypeInfo ti, void[] from, void[] to)
+export extern (C) void[] _d_arrayctor(TypeInfo ti, void[] from, void[] to)
 {
     debug(PRINTF) printf("_d_arrayctor(from = %p,%d, to = %p,%d) size = %d\n", from.ptr, from.length, to.ptr, to.length, ti.tsize());
 
@@ -126,7 +126,7 @@ extern (C) void[] _d_arrayctor(TypeInfo ti, void[] from, void[] to)
  * Do assignment to an array.
  *      p[0 .. count] = value;
  */
-extern (C) void* _d_arraysetassign(void* p, void* value, int count, TypeInfo ti)
+export extern (C) void* _d_arraysetassign(void* p, void* value, int count, TypeInfo ti)
 {
     void* pstart = p;
 
@@ -157,7 +157,7 @@ extern (C) void* _d_arraysetassign(void* p, void* value, int count, TypeInfo ti)
  * Do construction of an array.
  *      ti[count] p = value;
  */
-extern (C) void* _d_arraysetctor(void* p, void* value, int count, TypeInfo ti)
+export extern (C) void* _d_arraysetctor(void* p, void* value, int count, TypeInfo ti)
 {
     void* pstart = p;
     auto element_size = ti.tsize();

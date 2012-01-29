@@ -185,7 +185,7 @@ private void _aaInvAh_x(aaA *e)
  * Determine number of entries in associative array.
  */
 
-size_t _aaLen(AA aa)
+export size_t _aaLen(AA aa)
 in
 {
     //printf("_aaLen()+\n");
@@ -221,12 +221,12 @@ body
  */
 
 // retained for backwards compatibility
-void* _aaGet(AA* aa, TypeInfo keyti, size_t valuesize, ...)
+export void* _aaGet(AA* aa, TypeInfo keyti, size_t valuesize, ...)
 {
     return _aaGetX(aa, keyti, valuesize, cast(void*)(&valuesize + 1));
 }
 
-void* _aaGetX(AA* aa, TypeInfo keyti, size_t valuesize, void* pkey)
+export void* _aaGetX(AA* aa, TypeInfo keyti, size_t valuesize, void* pkey)
 in
 {
     assert(aa);
@@ -298,12 +298,12 @@ Lret:
  * Returns null if it is not already there.
  */
 
-void* _aaGetRvalue(AA aa, TypeInfo keyti, size_t valuesize, ...)
+export void* _aaGetRvalue(AA aa, TypeInfo keyti, size_t valuesize, ...)
 {
     return _aaGetRvalueX(aa, keyti, valuesize, cast(void*)(&valuesize + 1));
 }
 
-void* _aaGetRvalueX(AA aa, TypeInfo keyti, size_t valuesize, void* pkey)
+export void* _aaGetRvalueX(AA aa, TypeInfo keyti, size_t valuesize, void* pkey)
 {
     //printf("_aaGetRvalue(valuesize = %u)\n", valuesize);
     if (!aa.a)
@@ -340,12 +340,12 @@ void* _aaGetRvalueX(AA aa, TypeInfo keyti, size_t valuesize, void* pkey)
  *      !=null  in aa, return pointer to value
  */
 
-void* _aaIn(AA aa, TypeInfo keyti, ...)
+export void* _aaIn(AA aa, TypeInfo keyti, ...)
 {
     return _aaInX(aa, keyti, cast(void*)(&keyti + 1));
 }
 
-void* _aaInX(AA aa, TypeInfo keyti, void* pkey)
+export void* _aaInX(AA aa, TypeInfo keyti, void* pkey)
 in
 {
 }
@@ -388,12 +388,12 @@ body
  * If key is not in aa[], do nothing.
  */
 
-bool _aaDel(AA aa, TypeInfo keyti, ...)
+export bool _aaDel(AA aa, TypeInfo keyti, ...)
 {
     return _aaDelX(aa, keyti, cast(void*)(&keyti + 1));
 }
 
-bool _aaDelX(AA aa, TypeInfo keyti, void* pkey)
+export bool _aaDelX(AA aa, TypeInfo keyti, void* pkey)
 {
     aaA *e;
 
@@ -427,7 +427,7 @@ bool _aaDelX(AA aa, TypeInfo keyti, void* pkey)
  * Produce array of values from aa.
  */
 
-ArrayRet_t _aaValues(AA aa, size_t keysize, size_t valuesize)
+export ArrayRet_t _aaValues(AA aa, size_t keysize, size_t valuesize)
 {
     size_t resi;
     Array a;
@@ -461,7 +461,7 @@ ArrayRet_t _aaValues(AA aa, size_t keysize, size_t valuesize)
  * Rehash an array.
  */
 
-void* _aaRehash(AA* paa, TypeInfo keyti)
+export void* _aaRehash(AA* paa, TypeInfo keyti)
 in
 {
     //_aaInvAh(paa);
@@ -517,7 +517,7 @@ body
  * Produce array of N byte keys from aa.
  */
 
-ArrayRet_t _aaKeys(AA aa, size_t keysize)
+export ArrayRet_t _aaKeys(AA aa, size_t keysize)
 {
     auto len = _aaLen(aa);
     if (!len)
@@ -594,7 +594,7 @@ unittest
 // dg is D, but _aaApply() is C
 extern (D) alias int delegate(void *) dg_t;
 
-int _aaApply(AA aa, size_t keysize, dg_t dg)
+export int _aaApply(AA aa, size_t keysize, dg_t dg)
 {   int result;
 
     //printf("_aaApply(aa = x%llx, keysize = %d, dg = x%llx)\n", aa.a, keysize, dg);
@@ -621,7 +621,7 @@ int _aaApply(AA aa, size_t keysize, dg_t dg)
 // dg is D, but _aaApply2() is C
 extern (D) alias int delegate(void *, void *) dg2_t;
 
-int _aaApply2(AA aa, size_t keysize, dg2_t dg)
+export int _aaApply2(AA aa, size_t keysize, dg2_t dg)
 {   int result;
 
     //printf("_aaApply(aa = x%llx, keysize = %d, dg = x%llx)\n", aa.a, keysize, dg);
@@ -651,7 +651,7 @@ int _aaApply2(AA aa, size_t keysize, dg2_t dg)
  * length pairs of key/value pairs.
  */
 
-extern (C)
+export extern (C)
 BB* _d_assocarrayliteralT(TypeInfo_AssociativeArray ti, size_t length, ...)
 {
     auto valuesize = ti.next.tsize();           // value size
@@ -727,7 +727,7 @@ BB* _d_assocarrayliteralT(TypeInfo_AssociativeArray ti, size_t length, ...)
     return result;
 }
 
-extern (C)
+export extern (C)
 BB* _d_assocarrayliteralTX(TypeInfo_AssociativeArray ti, void[] keys, void[] values)
 {
     auto valuesize = ti.next.tsize();           // value size
@@ -802,7 +802,7 @@ BB* _d_assocarrayliteralTX(TypeInfo_AssociativeArray ti, void[] keys, void[] val
  *      1       equal
  *      0       not equal
  */
-int _aaEqual(TypeInfo tiRaw, AA e1, AA e2)
+export int _aaEqual(TypeInfo tiRaw, AA e1, AA e2)
 {
     //printf("_aaEqual()\n");
     //printf("keyti = %.*s\n", ti.key.classinfo.name);

@@ -1,0 +1,6 @@
+LIBRARY 	"druntimenogc" 
+DESCRIPTION 'Runtime of the D programming language' 
+
+EXETYPE 	NT 
+CODE 		PRELOAD DISCARDABLE 
+DATA 		WRITE

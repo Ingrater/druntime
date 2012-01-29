@@ -89,7 +89,7 @@ class Object
     /**
      * Convert Object to a human readable string.
      */
-    to_string_t toString()
+    export to_string_t toString()
     {
       version(NOGCSAFE)
         return rcstring(this.classinfo.name);
@@ -100,7 +100,7 @@ class Object
     /**
      * Compute hash function for Object.
      */
-    hash_t toHash()
+    export hash_t toHash()
     {
         // BUG: this prevents a compacting GC from working, needs to be fixed
         return cast(hash_t)cast(void*)this;
@@ -115,7 +115,7 @@ class Object
      *  $(TR $(TD this &gt; obj) $(TD &gt; 0))
      *  )
      */
-    int opCmp(Object o)
+    export int opCmp(Object o)
     {
         // BUG: this prevents a compacting GC from working, needs to be fixed
         //return cast(int)cast(void*)this - cast(int)cast(void*)o;
@@ -127,12 +127,12 @@ class Object
     /**
      * Returns !=0 if this object does have the same contents as obj.
      */
-    equals_t opEquals(Object o)
+    export equals_t opEquals(Object o)
     {
         return this is o;
     }
 
-    equals_t opEquals(Object lhs, Object rhs)
+    export equals_t opEquals(Object lhs, Object rhs)
     {
         if (lhs is rhs)
             return true;
@@ -157,7 +157,7 @@ class Object
      * Returns:
      *   null if failed
      */
-    static Object factory(string classname)
+    export static Object factory(string classname)
     {
         auto ci = TypeInfo_Class.find(classname);
         if (ci)
@@ -171,7 +171,7 @@ class Object
 /************************
  * Returns true if lhs and rhs are equal.
  */
-bool opEquals(Object lhs, Object rhs)
+export bool opEquals(Object lhs, Object rhs)
 {
     // If aliased to the same object or both null => equal
     if (lhs is rhs) return true;
@@ -180,14 +180,15 @@ bool opEquals(Object lhs, Object rhs)
     if (lhs is null || rhs is null) return false;
 
     // If same exact type => one call to method opEquals
-    if (typeid(lhs) is typeid(rhs) || typeid(lhs).opEquals(typeid(rhs)))
+    if (typeid(lhs) is typeid(rhs) || 
+        typeid(lhs).opEquals(typeid(rhs)))
         return lhs.opEquals(rhs);
 
     // General case => symmetric calls to method opEquals
     return lhs.opEquals(rhs) && rhs.opEquals(lhs);
 }
 
-bool opEquals(TypeInfo lhs, TypeInfo rhs)
+export bool opEquals(TypeInfo lhs, TypeInfo rhs)
 {
     // If aliased to the same object or both null => equal
     if (lhs is rhs) return true;
@@ -247,7 +248,7 @@ struct OffsetTypeInfo
  * Can be retrieved for any type using a
  * <a href="../expression.html#typeidexpression">TypeidExpression</a>.
  */
-class TypeInfo
+export class TypeInfo
 {
     override hash_t toHash()
     {
@@ -339,7 +340,7 @@ class TypeInfo
     }
 }
 
-class TypeInfo_Typedef : TypeInfo
+export class TypeInfo_Typedef : TypeInfo
 {
     override to_string_t toString() 
     {
@@ -379,12 +380,12 @@ class TypeInfo_Typedef : TypeInfo
     void[]   m_init;
 }
 
-class TypeInfo_Enum : TypeInfo_Typedef
+export class TypeInfo_Enum : TypeInfo_Typedef
 {
 
 }
 
-class TypeInfo_Pointer : TypeInfo
+export class TypeInfo_Pointer : TypeInfo
 {
     override to_string_t toString() 
     { 
@@ -437,7 +438,7 @@ class TypeInfo_Pointer : TypeInfo
     TypeInfo m_next;
 }
 
-class TypeInfo_Array : TypeInfo
+export class TypeInfo_Array : TypeInfo
 {
     override to_string_t toString() { return value.toString() ~ "[]"; }
 
@@ -521,7 +522,7 @@ class TypeInfo_Array : TypeInfo
     }
 }
 
-class TypeInfo_StaticArray : TypeInfo
+export class TypeInfo_StaticArray : TypeInfo
 {
     override to_string_t toString()
     {
@@ -638,7 +639,7 @@ class TypeInfo_StaticArray : TypeInfo
     }
 }
 
-class TypeInfo_AssociativeArray : TypeInfo
+export class TypeInfo_AssociativeArray : TypeInfo
 {
     override to_string_t toString()
     {
@@ -680,7 +681,7 @@ class TypeInfo_AssociativeArray : TypeInfo
     }
 }
 
-class TypeInfo_Function : TypeInfo
+export class TypeInfo_Function : TypeInfo
 {
     override to_string_t toString()
     {
@@ -706,7 +707,7 @@ class TypeInfo_Function : TypeInfo
     string deco;
 }
 
-class TypeInfo_Delegate : TypeInfo
+export class TypeInfo_Delegate : TypeInfo
 {
     override to_string_t toString()
     {
@@ -751,7 +752,7 @@ class TypeInfo_Delegate : TypeInfo
  * Can be retrieved from an object instance by using the
  * $(LINK2 ../property.html#classinfo, .classinfo) property.
  */
-class TypeInfo_Class : TypeInfo
+export class TypeInfo_Class : TypeInfo
 {
     override to_string_t toString() 
     { 
@@ -893,7 +894,7 @@ class TypeInfo_Class : TypeInfo
 
 alias TypeInfo_Class ClassInfo;
 
-class TypeInfo_Interface : TypeInfo
+export class TypeInfo_Interface : TypeInfo
 {
     override to_string_t toString() 
     {
@@ -963,12 +964,12 @@ class TypeInfo_Interface : TypeInfo
     TypeInfo_Class info;
 }
 
-class TypeInfo_Struct : TypeInfo
+export class TypeInfo_Struct : TypeInfo
 {
     override to_string_t toString() 
     { 
       version(NOGCSAFE)
-        return to_string_t(name);
+        return _T(name);
       else
         return name; 
     }
@@ -1095,7 +1096,7 @@ unittest
     assert(!typeid(S).equals(&s, &s));
 }
 
-class TypeInfo_Tuple : TypeInfo
+export class TypeInfo_Tuple : TypeInfo
 {
     TypeInfo[] elements;
 
@@ -1179,7 +1180,7 @@ class TypeInfo_Tuple : TypeInfo
     }
 }
 
-class TypeInfo_Const : TypeInfo
+export class TypeInfo_Const : TypeInfo
 {
     override to_string_t toString()
     {
@@ -1308,7 +1309,7 @@ class MemberInfo_function : MemberInfo
 ///////////////////////////////////////////////////////////////////////////////
 
 
-class Throwable : Object
+export class Throwable : Object
 {
     interface TraceInfo
     {
@@ -1323,7 +1324,7 @@ class Throwable : Object
     TraceInfo   info;
     Throwable   next;
 
-    this(string msg, Throwable next = null)
+    export this(string msg, Throwable next = null)
     {
         this.msg = msg;
         this.next = next;
@@ -1331,7 +1332,7 @@ class Throwable : Object
         //this.info = _d_traceContext();
     }
 
-    this(string msg, string file, size_t line, Throwable next = null)
+    export this(string msg, string file, size_t line, Throwable next = null)
     {
         this(msg, next);
         this.file = file;
@@ -1340,7 +1341,7 @@ class Throwable : Object
         //this.info = _d_traceContext();
     }
 
-    override to_string_t toString()
+    export override to_string_t toString()
     {
         char[20] tmp = void;
         version(NOGCSAFE)

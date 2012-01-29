@@ -86,7 +86,7 @@ private
 /**
  *
  */
-extern (C) void* _d_allocmemory(size_t sz)
+export extern (C) void* _d_allocmemory(size_t sz)
 {
     return gc_malloc(sz);
 }
@@ -95,7 +95,7 @@ extern (C) void* _d_allocmemory(size_t sz)
 /**
  *
  */
-extern (C) Object _d_newclass(ClassInfo ci)
+export extern (C) Object _d_newclass(ClassInfo ci)
 {
     void* p;
 
@@ -143,7 +143,7 @@ extern (C) Object _d_newclass(ClassInfo ci)
 /**
  *
  */
-extern (C) void _d_delinterface(void** p)
+export extern (C) void _d_delinterface(void** p)
 {
     if (*p)
     {
@@ -163,7 +163,7 @@ private extern (D) alias void function (Object) fp_t;
 /**
  *
  */
-extern (C) void _d_delclass(Object* p)
+export extern (C) void _d_delclass(Object* p)
 {
     if (*p)
     {
@@ -233,7 +233,7 @@ private class ArrayAllocLengthLock
 
   where elem0 starts 16 bytes after the first byte.
   */
-bool __setArrayAllocLength(ref BlkInfo info, size_t newlength, bool isshared, size_t oldlength = ~0)
+export bool __setArrayAllocLength(ref BlkInfo info, size_t newlength, bool isshared, size_t oldlength = ~0)
 {
     if(info.size <= 256)
     {
@@ -337,7 +337,7 @@ bool __setArrayAllocLength(ref BlkInfo info, size_t newlength, bool isshared, si
 /**
   get the start of the array for the given block
   */
-void *__arrayStart(BlkInfo info)
+export void *__arrayStart(BlkInfo info)
 {
     return info.base + ((info.size & BIGLENGTHMASK) ? LARGEPREFIX : 0);
 }
@@ -347,7 +347,7 @@ void *__arrayStart(BlkInfo info)
   NOT included in the passed in size.  Therefore, do NOT call this function
   with the size of an allocated block.
   */
-size_t __arrayPad(size_t size)
+export size_t __arrayPad(size_t size)
 {
     return size > MAXMEDSIZE ? LARGEPAD : (size > MAXSMALLSIZE ? MEDPAD : SMALLPAD);
 }
@@ -547,7 +547,7 @@ void __insertBlkInfoCache(BlkInfo bi, BlkInfo *curpos)
  * It doesn't matter what the current allocated length of the array is, the
  * user is telling the runtime that he knows what he is doing.
  */
-extern(C) void _d_arrayshrinkfit(TypeInfo ti, void[] arr)
+export extern(C) void _d_arrayshrinkfit(TypeInfo ti, void[] arr)
 {
     // note, we do not care about shared.  We are setting the length no matter
     // what, so no lock is required.
@@ -566,7 +566,7 @@ extern(C) void _d_arrayshrinkfit(TypeInfo ti, void[] arr)
     }
 }
 
-void __doPostblit(void *ptr, size_t len, TypeInfo ti)
+export void __doPostblit(void *ptr, size_t len, TypeInfo ti)
 {
     // optimize out any type info that does not need postblit.
     //if((&ti.postblit).funcptr is &TypeInfo.postblit) // compiler doesn't like this
@@ -607,7 +607,7 @@ void __doPostblit(void *ptr, size_t len, TypeInfo ti)
  * of 0 to get the current capacity.  Returns the number of elements that can
  * actually be stored once the resizing is done.
  */
-extern(C) size_t _d_arraysetcapacity(TypeInfo ti, size_t newcapacity, Array *p)
+export extern(C) size_t _d_arraysetcapacity(TypeInfo ti, size_t newcapacity, Array *p)
 in
 {
     assert(ti);
@@ -762,7 +762,7 @@ Loverflow:
  * ti is the type of the resulting array, or pointer to element.
  * (For when the array is initialized to 0)
  */
-extern (C) void[] _d_newarrayT(TypeInfo ti, size_t length)
+export extern (C) void[] _d_newarrayT(TypeInfo ti, size_t length)
 {
     void[] result;
     auto size = ti.next.tsize();                // array element size
@@ -821,7 +821,7 @@ Loverflow:
 /**
  * For when the array has a non-zero initializer.
  */
-extern (C) void[] _d_newarrayiT(TypeInfo ti, size_t length)
+export extern (C) void[] _d_newarrayiT(TypeInfo ti, size_t length)
 {
     void[] result;
     auto size = ti.next.tsize();                // array element size
@@ -900,7 +900,7 @@ Loverflow:
 /**
  *
  */
-void[] _d_newarrayOpT(alias op)(TypeInfo ti, size_t ndims, va_list q)
+export void[] _d_newarrayOpT(alias op)(TypeInfo ti, size_t ndims, va_list q)
 {
     debug(PRINTF) printf("_d_newarrayOpT(ndims = %d)\n", ndims);
     if (ndims == 0)
@@ -967,7 +967,7 @@ void[] _d_newarrayOpT(alias op)(TypeInfo ti, size_t ndims, va_list q)
 /**
  *
  */
-extern (C) void[] _d_newarraymT(TypeInfo ti, size_t ndims, ...)
+export extern (C) void[] _d_newarraymT(TypeInfo ti, size_t ndims, ...)
 {
     debug(PRINTF) printf("_d_newarraymT(ndims = %d)\n", ndims);
 
@@ -990,7 +990,7 @@ extern (C) void[] _d_newarraymT(TypeInfo ti, size_t ndims, ...)
 /**
  *
  */
-extern (C) void[] _d_newarraymiT(TypeInfo ti, size_t ndims, ...)
+export extern (C) void[] _d_newarraymiT(TypeInfo ti, size_t ndims, ...)
 {
     debug(PRINTF) printf("_d_newarraymiT(ndims = %d)\n", ndims);
 
@@ -1023,7 +1023,7 @@ struct Array
 /**
  * This function has been replaced by _d_delarray_t
  */
-extern (C) void _d_delarray(Array *p)
+export extern (C) void _d_delarray(Array *p)
 {
     if (p)
     {
@@ -1052,7 +1052,7 @@ debug(PRINTF)
 /**
  *
  */
-extern (C) void _d_delarray_t(Array *p, TypeInfo ti)
+export extern (C) void _d_delarray_t(Array *p, TypeInfo ti)
 {
     if (p)
     {
@@ -1089,7 +1089,7 @@ extern (C) void _d_delarray_t(Array *p, TypeInfo ti)
 /**
  *
  */
-extern (C) void _d_delmemory(void* *p)
+export extern (C) void _d_delmemory(void* *p)
 {
     if (*p)
     {
@@ -1102,7 +1102,7 @@ extern (C) void _d_delmemory(void* *p)
 /**
  *
  */
-extern (C) void _d_callinterfacefinalizer(void *p)
+export extern (C) void _d_callinterfacefinalizer(void *p)
 {
     if (p)
     {
@@ -1116,7 +1116,7 @@ extern (C) void _d_callinterfacefinalizer(void *p)
 /**
  *
  */
-extern (C) void _d_callfinalizer(void* p)
+export extern (C) void _d_callfinalizer(void* p)
 {
     rt_finalize( p );
 }
@@ -1143,7 +1143,7 @@ extern (C) CollectHandler rt_getCollectHandler()
 /**
  *
  */
-extern (C) void rt_finalize(void* p, bool det = true)
+export extern (C) void rt_finalize(void* p, bool det = true)
 {
     debug(PRINTF) printf("rt_finalize(p = %p)\n", p);
 
@@ -1194,7 +1194,7 @@ extern (C) void rt_finalize(void* p, bool det = true)
 /**
  * Resize dynamic arrays with 0 initializers.
  */
-extern (C) byte[] _d_arraysetlengthT(TypeInfo ti, size_t newlength, Array *p)
+export extern (C) byte[] _d_arraysetlengthT(TypeInfo ti, size_t newlength, Array *p)
 in
 {
     assert(ti);
@@ -1373,7 +1373,7 @@ Loverflow:
  *      initsize        size of initializer
  *      ...             initializer
  */
-extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
+export extern (C) byte[] _d_arraysetlengthiT(TypeInfo ti, size_t newlength, Array *p)
 in
 {
     assert(!p.length || p.data);
@@ -1566,7 +1566,7 @@ Loverflow:
 /**
  * Append y[] to array x[]
  */
-extern (C) void[] _d_arrayappendT(TypeInfo ti, ref byte[] x, byte[] y)
+export extern (C) void[] _d_arrayappendT(TypeInfo ti, ref byte[] x, byte[] y)
 {
     auto length = x.length;
     auto sizeelem = ti.next.tsize();            // array element size
@@ -1582,7 +1582,7 @@ extern (C) void[] _d_arrayappendT(TypeInfo ti, ref byte[] x, byte[] y)
 /**
  *
  */
-size_t newCapacity(size_t newlength, size_t size)
+export size_t newCapacity(size_t newlength, size_t size)
 {
     version(none)
     {
@@ -1663,7 +1663,7 @@ size_t newCapacity(size_t newlength, size_t size)
 /**
  * Obsolete, replaced with _d_arrayappendcTX()
  */
-extern (C) void[] _d_arrayappendcT(TypeInfo ti, ref byte[] x, ...)
+export extern (C) void[] _d_arrayappendcT(TypeInfo ti, ref byte[] x, ...)
 {
     version(X86)
     {
@@ -1703,7 +1703,7 @@ extern (C) void[] _d_arrayappendcT(TypeInfo ti, ref byte[] x, ...)
  * Extend an array by n elements.
  * Caller must initialize those elements.
  */
-extern (C)
+export extern (C)
 byte[] _d_arrayappendcTX(TypeInfo ti, ref byte[] px, size_t n)
 {
     // This is a cut&paste job from _d_arrayappendT(). Should be refactored.
@@ -1802,7 +1802,7 @@ byte[] _d_arrayappendcTX(TypeInfo ti, ref byte[] px, size_t n)
 /**
  * Append dchar to char[]
  */
-extern (C) void[] _d_arrayappendcd(ref byte[] x, dchar c)
+export extern (C) void[] _d_arrayappendcd(ref byte[] x, dchar c)
 {
     // c could encode into from 1 to 4 characters
     char[4] buf = void;
@@ -1848,7 +1848,7 @@ extern (C) void[] _d_arrayappendcd(ref byte[] x, dchar c)
 /**
  * Append dchar to wchar[]
  */
-extern (C) void[] _d_arrayappendwd(ref byte[] x, dchar c)
+export extern (C) void[] _d_arrayappendwd(ref byte[] x, dchar c)
 {
     // c could encode into from 1 to 2 w characters
     wchar[2] buf = void;
@@ -1881,7 +1881,7 @@ extern (C) void[] _d_arrayappendwd(ref byte[] x, dchar c)
 /**
  *
  */
-extern (C) byte[] _d_arraycatT(TypeInfo ti, byte[] x, byte[] y)
+export extern (C) byte[] _d_arraycatT(TypeInfo ti, byte[] x, byte[] y)
 out (result)
 {
     auto sizeelem = ti.next.tsize();            // array element size
@@ -1938,7 +1938,7 @@ body
 /**
  *
  */
-extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
+export extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
 {
     size_t length;
     auto size = ti.next.tsize(); // array element size
@@ -2020,7 +2020,7 @@ extern (C) byte[] _d_arraycatnT(TypeInfo ti, uint n, ...)
 /**
  * Allocate the array, rely on the caller to do the initialization of the array.
  */
-extern (C)
+export extern (C)
 void* _d_arrayliteralTX(TypeInfo ti, size_t length)
 {
     auto sizeelem = ti.next.tsize();            // array element size
@@ -2043,7 +2043,7 @@ void* _d_arrayliteralTX(TypeInfo ti, size_t length)
 /**
  * The old way, obsolete.
  */
-extern (C) void* _d_arrayliteralT(TypeInfo ti, size_t length, ...)
+export extern (C) void* _d_arrayliteralT(TypeInfo ti, size_t length, ...)
 {
     auto sizeelem = ti.next.tsize();            // array element size
     void* result;
@@ -2109,7 +2109,7 @@ struct Array2
 /**
  *
  */
-extern (C) void[] _adDupT(TypeInfo ti, Array2 a)
+export extern (C) void[] _adDupT(TypeInfo ti, Array2 a)
 out (result)
 {
     auto sizeelem = ti.next.tsize();            // array element size

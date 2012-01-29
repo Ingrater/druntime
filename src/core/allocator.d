@@ -162,7 +162,7 @@ struct StdAllocator
     Delete(m_memoryMap);
   }
   
-  static void* AllocateMemory(size_t size, size_t alignment = 0)
+  export static void* AllocateMemory(size_t size, size_t alignment = 0)
   {
     void* mem = (OnFreeMemoryCallback is null) ? null : OnAllocateMemoryCallback(size,alignment);
     if(mem is null)
@@ -190,7 +190,7 @@ struct StdAllocator
     return mem;
   }
   
-  static void* ReallocateMemory(void* ptr, size_t size)
+  export static void* ReallocateMemory(void* ptr, size_t size)
   {
     if( m_allocMutex !is null)
     {
@@ -264,7 +264,7 @@ struct StdAllocator
     return mem;
   }
   
-  static void FreeMemory(void* ptr)
+  export static void FreeMemory(void* ptr)
   {
     if( ptr !is null)
     {

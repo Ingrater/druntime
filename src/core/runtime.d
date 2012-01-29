@@ -96,7 +96,7 @@ static this()
  * This struct encapsulates all functionality related to the underlying runtime
  * module for the calling context.
  */
-struct Runtime
+export struct Runtime
 {
     /**
      * Initializes the runtime.  This call is to be used in instances where the
@@ -111,7 +111,7 @@ struct Runtime
      * Returns:
      *  true if initialization succeeds and false if initialization fails.
      */
-    static bool initialize( ExceptionHandler dg = null )
+    export static bool initialize( ExceptionHandler dg = null )
     {
         return rt_init( dg );
     }
@@ -130,7 +130,7 @@ struct Runtime
      * Returns:
      *  true if termination succeeds and false if termination fails.
      */
-    static bool terminate( ExceptionHandler dg = null )
+    export static bool terminate( ExceptionHandler dg = null )
     {
         return rt_term( dg );
     }
@@ -144,7 +144,7 @@ struct Runtime
      * Returns:
      *  true if the runtime is halting.
      */
-    deprecated static @property bool isHalting()
+    export deprecated static @property bool isHalting()
     {
         return rt_isHalting();
     }
@@ -156,7 +156,7 @@ struct Runtime
      * Returns:
      *  The arguments supplied when this process was started.
      */
-    static @property string[] args()
+    export static @property string[] args()
     {
         return rt_args();
     }
@@ -173,7 +173,7 @@ struct Runtime
      * Returns:
      *  A reference to the library or null on error.
      */
-    static void* loadLibrary( in char[] name )
+    export static void* loadLibrary( in char[] name )
     {
         return rt_loadLibrary( name );
     }
@@ -187,7 +187,7 @@ struct Runtime
      * Params:
      *  p = A reference to the library to unload.
      */
-    static bool unloadLibrary( void* p )
+    export static bool unloadLibrary( void* p )
     {
         return rt_unloadLibrary( p );
     }
@@ -204,7 +204,7 @@ struct Runtime
      * Params:
      *  h = The new trace handler.  Set to null to use the default handler.
      */
-    static @property void traceHandler( TraceHandler h )
+    export static @property void traceHandler( TraceHandler h )
     {
         rt_setTraceHandler( h );
     }
@@ -215,7 +215,7 @@ struct Runtime
      * Returns:
      *  The current trace handler or null if no trace handler is set.
      */
-    static @property TraceHandler traceHandler()
+    export static @property TraceHandler traceHandler()
     {
         return rt_getTraceHandler();
     }
@@ -231,7 +231,7 @@ struct Runtime
      * Params:
      *  h = The new collect handler.  Set to null to use the default handler.
      */
-    static @property void collectHandler( CollectHandler h )
+    export static @property void collectHandler( CollectHandler h )
     {
         rt_setCollectHandler( h );
     }
@@ -243,7 +243,7 @@ struct Runtime
      * Returns:
      *  The current collect handler or null if no trace handler is set.
      */
-    static @property CollectHandler collectHandler()
+    export static @property CollectHandler collectHandler()
     {
         return rt_getCollectHandler();
     }
@@ -258,7 +258,7 @@ struct Runtime
      * Params:
      *  h = The new unit tester.  Set to null to use the default unit tester.
      */
-    static @property void moduleUnitTester( ModuleUnitTester h )
+    export static @property void moduleUnitTester( ModuleUnitTester h )
     {
         sm_moduleUnitTester = h;
     }
@@ -271,7 +271,7 @@ struct Runtime
      *  The current module unit tester handler or null if no trace handler is
      *  set.
      */
-    static @property ModuleUnitTester moduleUnitTester()
+    export static @property ModuleUnitTester moduleUnitTester()
     {
         return sm_moduleUnitTester;
     }
@@ -299,7 +299,7 @@ private:
  *  true if execution should continue after testing is complete and false if
  *  not.  Default behavior is to return true.
  */
-extern (C) bool runModuleUnitTests()
+export extern (C) bool runModuleUnitTests()
 {
     static if( __traits( compiles, backtrace ) )
     {
@@ -389,7 +389,7 @@ extern (C) bool runModuleUnitTests()
 /**
  *
  */
-Throwable.TraceInfo defaultTraceHandler( void* ptr = null )
+export Throwable.TraceInfo defaultTraceHandler( void* ptr = null )
 {
     static if( __traits( compiles, backtrace ) )
     {

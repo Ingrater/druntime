@@ -388,7 +388,7 @@ EXCEPTION_RECORD *skipCollateralExceptions(EXCEPTION_RECORD *n)
  * Input:
  *      EAX     the handler table for the frame
  */
-extern(C)
+export extern(C)
 EXCEPTION_DISPOSITION _d_framehandler(
             EXCEPTION_RECORD *exceptionRecord,
             DEstablisherFrame *frame,
@@ -579,7 +579,7 @@ EXCEPTION_DISPOSITION _d_framehandler(
  * surrounding call to Dmain()
  */
 
-int _d_exception_filter(EXCEPTION_POINTERS *eptrs,
+export int _d_exception_filter(EXCEPTION_POINTERS *eptrs,
                         int retval,
                         Object *exceptionObject)
 {
@@ -590,7 +590,7 @@ int _d_exception_filter(EXCEPTION_POINTERS *eptrs,
 /***********************************
  * Throw a D object.
  */
-extern(C)
+export extern(C)
 void _d_throwc(Object h)
 {
     // @@@ TODO @@@ Signature should change: h will always be a Throwable.
@@ -608,7 +608,7 @@ void _d_throwc(Object h)
  * Converts a Windows Structured Exception code to a D Throwable Object.
  */
 
-Throwable _d_translate_se_to_d_exception(EXCEPTION_RECORD *exceptionRecord)
+export Throwable _d_translate_se_to_d_exception(EXCEPTION_RECORD *exceptionRecord)
 {
     Throwable pti;
    // BUG: what if _d_newclass() throws an out of memory exception?
@@ -778,7 +778,7 @@ EXCEPTION_DISPOSITION unwindCollisionExceptionHandler(
  * Call finally blocks in the current stack frame until stop_index.
  * This is roughly equivalent to _local_unwind() for C in \src\win32\ehsup.c
  */
-extern(C)
+export extern(C)
 void _d_local_unwind(DHandlerTable *handler_table,
         DEstablisherFrame *frame, int stop_index, LanguageSpecificHandler collisionHandler)
 {
@@ -838,7 +838,7 @@ Apparently Win32 doesn't use the return address anyway.
 
 This code seems to be calling RtlUnwind( pFrame, &__retlabel, eRecord, 0);
 +/
-extern(C)
+export extern(C)
 int _d_global_unwind(DEstablisherFrame *pFrame, EXCEPTION_RECORD *eRecord)
 {
     asm {
@@ -874,7 +874,7 @@ int _d_global_unwind(DEstablisherFrame *pFrame, EXCEPTION_RECORD *eRecord)
  * This is used for 'goto' or 'return', to run any finally blocks
  * which were skipped.
  */
-extern(C)
+export extern(C)
 void _d_local_unwind2()
 {
     asm
@@ -884,7 +884,7 @@ void _d_local_unwind2()
     }
 }
 
-extern(C)
+export extern(C)
 void _d_localUnwindForGoto(DHandlerTable *handler_table,
         DEstablisherFrame *frame, int stop_index)
 {
@@ -898,7 +898,7 @@ void _d_localUnwindForGoto(DHandlerTable *handler_table,
  *      EAX     the handler table for the frame
  */
 
-extern(C)
+export extern(C)
 EXCEPTION_DISPOSITION _d_monitor_handler(
             EXCEPTION_RECORD *exceptionRecord,
             DEstablisherFrame *frame,
@@ -917,7 +917,7 @@ EXCEPTION_DISPOSITION _d_monitor_handler(
 
 /***********************************
  */
-extern(C)
+export extern(C)
 void _d_monitor_prolog(void *x, void *y, Object h)
 {
     asm
@@ -934,7 +934,7 @@ void _d_monitor_prolog(void *x, void *y, Object h)
 
 /***********************************
  */
-extern(C)
+export extern(C)
 void _d_monitor_epilog(void *x, void *y, Object h)
 {
     //printf("_d_monitor_epilog(x=%p, y=%p, h=%p)\n", x, y, h);

@@ -57,17 +57,17 @@ extern (C):
  *      a[] = b[] + value
  */
 
-T[] _arraySliceExpAddSliceAssign_a(T[] a, T value, T[] b)
+export T[] _arraySliceExpAddSliceAssign_a(T[] a, T value, T[] b)
 {
     return _arraySliceExpAddSliceAssign_g(a, value, b);
 }
 
-T[] _arraySliceExpAddSliceAssign_h(T[] a, T value, T[] b)
+export T[] _arraySliceExpAddSliceAssign_h(T[] a, T value, T[] b)
 {
     return _arraySliceExpAddSliceAssign_g(a, value, b);
 }
 
-T[] _arraySliceExpAddSliceAssign_g(T[] a, T value, T[] b)
+export T[] _arraySliceExpAddSliceAssign_g(T[] a, T value, T[] b)
 in
 {
     assert(a.length == b.length);
@@ -286,17 +286,17 @@ unittest
  *      a[] = b[] + c[]
  */
 
-T[] _arraySliceSliceAddSliceAssign_a(T[] a, T[] c, T[] b)
+export T[] _arraySliceSliceAddSliceAssign_a(T[] a, T[] c, T[] b)
 {
     return _arraySliceSliceAddSliceAssign_g(a, c, b);
 }
 
-T[] _arraySliceSliceAddSliceAssign_h(T[] a, T[] c, T[] b)
+export T[] _arraySliceSliceAddSliceAssign_h(T[] a, T[] c, T[] b)
 {
     return _arraySliceSliceAddSliceAssign_g(a, c, b);
 }
 
-T[] _arraySliceSliceAddSliceAssign_g(T[] a, T[] c, T[] b)
+export T[] _arraySliceSliceAddSliceAssign_g(T[] a, T[] c, T[] b)
 in
 {
         assert(a.length == b.length && b.length == c.length);
@@ -497,17 +497,17 @@ unittest
  *      a[] += value
  */
 
-T[] _arrayExpSliceAddass_a(T[] a, T value)
+export T[] _arrayExpSliceAddass_a(T[] a, T value)
 {
     return _arrayExpSliceAddass_g(a, value);
 }
 
-T[] _arrayExpSliceAddass_h(T[] a, T value)
+export T[] _arrayExpSliceAddass_h(T[] a, T value)
 {
     return _arrayExpSliceAddass_g(a, value);
 }
 
-T[] _arrayExpSliceAddass_g(T[] a, T value)
+export T[] _arrayExpSliceAddass_g(T[] a, T value)
 {
     //printf("_arrayExpSliceAddass_g(a.length = %d, value = %Lg)\n", a.length, cast(real)value);
     auto aptr = a.ptr;
@@ -676,17 +676,17 @@ unittest
  *      a[] += b[]
  */
 
-T[] _arraySliceSliceAddass_a(T[] a, T[] b)
+export T[] _arraySliceSliceAddass_a(T[] a, T[] b)
 {
     return _arraySliceSliceAddass_g(a, b);
 }
 
-T[] _arraySliceSliceAddass_h(T[] a, T[] b)
+export T[] _arraySliceSliceAddass_h(T[] a, T[] b)
 {
     return _arraySliceSliceAddass_g(a, b);
 }
 
-T[] _arraySliceSliceAddass_g(T[] a, T[] b)
+export T[] _arraySliceSliceAddass_g(T[] a, T[] b)
 in
 {
     assert (a.length == b.length);
@@ -874,17 +874,17 @@ unittest
  *      a[] = b[] - value
  */
 
-T[] _arraySliceExpMinSliceAssign_a(T[] a, T value, T[] b)
+export T[] _arraySliceExpMinSliceAssign_a(T[] a, T value, T[] b)
 {
     return _arraySliceExpMinSliceAssign_g(a, value, b);
 }
 
-T[] _arraySliceExpMinSliceAssign_h(T[] a, T value, T[] b)
+export T[] _arraySliceExpMinSliceAssign_h(T[] a, T value, T[] b)
 {
     return _arraySliceExpMinSliceAssign_g(a, value, b);
 }
 
-T[] _arraySliceExpMinSliceAssign_g(T[] a, T value, T[] b)
+export T[] _arraySliceExpMinSliceAssign_g(T[] a, T value, T[] b)
 in
 {
     assert(a.length == b.length);
@@ -1099,17 +1099,17 @@ unittest
  *      a[] = value - b[]
  */
 
-T[] _arrayExpSliceMinSliceAssign_a(T[] a, T[] b, T value)
+export T[] _arrayExpSliceMinSliceAssign_a(T[] a, T[] b, T value)
 {
     return _arrayExpSliceMinSliceAssign_g(a, b, value);
 }
 
-T[] _arrayExpSliceMinSliceAssign_h(T[] a, T[] b, T value)
+export T[] _arrayExpSliceMinSliceAssign_h(T[] a, T[] b, T value)
 {
     return _arrayExpSliceMinSliceAssign_g(a, b, value);
 }
 
-T[] _arrayExpSliceMinSliceAssign_g(T[] a, T[] b, T value)
+export T[] _arrayExpSliceMinSliceAssign_g(T[] a, T[] b, T value)
 in
 {
     assert(a.length == b.length);
@@ -1306,17 +1306,17 @@ unittest
  *      a[] = b[] - c[]
  */
 
-T[] _arraySliceSliceMinSliceAssign_a(T[] a, T[] c, T[] b)
+export T[] _arraySliceSliceMinSliceAssign_a(T[] a, T[] c, T[] b)
 {
     return _arraySliceSliceMinSliceAssign_g(a, c, b);
 }
 
-T[] _arraySliceSliceMinSliceAssign_h(T[] a, T[] c, T[] b)
+export T[] _arraySliceSliceMinSliceAssign_h(T[] a, T[] c, T[] b)
 {
     return _arraySliceSliceMinSliceAssign_g(a, c, b);
 }
 
-T[] _arraySliceSliceMinSliceAssign_g(T[] a, T[] c, T[] b)
+export T[] _arraySliceSliceMinSliceAssign_g(T[] a, T[] c, T[] b)
 in
 {
         assert(a.length == b.length && b.length == c.length);
@@ -1512,17 +1512,17 @@ unittest
  *      a[] -= value
  */
 
-T[] _arrayExpSliceMinass_a(T[] a, T value)
+export T[] _arrayExpSliceMinass_a(T[] a, T value)
 {
     return _arrayExpSliceMinass_g(a, value);
 }
 
-T[] _arrayExpSliceMinass_h(T[] a, T value)
+export T[] _arrayExpSliceMinass_h(T[] a, T value)
 {
     return _arrayExpSliceMinass_g(a, value);
 }
 
-T[] _arrayExpSliceMinass_g(T[] a, T value)
+export T[] _arrayExpSliceMinass_g(T[] a, T value)
 {
     //printf("_arrayExpSliceMinass_g(a.length = %d, value = %Lg)\n", a.length, cast(real)value);
     auto aptr = a.ptr;
@@ -1691,17 +1691,17 @@ unittest
  *      a[] -= b[]
  */
 
-T[] _arraySliceSliceMinass_a(T[] a, T[] b)
+export T[] _arraySliceSliceMinass_a(T[] a, T[] b)
 {
     return _arraySliceSliceMinass_g(a, b);
 }
 
-T[] _arraySliceSliceMinass_h(T[] a, T[] b)
+export T[] _arraySliceSliceMinass_h(T[] a, T[] b)
 {
     return _arraySliceSliceMinass_g(a, b);
 }
 
-T[] _arraySliceSliceMinass_g(T[] a, T[] b)
+export T[] _arraySliceSliceMinass_g(T[] a, T[] b)
 in
 {
     assert (a.length == b.length);

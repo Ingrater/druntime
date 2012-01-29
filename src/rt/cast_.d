@@ -23,7 +23,7 @@ extern (C):
  *      Else, undefined crash
  */
 
-Object _d_toObject(void* p)
+export Object _d_toObject(void* p)
 {   Object o;
 
     if (p)
@@ -51,7 +51,7 @@ Object _d_toObject(void* p)
  * Returns o if successful, null if not.
  */
 
-Object _d_interface_cast(void* p, ClassInfo c)
+export Object _d_interface_cast(void* p, ClassInfo c)
 {   Object o;
 
     //printf("_d_interface_cast(p = %p, c = '%.*s')\n", p, c.name);
@@ -66,7 +66,7 @@ Object _d_interface_cast(void* p, ClassInfo c)
     return o;
 }
 
-Object _d_dynamic_cast(Object o, ClassInfo c)
+export Object _d_dynamic_cast(Object o, ClassInfo c)
 {   ClassInfo oc;
     size_t offset = 0;
 
@@ -87,7 +87,7 @@ Object _d_dynamic_cast(Object o, ClassInfo c)
     return o;
 }
 
-int _d_isbaseof2(ClassInfo oc, ClassInfo c, ref size_t offset)
+export int _d_isbaseof2(ClassInfo oc, ClassInfo c, ref size_t offset)
 {
     if (oc is c)
         return 1;
@@ -118,7 +118,7 @@ int _d_isbaseof2(ClassInfo oc, ClassInfo c, ref size_t offset)
     return 0;
 }
 
-int _d_isbaseof(ClassInfo oc, ClassInfo c)
+export int _d_isbaseof(ClassInfo oc, ClassInfo c)
 {
     if (oc is c)
         return 1;
@@ -143,7 +143,7 @@ int _d_isbaseof(ClassInfo oc, ClassInfo c)
  * Find the vtbl[] associated with Interface ic.
  */
 
-void *_d_interface_vtbl(ClassInfo ic, Object o)
+export void *_d_interface_vtbl(ClassInfo ic, Object o)
 {
     //printf("__d_interface_vtbl(o = %p, ic = %p)\n", o, ic);
 

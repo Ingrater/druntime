@@ -295,7 +295,7 @@ struct RCArray(T,AT = StdAllocator)
   alias StripModifier!(T) BT; //base type
   
   
-  this(size_t size){
+  export this(size_t size){
     m_DataObject = data_t.AllocateArray(size);
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
@@ -303,7 +303,7 @@ struct RCArray(T,AT = StdAllocator)
 
   static if(IsPOD!(BT))
   {
-    this(T[] data, IsStatic isStatic)
+    export this(T[] data, IsStatic isStatic)
     {
       assert(isStatic == IsStatic.Yes);
       m_Data = data;
@@ -324,36 +324,36 @@ struct RCArray(T,AT = StdAllocator)
   static if(IsPOD!(BT))
   {
   
-    this(BT[] init) 
+    export this(BT[] init) 
     {
       ConstructFromArray(init);
     }
     
-    this(const(BT[]) init)
+    export this(const(BT[]) init)
     {
       ConstructFromArray(init);
     }
     
-    this(immutable(BT[]) init)
+    export this(immutable(BT[]) init)
     {
       ConstructFromArray(init);
     }
   }
   else {
-    this(T[] init)
+    export this(T[] init)
     {
       ConstructFromArray(init);
     }
   }
   
   //post blit constructor
-  this(this)
+  export this(this)
   {
     if(m_DataObject !is null)
       m_DataObject.AddReference();
   }
   
-  this(ref immutable(this_t) rh) immutable
+  export this(ref immutable(this_t) rh) immutable
   {
     m_DataObject = rh.m_DataObject;
     if(m_DataObject !is null)
@@ -361,7 +361,7 @@ struct RCArray(T,AT = StdAllocator)
     m_Data = rh.m_Data;
   }
   
-  this(ref const(this_t) rh) const
+  export this(ref const(this_t) rh) const
   {
     m_DataObject = rh.m_DataObject;
     if(m_DataObject !is null)
@@ -400,14 +400,14 @@ struct RCArray(T,AT = StdAllocator)
     m_Data = data;
   }
     
-  ~this()
+  export ~this()
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
   }
   
   // TODO replace this bullshit with a template once it is supported by dmd
-  void opAssign(this_t rh)
+  export void opAssign(this_t rh)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -417,7 +417,7 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.AddReference();
   }
   
-  void opAssign(T[] rh)
+  export void opAssign(T[] rh)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -431,7 +431,7 @@ struct RCArray(T,AT = StdAllocator)
   
   static if(IsPOD!(BT) && !is(T == BT))
   {
-    void opAssign(BT[] rh)
+    export void opAssign(BT[] rh)
     {
       if(m_DataObject !is null)
         m_DataObject.RemoveReference();
@@ -468,7 +468,7 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.AddReference();
   }*/
   
-  this_t dup()
+  export this_t dup()
   {
     assert(m_Data !is null,"nothing to duplicate");
     auto copy = data_t.AllocateArray(m_Data.length,false);
@@ -483,42 +483,42 @@ struct RCArray(T,AT = StdAllocator)
     return cast(immutable(this_t))dup();
   }*/
   
-  ref T opIndex(size_t index)
+  export ref T opIndex(size_t index)
   {
     return m_Data[index];
   }
   
-  ref const(T) opIndex(size_t index) const
+  export ref const(T) opIndex(size_t index) const
   {
     return m_Data[index];
   }
   
-  ref immutable(T) opIndex(size_t index) immutable
+  export ref immutable(T) opIndex(size_t index) immutable
   {
     return m_Data[index];
   }
   
-  ref shared(T) opIndex(size_t index) shared
+  export ref shared(T) opIndex(size_t index) shared
   {
     return m_Data[index];
   }
   
-  T[] opSlice()
+  export T[] opSlice()
   {
     return m_Data;
   }
   
-  this_t opSlice(size_t start, size_t end)
+  export this_t opSlice(size_t start, size_t end)
   {
     return this_t(m_DataObject,m_Data[start..end]);
   }
   
-  const(this_t) opSlice(size_t start, size_t end) const
+  export const(this_t) opSlice(size_t start, size_t end) const
   {
     return const(this_t)(m_DataObject, m_Data[start..end]);
   }
   
-  immutable(this_t) opSlice(size_t start, size_t end) immutable
+  export immutable(this_t) opSlice(size_t start, size_t end) immutable
   {
     return immutable(this_t)(m_DataObject, m_Data[start..end]);
   }
@@ -588,7 +588,7 @@ struct RCArray(T,AT = StdAllocator)
   
   this_t opBinary(string op,U)(auto ref U rh) if(op == "~" && (is(U == this_t) || 
                                       is(U == T[]) || 
-                                      (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT))))
+                                      (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
                                      ))
   {
     auto result = this_t(this.length + rh.length);
@@ -632,7 +632,7 @@ struct RCArray(T,AT = StdAllocator)
     return result;
   }
   
-  int opApply( scope int delegate(ref T) dg )
+  export int opApply( scope int delegate(ref T) dg )
   {
     int result;
     
@@ -644,7 +644,7 @@ struct RCArray(T,AT = StdAllocator)
     return result;
   }
   
-  int opApply( scope int delegate(ref size_t, ref T) dg )
+  export int opApply( scope int delegate(ref size_t, ref T) dg )
   {
       int result;
 
@@ -661,18 +661,18 @@ struct RCArray(T,AT = StdAllocator)
     return m_DataObject !is null; 
   }
   
-  @property auto ptr()
+  export @property auto ptr()
   {
     return m_Data.ptr;
   }
   
-  @property size_t length()
+  export @property size_t length()
   {
     return m_Data.length;
   }
 }
 
-RCArray!(immutable(char)) _T(immutable(char)[] data)
+export RCArray!(immutable(char)) _T(immutable(char)[] data)
 {
   return RCArray!(immutable(char))(data,IsStatic.Yes);
 }
@@ -730,15 +730,15 @@ unittest
 
 }
 
-class RCException : Throwable
+export class RCException : Throwable
 {
-  this(RCArray!(immutable(char)) msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+  export this(RCArray!(immutable(char)) msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
   {
     this.rcmsg = msg;
     super(msg[], file, line, next);
   }
 
-  this(RCArray!(immutable(char)) msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+  export this(RCArray!(immutable(char)) msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
   {
     this.rcmsg = msg;
     super(msg[], file, line, next);
