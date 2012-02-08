@@ -158,6 +158,13 @@ struct StdAllocator
         printf("%s\n",line.ptr);
       }
     }
+    debug
+    {
+      if( m_memoryMap.count > 0)
+      {
+        asm { int 3; }
+      }
+    }
     Delete(temp);
     Delete(m_memoryMap);
   }
@@ -312,7 +319,9 @@ auto AllocatorNew(T,AT,ARGS...)(ARGS args)
   static if(is(T == class))
   {
     void[] blop = mem[0..memSize];
-    (cast(byte[])blop)[] = typeid(T).init[];
+    auto ti = typeid(T);
+    assert(memSize == ti.init.length,"classInstanceSize and typeid(T).init.length do not match");
+    (cast(byte[])blop)[] = ti.init[];
     auto result = (cast(T)mem);
     static if(is(typeof(result.__ctor(args))))
     {
@@ -345,7 +354,7 @@ auto AllocatorNew(T,AT,ARGS...)(ARGS args)
     {
       static assert(args.length == 0 && !is(typeof(&T.__ctor)),
                 "Don't know how to initialize an object of type "
-                ~ T.stringof ~ " with arguments " ~ Args.stringof);
+                ~ T.stringof ~ " with arguments " ~ args.stringof);
     }
     return result;
   }

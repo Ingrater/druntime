@@ -38,7 +38,7 @@ private:
   }
 
 protected:
-  // Release also needs to be private so that the invariant handler does not get
+  // Release also needs to be protected so that the invariant handler does not get
   // called on a already freed object
   abstract void Release();
   
@@ -161,7 +161,7 @@ private:
   
   alias StripModifier!(T) BT; //Base Type
 
-protected:
+public:
 
   static if(is(T == struct) && is(typeof(T.__dtor())))
   {
@@ -216,65 +216,27 @@ protected:
     return result;
   }
   
-  private @property final size_t length() immutable
+  @property final size_t length() immutable
   {
     return data.length;
   }
-  
-  final auto Resize(InitializeMemoryWith meminit = InitializeMemoryWith.INIT)
-                   (size_t newSize, bool doInit = true)
-  {
-    assert(newSize > data.length,"can not resize to smaller size");
-    
-    size_t headerSize = __traits(classInstanceSize,typeof(this));
-    size_t bytesToAllocate = headerSize + (T.sizeof * newSize);
-    void* mem = allocator_t.ReallocateMemory(cast(void*)this,bytesToAllocate);
-    
-    auto result = cast(typeof(this))mem;
-    
-    static if(meminit == InitializeMemoryWith.NULL)
-    {
-      if(doInit)
-        memset(mem + headerSize + result.m_Length * T.sizeof,0,
-               bytesToAllocate - headerSize + result.m_Length * T.sizeof);
-    }
-    static if(meminit == InitializeMemoryWith.INIT)
-    {
-      if(doInit)
-      {
-        auto arrayData = (cast(BT*)(mem + headerSize))[result.data.length..newSize];
-        foreach(ref BT e; arrayData)
-        {
-          // If it is a struct we can not use the assignment operator
-          // as the assignment operator will be calle don a non initialized instance
-          static if(is(BT == struct))
-            memcpy(&e,&BT.init,T.sizeof);
-          else
-            e = BT.init;
-        }
-      }
-    }   
-    
-    result.data = (cast(T*)(mem + headerSize))[0..newSize];
-    return result;
-  }
-  
-  private final auto opSlice()
+   
+  final auto opSlice()
   {
     return this.data;
   }
   
-  private final auto opSlice() const
+  final auto opSlice() const
   {
     return this.data;
   }
   
-  private final auto opSlice() immutable
+  final auto opSlice() immutable
   {
     return this.data;
   }
   
-  private final auto opSlice() shared
+  final auto opSlice() shared
   {
     return this.data;
   }
@@ -295,7 +257,7 @@ struct RCArray(T,AT = StdAllocator)
   alias StripModifier!(T) BT; //base type
   
   
-  export this(size_t size){
+  this(size_t size){
     m_DataObject = data_t.AllocateArray(size);
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
@@ -303,7 +265,7 @@ struct RCArray(T,AT = StdAllocator)
 
   static if(IsPOD!(BT))
   {
-    export this(T[] data, IsStatic isStatic)
+    this(T[] data, IsStatic isStatic)
     {
       assert(isStatic == IsStatic.Yes);
       m_Data = data;
@@ -324,36 +286,36 @@ struct RCArray(T,AT = StdAllocator)
   static if(IsPOD!(BT))
   {
   
-    export this(BT[] init) 
+    this(BT[] init) 
     {
       ConstructFromArray(init);
     }
     
-    export this(const(BT[]) init)
+    this(const(BT[]) init)
     {
       ConstructFromArray(init);
     }
     
-    export this(immutable(BT[]) init)
+    this(immutable(BT[]) init)
     {
       ConstructFromArray(init);
     }
   }
   else {
-    export this(T[] init)
+    this(T[] init)
     {
       ConstructFromArray(init);
     }
   }
   
   //post blit constructor
-  export this(this)
+  this(this)
   {
     if(m_DataObject !is null)
       m_DataObject.AddReference();
   }
   
-  export this(ref immutable(this_t) rh) immutable
+  this(ref immutable(this_t) rh) immutable
   {
     m_DataObject = rh.m_DataObject;
     if(m_DataObject !is null)
@@ -361,7 +323,7 @@ struct RCArray(T,AT = StdAllocator)
     m_Data = rh.m_Data;
   }
   
-  export this(ref const(this_t) rh) const
+  this(ref const(this_t) rh) const
   {
     m_DataObject = rh.m_DataObject;
     if(m_DataObject !is null)
@@ -369,14 +331,14 @@ struct RCArray(T,AT = StdAllocator)
     m_Data = rh.m_Data;
   }
   
-  private this(data_t data)
+  this(data_t data)
   {
     m_DataObject = data;
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
   }
   
-  private this(data_t dataObject, T[] data)
+  this(data_t dataObject, T[] data)
   {
     m_DataObject = dataObject;
     if(m_DataObject !is null)
@@ -400,14 +362,14 @@ struct RCArray(T,AT = StdAllocator)
     m_Data = data;
   }
     
-  export ~this()
+  ~this()
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
   }
   
   // TODO replace this bullshit with a template once it is supported by dmd
-  export void opAssign(this_t rh)
+  void opAssign(this_t rh)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -417,7 +379,7 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.AddReference();
   }
   
-  export void opAssign(T[] rh)
+  void opAssign(T[] rh)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -431,7 +393,7 @@ struct RCArray(T,AT = StdAllocator)
   
   static if(IsPOD!(BT) && !is(T == BT))
   {
-    export void opAssign(BT[] rh)
+    void opAssign(BT[] rh)
     {
       if(m_DataObject !is null)
         m_DataObject.RemoveReference();
@@ -468,7 +430,7 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.AddReference();
   }*/
   
-  export this_t dup()
+  this_t dup()
   {
     assert(m_Data !is null,"nothing to duplicate");
     auto copy = data_t.AllocateArray(m_Data.length,false);
@@ -483,42 +445,42 @@ struct RCArray(T,AT = StdAllocator)
     return cast(immutable(this_t))dup();
   }*/
   
-  export ref T opIndex(size_t index)
+  ref T opIndex(size_t index)
   {
     return m_Data[index];
   }
   
-  export ref const(T) opIndex(size_t index) const
+  ref const(T) opIndex(size_t index) const
   {
     return m_Data[index];
   }
   
-  export ref immutable(T) opIndex(size_t index) immutable
+  ref immutable(T) opIndex(size_t index) immutable
   {
     return m_Data[index];
   }
   
-  export ref shared(T) opIndex(size_t index) shared
+  ref shared(T) opIndex(size_t index) shared
   {
     return m_Data[index];
   }
   
-  export T[] opSlice()
+  T[] opSlice()
   {
     return m_Data;
   }
   
-  export this_t opSlice(size_t start, size_t end)
+  this_t opSlice(size_t start, size_t end)
   {
     return this_t(m_DataObject,m_Data[start..end]);
   }
   
-  export const(this_t) opSlice(size_t start, size_t end) const
+  const(this_t) opSlice(size_t start, size_t end) const
   {
     return const(this_t)(m_DataObject, m_Data[start..end]);
   }
   
-  export immutable(this_t) opSlice(size_t start, size_t end) immutable
+  immutable(this_t) opSlice(size_t start, size_t end) immutable
   {
     return immutable(this_t)(m_DataObject, m_Data[start..end]);
   }
@@ -632,7 +594,7 @@ struct RCArray(T,AT = StdAllocator)
     return result;
   }
   
-  export int opApply( scope int delegate(ref T) dg )
+  int opApply( scope int delegate(ref T) dg )
   {
     int result;
     
@@ -644,7 +606,7 @@ struct RCArray(T,AT = StdAllocator)
     return result;
   }
   
-  export int opApply( scope int delegate(ref size_t, ref T) dg )
+  int opApply( scope int delegate(ref size_t, ref T) dg )
   {
       int result;
 
@@ -661,18 +623,18 @@ struct RCArray(T,AT = StdAllocator)
     return m_DataObject !is null; 
   }
   
-  export @property auto ptr()
+  @property auto ptr()
   {
     return m_Data.ptr;
   }
   
-  export @property size_t length()
+  @property size_t length()
   {
     return m_Data.length;
   }
 }
 
-export RCArray!(immutable(char)) _T(immutable(char)[] data)
+RCArray!(immutable(char)) _T(immutable(char)[] data)
 {
   return RCArray!(immutable(char))(data,IsStatic.Yes);
 }
@@ -730,15 +692,15 @@ unittest
 
 }
 
-export class RCException : Throwable
+class RCException : Exception
 {
-  export this(RCArray!(immutable(char)) msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+  this(RCArray!(immutable(char)) msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
   {
     this.rcmsg = msg;
     super(msg[], file, line, next);
   }
 
-  export this(RCArray!(immutable(char)) msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+  this(RCArray!(immutable(char)) msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
   {
     this.rcmsg = msg;
     super(msg[], file, line, next);

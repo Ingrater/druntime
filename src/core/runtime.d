@@ -555,7 +555,8 @@ export Throwable.TraceInfo defaultTraceHandler( void* ptr = null )
     }
     else static if( __traits( compiles, new StackTrace ) )
     {
-        return new StackTrace;
+        //return new StackTrace;
+        return null;
     }
     else
     {

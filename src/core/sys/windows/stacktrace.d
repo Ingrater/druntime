@@ -496,10 +496,16 @@ private:
                       cur ~= "(";
                       cur ~= format( temp[], line.LineNumber );
                       cur ~= "):";
-                      char[] demangledName = demangle( symbolName, demangleBuf );
-                      cur ~= demangledName;
-                      if(demangledName.ptr != demangleBuf.ptr)
-                        StdAllocator.FreeMemory(demangledName.ptr);
+                      try {
+                        char[] demangledName = demangle( symbolName, demangleBuf );
+                        cur ~= demangledName;
+                        if(demangledName.ptr != demangleBuf.ptr)
+                          StdAllocator.FreeMemory(demangledName.ptr);
+                      }
+                      catch(Exception ex)
+                      {
+                        cur ~= symbolName;
+                      }
                       trace ~= cur;
                     }
                     else {

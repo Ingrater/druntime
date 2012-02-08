@@ -320,7 +320,7 @@ class Throwable : Object
         to_string_t toString();
     }
 
-    string      msg;
+    to_string_t  msg;
     string      file;
     size_t      line;
     TraceInfo   info;
