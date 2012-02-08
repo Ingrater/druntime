@@ -300,6 +300,7 @@ auto New(T,ARGS...)(ARGS args)
   return AllocatorNew!(T,StdAllocator,ARGS)(args);
 }
 
+// TODO: List all aviable constructors in case of failure
 auto AllocatorNew(T,AT,ARGS...)(ARGS args)
 {
   static if(is(T == class))
@@ -331,7 +332,7 @@ auto AllocatorNew(T,AT,ARGS...)(ARGS args)
     {
       static assert(args.length == 0 && !is(typeof(&T.__ctor)),
                 "Don't know how to initialize an object of type "
-                ~ T.stringof ~ " with arguments " ~ Args.stringof);
+                ~ T.stringof ~ " with arguments " ~ ARGS.stringof);
     }
     
     static if(is(T : RefCountedBase))

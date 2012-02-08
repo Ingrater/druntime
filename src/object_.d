@@ -63,6 +63,7 @@ else
 
 alias size_t hash_t;
 alias bool equals_t;
+alias typeof(null) null_t;
 
 alias immutable(char)[]  string;
 alias immutable(wchar)[] wstring;

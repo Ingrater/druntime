@@ -487,60 +487,41 @@ struct RCArray(T,AT = StdAllocator)
   
   void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == this_t) || is(U : BT[]) || is(U : const(BT)[]) || is(U : immutable(BT)[])))
   {
-    // We own the data and therefore can do whatever we want with it
-    if(m_DataObject !is null && m_DataObject.refcount == 1)
+    auto newData = data_t.AllocateArray(m_Data.length + rh.length, false);
+    auto mem = cast(BT[])newData.data;
+    if(m_Data.length > 0)
     {
-      m_DataObject = m_DataObject.Resize!(InitializeMemoryWith.NOTHING)
-                                         (m_Data.length + rh.length);
-      (cast(BT[])m_DataObject.data)[m_Data.length..$] = rh[];
-      m_Data = m_DataObject.data;
+      mem[0..m_Data.length] = m_Data[];
+      mem[m_Data.length..$] = rh[];
+      if(m_DataObject !is null)
+        m_DataObject.RemoveReference();
     }
-    else { // we have to copy the data
-      auto newData = data_t.AllocateArray(m_Data.length + rh.length, false);
-      auto mem = cast(BT[])newData.data;
-      if(m_Data.length > 0)
-      {
-        mem[0..m_Data.length] = m_Data[];
-        mem[m_Data.length..$] = rh[];
-        if(m_DataObject !is null)
-          m_DataObject.RemoveReference();
-      }
-      else
-        mem[0..$] = rh[];
+    else
+      mem[0..$] = rh[];
 
-      m_DataObject = newData;
-      m_DataObject.AddReference();
-      m_Data = newData.data;
-    }
+    m_DataObject = newData;
+    m_DataObject.AddReference();
+    m_Data = newData.data;
   }
   
   void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == T) || IsPOD!(BT) && is(U == BT)))
   {
-    //We own the data
-    if(m_DataObject !is null && m_DataObject.refcount == 1)
+    auto newData = data_t.AllocateArray(m_Data.length + 1);
+    if(m_Data.length > 0)
     {
-      m_DataObject = m_DataObject.Resize(m_Data.length + 1);
-      (cast(BT[])m_DataObject.data)[m_Data.length] = rh;
-      m_Data = m_DataObject.data;
+      auto mem = cast(BT[])newData.data;
+      mem[0..m_Data.length] = m_Data[];
+      mem[m_Data.length] = rh;
+      if(m_DataObject !is null)
+        m_DataObject.RemoveReference();
     }
-    else { // we have to copy the data
-      auto newData = data_t.AllocateArray(m_Data.length + 1);
-      if(m_Data.length > 0)
-      {
-        auto mem = cast(BT[])newData.data;
-        mem[0..m_Data.length] = m_Data[];
-        mem[m_Data.length] = rh;
-        if(m_DataObject !is null)
-          m_DataObject.RemoveReference();
-      }
-      else
-      {
-        (cast(BT[])newData.data)[m_Data.length] = rh;
-      }
-      m_DataObject = newData;
-      m_DataObject.AddReference();
-      m_Data = newData.data;
+    else
+    {
+      (cast(BT[])newData.data)[m_Data.length] = rh;
     }
+    m_DataObject = newData;
+    m_DataObject.AddReference();
+    m_Data = newData.data;
   }
   
   /*void opOpAssign(string op,U)(U rh)
@@ -578,8 +559,8 @@ struct RCArray(T,AT = StdAllocator)
   {
     auto result = this_t(this.length + lh.length);
     auto mem = cast(BT[])result[];
-    mem[0..rh.length] = rh[];
-    mem[rh.length..$] = this[];
+    mem[0..lh.length] = lh[];
+    mem[lh.length..$] = this[];
     return result;
   }
   
@@ -631,6 +612,26 @@ struct RCArray(T,AT = StdAllocator)
   @property size_t length()
   {
     return m_Data.length;
+  }
+
+  bool opEquals(this_t rh)
+  {
+    return (this[] == rh[]);
+  }
+
+  bool opEquals(T[] rh)
+  {
+    return (this[] == rh);
+  }
+
+  int opCmp(T[] rh)
+  {
+    return (this[] < rh);
+  }
+
+  int opCmp(this_t rh)
+  {
+    return (this[] < rh[]);
   }
 }
 
