@@ -489,7 +489,6 @@ private:
                 {     
                     char[2048] demangleBuf;
                     version(NOGCSAFE){
-                      //TODO non leaking demangling
                       line_t cur;
                       
                       cur ~= line.FileName[0 .. strlen( line.FileName )];
@@ -505,6 +504,7 @@ private:
                       catch(Exception ex)
                       {
                         cur ~= symbolName;
+                        //no need to delete the exception here because it is in static memory
                       }
                       trace ~= cur;
                     }

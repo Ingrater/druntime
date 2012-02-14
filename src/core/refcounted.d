@@ -281,6 +281,7 @@ struct RCArray(T,AT = StdAllocator)
     m_Data = m_DataObject.data;
     auto mem = cast(BT[])m_Data;
     mem[] = cast(BT[])init[];
+    callPostBlit(mem);
   }
   
   static if(IsPOD!(BT))
@@ -333,6 +334,7 @@ struct RCArray(T,AT = StdAllocator)
   
   this(data_t data)
   {
+    assert(data !is null);
     m_DataObject = data;
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
@@ -400,6 +402,7 @@ struct RCArray(T,AT = StdAllocator)
       auto newData = data_t.AllocateArray(rh.length,false);
       auto mem = cast(BT[])newData.data;
       mem[] = rh[];
+      callPostBlit(mem);
       m_DataObject = newData;
       m_DataObject.AddReference();
       m_Data = newData.data;      
@@ -435,7 +438,8 @@ struct RCArray(T,AT = StdAllocator)
     assert(m_Data !is null,"nothing to duplicate");
     auto copy = data_t.AllocateArray(m_Data.length,false);
     auto mem = cast(BT[])copy.data;
-    mem[0..m_Data.length] = m_Data[0..$];
+    mem[] = m_Data[];
+    callPostBlit(mem);
     return this_t(copy);
   }
   
@@ -492,13 +496,14 @@ struct RCArray(T,AT = StdAllocator)
     if(m_Data.length > 0)
     {
       mem[0..m_Data.length] = m_Data[];
+      callPostBlit(mem[0..m_Data.length]);
       mem[m_Data.length..$] = rh[];
-      if(m_DataObject !is null)
-        m_DataObject.RemoveReference();
     }
     else
       mem[0..$] = rh[];
 
+    if(m_DataObject !is null)
+      m_DataObject.RemoveReference();
     m_DataObject = newData;
     m_DataObject.AddReference();
     m_Data = newData.data;
@@ -511,14 +516,15 @@ struct RCArray(T,AT = StdAllocator)
     {
       auto mem = cast(BT[])newData.data;
       mem[0..m_Data.length] = m_Data[];
+      callPostBlit(mem[0..m_Data.length]);
       mem[m_Data.length] = rh;
-      if(m_DataObject !is null)
-        m_DataObject.RemoveReference();
     }
     else
     {
       (cast(BT[])newData.data)[m_Data.length] = rh;
     }
+    if(m_DataObject !is null)
+      m_DataObject.RemoveReference();
     m_DataObject = newData;
     m_DataObject.AddReference();
     m_Data = newData.data;
@@ -534,22 +540,24 @@ struct RCArray(T,AT = StdAllocator)
                                       (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
                                      ))
   {
-    auto result = this_t(this.length + rh.length);
+    auto result = data_t.AllocateArray(this.length + rh.length,false);
     auto mem = cast(BT[])result[];
     mem[0..this.length] = this[];
     mem[this.length..$] = rh[];
-    return result;
+
+    return this_t(result);
   }
   
   this_t opBinary(string op,U)(auto ref U rh) if(op == "~" && (is(U == T) || 
                                                  (IsPOD!(BT) && (is(U == BT) || is(U == const(BT)) || is(U == immutable(BT))))
                                                 ))
   {
-    auto result = this_t(this.length + 1);
+    auto result = data_t.AllocateArray(this.length + 1);
     auto mem = cast(BT[])result[];
     mem[0..this.length] = this[];
+    callPostBlit(mem[0..this.length]);
     mem[this.length] = rh;
-    return result;
+    return this_t(result);
   }
   
   this_t opBinaryRight(string op,U)(U lh) if(op == "~" && (
@@ -557,22 +565,24 @@ struct RCArray(T,AT = StdAllocator)
                                       (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT))))
                                      ))
   {
-    auto result = this_t(this.length + lh.length);
+    auto result = data_t.AllocateArray(this.length + lh.length);
     auto mem = cast(BT[])result[];
     mem[0..lh.length] = lh[];
     mem[lh.length..$] = this[];
-    return result;
+    callPostBlit(mem);
+    return this_t(result);
   }
   
   this_t opBinaryRight(string op,U)(U lh) if(op == "~" && (is(U == T) || 
                                                  (IsPOD!(BT) && (is(U == BT) || is(U == const(BT)) || is(U == immutable(BT))))
                                                 ))
   {
-    auto result = this_t(this.length + 1);
+    auto result = data_t.AllocateArray(this.length + 1);
     auto mem = cast(BT[])result[];
     mem[0] = lh;
     mem[1..$] = this[];
-    return result;
+    callPostBlit(mem[1..$]);
+    return this_t(result);
   }
   
   int opApply( scope int delegate(ref T) dg )
@@ -602,6 +612,12 @@ struct RCArray(T,AT = StdAllocator)
   bool opCast(U)() if(is(U == bool))
   {
     return m_DataObject !is null; 
+  }
+
+  auto opCast(U)() if(is(U V : RCArray!V) && is(BT == U.BT) )
+  {
+    return U(cast(U.data_t)(cast(void*)m_DataObject), //need to use very ugly cast here
+             cast(RCArrayType!U[])m_Data);
   }
   
   @property auto ptr()

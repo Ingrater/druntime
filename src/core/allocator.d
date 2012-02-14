@@ -147,20 +147,28 @@ struct StdAllocator
     
     printf("deinitializing memory tracking\n");
     printf("Found %d memory leaks",m_memoryMap.count);
+    FILE* log = null;
+    if(m_memoryMap.count > 0)
+      log = fopen("memoryleaks.log","wb");
     foreach(ref leak; m_memoryMap)
     {
       printf("---------------------------------\n");
+      if(log !is null) fprintf(log,"---------------------------------\n");
       printf("memory leak %d bytes\n",leak.size);
+      if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
       auto trace = StackTrace.resolveAddresses(leak.backtrace);
       foreach(ref line; trace)
       {
         line ~= "\0";
         printf("%s\n",line.ptr);
+        if(log !is null) fprintf(log, "%s\n",line.ptr);
       }
     }
-    debug
+
+    if( m_memoryMap.count > 0)
     {
-      if( m_memoryMap.count > 0)
+      if(log !is null) fclose(log);
+      debug
       {
         asm { int 3; }
       }
@@ -188,7 +196,7 @@ struct StdAllocator
         // TODO implement for linux / osx
         version(Windows)
         {
-          info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false).length;
+          info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false,3).length;
         }
         auto map = m_memoryMap;
         map[mem] = info;
@@ -300,6 +308,14 @@ auto New(T,ARGS...)(ARGS args)
   return AllocatorNew!(T,StdAllocator,ARGS)(args);
 }
 
+string ListAvailableCtors(T)()
+{
+  string result = "";
+  foreach(t; __traits(getOverloads, T, "__ctor"))
+    result ~= typeof(t).stringof ~ "\n";
+  return result;
+}
+
 // TODO: List all aviable constructors in case of failure
 auto AllocatorNew(T,AT,ARGS...)(ARGS args)
 {
@@ -332,7 +348,7 @@ auto AllocatorNew(T,AT,ARGS...)(ARGS args)
     {
       static assert(args.length == 0 && !is(typeof(&T.__ctor)),
                 "Don't know how to initialize an object of type "
-                ~ T.stringof ~ " with arguments " ~ ARGS.stringof);
+                ~ T.stringof ~ " with arguments:\n" ~ ARGS.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
     }
     
     static if(is(T : RefCountedBase))
@@ -355,7 +371,7 @@ auto AllocatorNew(T,AT,ARGS...)(ARGS args)
     {
       static assert(args.length == 0 && !is(typeof(&T.__ctor)),
                 "Don't know how to initialize an object of type "
-                ~ T.stringof ~ " with arguments " ~ args.stringof);
+                ~ T.stringof ~ " with arguments " ~ args.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
     }
     return result;
   }
@@ -366,15 +382,79 @@ void Delete(T)(T mem)
   AllocatorDelete!(T,StdAllocator)(mem);
 }
 
+void Destruct(Object obj)
+{
+  rt_finalize(cast(void*)obj);
+}
+
+struct DefaultCtor {}; //call default ctor type
+
+struct composite(T)
+{
+  static assert(is(T == class),"can only composite classes");
+  void[__traits(classInstanceSize, T)] _classMemory = void;
+
+  @property T _instance()
+  {
+    return cast(T)_classMemory.ptr;
+  }
+
+  alias _instance this;
+
+  @disable this();
+
+  this(DefaultCtor c){ };
+
+  void construct(ARGS...)(ARGS args) //TODO fix: workaround because constructor can not be a template
+  {
+    //c = DontDefaultConstruct(DefaultCtor());
+    _classMemory[] = typeid(T).init[];
+    auto result = (cast(T)_classMemory.ptr);
+    static if(ARGS.length == 1 && is(ARGS[0] == DefaultCtor))
+    {
+      static if(is(typeof(result.__ctor())))
+      {
+        result.__ctor();
+      }
+      else
+      {
+        static assert(0,T.stringof ~ " does not have a default constructor");
+      }
+    }
+    else {
+      static if(is(typeof(result.__ctor(args))))
+      {
+        result.__ctor(args);
+      }
+      else
+      {
+        static assert(args.length == 0 && !is(typeof(&T.__ctor)),
+                      "Don't know how to initialize an object of type "
+                      ~ T.stringof ~ " with arguments:\n" ~ ARGS.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
+      }
+    }
+  }
+
+  ~this()
+  {
+    Destruct(_instance);
+  }
+}
+
 void AllocatorDelete(T,AT)(T obj)
 {
+  static assert(!is(T U == composite!U), "can not delete composited instance");
   static if(is(T == class))
   {
+    if(obj is null)
+      return;
     rt_finalize(cast(void*)obj);
     AT.FreeMemory(cast(void*)obj);
   }
   else static if(is(T P == U*, U))
   {
+    if(obj is null)
+      return;
     static if(is(U == struct) && is(typeof(obj.__dtor())))
     {
       obj.__dtor();
@@ -383,6 +463,8 @@ void AllocatorDelete(T,AT)(T obj)
   }
   else static if(is(T P == U[], U))
   {
+    if(!obj)
+      return;
     static if(is(U == struct) && is(typeof(obj[0].__dtor())))
     {
       foreach(ref e; obj)
@@ -431,4 +513,19 @@ auto AllocatorNewArray(T,AT)(size_t size, InitializeMemoryWith init = Initialize
       break;
   }
   return data;
+}
+
+void callPostBlit(T)(T[] array) if(is(T == struct))
+{
+  static if(is(typeof(array[0].__postblit)))
+  {
+    foreach(ref el; array)
+    {
+      el.__postblit();
+    }
+  }
+}
+
+void callPostBlit(T)(T[] array) if(!is(T == struct))
+{
 }

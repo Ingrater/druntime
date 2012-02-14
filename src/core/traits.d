@@ -112,3 +112,8 @@ unittest
   static assert(IsPOD!(immutable(int)[]) == false);
   static assert(IsPOD!(immutable(int[])) == false);
 }
+
+template RCArrayType(T : RCArray!T)
+{
+  alias T RCArrayType;
+}
