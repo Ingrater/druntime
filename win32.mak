@@ -37,6 +37,7 @@ MANIFEST= \
 	src\core\math.d \
 	src\core\memory.d \
 	src\core\runtime.d \
+	src\core\simd.d \
 	src\core\thread.d \
 	src\core\threadasm.S \
 	src\core\time.d \
@@ -120,6 +121,7 @@ MANIFEST= \
 	src\core\sys\posix\sys\uio.d \
 	src\core\sys\posix\sys\un.d \
 	src\core\sys\posix\sys\wait.d \
+	src\core\sys\posix\sys\utsname.d \
 	\
 	src\core\sys\windows\dbghelp.d \
 	src\core\sys\windows\dll.d \
@@ -232,6 +234,7 @@ SRCS= \
 	src\core\math.d \
 	src\core\memory.d \
 	src\core\runtime.d \
+	src\core\simd.d \
 	src\core\thread.d \
 	src\core\time.d \
 	src\core\vararg.d \
@@ -358,6 +361,7 @@ DOCS=\
 	$(DOCDIR)\core_math.html \
 	$(DOCDIR)\core_memory.html \
 	$(DOCDIR)\core_runtime.html \
+	$(DOCDIR)\core_simd.html \
 	$(DOCDIR)\core_thread.html \
 	$(DOCDIR)\core_time.html \
 	$(DOCDIR)\core_vararg.html \
@@ -379,6 +383,7 @@ IMPORTS=\
 	$(IMPDIR)\core\math.di \
 	$(IMPDIR)\core\memory.di \
 	$(IMPDIR)\core\runtime.di \
+	$(IMPDIR)\core\simd.di \
 	$(IMPDIR)\core\thread.di \
 	$(IMPDIR)\core\time.di \
 	$(IMPDIR)\core\vararg.di \
@@ -454,7 +459,9 @@ IMPORTS=\
 	$(IMPDIR)\core\sys\posix\sys\time.di \
 	$(IMPDIR)\core\sys\posix\sys\types.di \
 	$(IMPDIR)\core\sys\posix\sys\uio.di \
+	$(IMPDIR)\core\sys\posix\sys\un.di \
 	$(IMPDIR)\core\sys\posix\sys\wait.di \
+	$(IMPDIR)\core\sys\posix\sys\utsname.di \
 	\
 	$(IMPDIR)\core\sys\windows\dbghelp.di \
 	$(IMPDIR)\core\sys\windows\dll.di \
@@ -491,6 +498,9 @@ $(DOCDIR)\core_memory.html : src\core\memory.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Df$@ $(DOCFMT) $**
 
 $(DOCDIR)\core_runtime.html : src\core\runtime.d
+	$(DMD) -c -d -o- -Isrc -Iimport -Df$@ $(DOCFMT) $**
+
+$(DOCDIR)\core_simd.html : src\core\simd.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Df$@ $(DOCFMT) $**
 
 $(DOCDIR)\core_thread.html : src\core\thread.d
@@ -549,6 +559,9 @@ $(IMPDIR)\core\memory.di : src\core\memory.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
 
 $(IMPDIR)\core\runtime.di : src\core\runtime.d
+	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
+
+$(IMPDIR)\core\simd.di : src\core\simd.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
 
 $(IMPDIR)\core\thread.di : src\core\thread.d
@@ -740,7 +753,13 @@ $(IMPDIR)\core\sys\posix\sys\types.di : src\core\sys\posix\sys\types.d
 $(IMPDIR)\core\sys\posix\sys\uio.di : src\core\sys\posix\sys\uio.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
 
+$(IMPDIR)\core\sys\posix\sys\un.di : src\core\sys\posix\sys\un.d
+	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
+
 $(IMPDIR)\core\sys\posix\sys\wait.di : src\core\sys\posix\sys\wait.d
+	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
+
+$(IMPDIR)\core\sys\posix\sys\utsname.di : src\core\sys\posix\sys\utsname.d
 	$(DMD) -c -d -o- -Isrc -Iimport -Hf$@ $**
 
 $(IMPDIR)\core\sys\posix\termios.di : src\core\sys\posix\termios.d
