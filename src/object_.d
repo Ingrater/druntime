@@ -349,7 +349,7 @@ class TypeInfo
 
 class TypeInfo_Vector : TypeInfo
 {
-    override string toString() { return "__vector(" ~ base.toString() ~ ")"; }
+    override to_string_t toString() { return "__vector(" ~ base.toString() ~ ")"; }
 
     override equals_t opEquals(Object o)
     {

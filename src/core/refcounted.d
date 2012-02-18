@@ -8,7 +8,7 @@ import core.traits;
 abstract class RefCountedBase
 {
 private:
-  int m_iRefCount = 0;
+  shared(int) m_iRefCount = 0;
   
   final void AddReference()
   {
