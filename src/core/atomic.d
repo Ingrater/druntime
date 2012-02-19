@@ -1039,13 +1039,13 @@ version( unittest )
         T         base;
         shared(T) atom;
 
-        assert( base != val, T.stringof );
-        assert( atom == base, T.stringof );
+        assert( base !is val, T.stringof );
+        assert( atom is base, T.stringof );
 
         assert( cas( &atom, base, val ), T.stringof );
-        assert( atom == val, T.stringof );
+        assert( atom is val, T.stringof );
         assert( !cas( &atom, base, base ), T.stringof );
-        assert( atom == val, T.stringof );
+        assert( atom is val, T.stringof );
     }
 
     void testLoadStore(msync ms = msync.seq, T)( T val = T.init + 1 )
@@ -1053,13 +1053,13 @@ version( unittest )
         T         base = cast(T) 0;
         shared(T) atom = cast(T) 0;
 
-        assert( base != val );
-        assert( atom == base );
+        assert( base !is val );
+        assert( atom is base );
         atomicStore!(ms)( atom, val );
         base = atomicLoad!(ms)( atom );
 
-        assert( base == val, T.stringof );
-        assert( atom == val );
+        assert( base is val, T.stringof );
+        assert( atom is val );
     }
 
 
