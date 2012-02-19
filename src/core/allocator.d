@@ -3,8 +3,10 @@ module core.allocator;
 import core.stdc.stdlib;
 import core.stdc.stdio;
 import core.sync.mutex;
+import core.stdc.string; //for memcpy
 import core.hashmap;
 import core.refcounted;
+import core.traits;
 
 version(DUMA)
 {
@@ -316,7 +318,6 @@ string ListAvailableCtors(T)()
   return result;
 }
 
-// TODO: List all aviable constructors in case of failure
 auto AllocatorNew(T,AT,ARGS...)(ARGS args)
 {
   static if(is(T == class))
@@ -528,4 +529,27 @@ void callPostBlit(T)(T[] array) if(is(T == struct))
 
 void callPostBlit(T)(T[] array) if(!is(T == struct))
 {
+}
+
+void uninitializedCopy(DT,ST)(DT dest, ST source) 
+if(is(DT DBT == DBT[]) && is(ST SBT == SBT[]) 
+   && is(StripModifier!DBT == StripModifier!SBT))
+{
+  assert(dest.length == source.length, "array lengths do not match");
+  memcpy(dest.ptr,source.ptr,dest.length * typeof(*dest.ptr).sizeof);
+  callPostBlit(dest);
+}
+
+void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(is(DT == struct) && is(DT == ST))
+{
+  memcpy(&dest,&source,DT.sizeof);
+  static if(is(typeof(dest.__postblit)))
+  {
+    dest.__postblit();
+  }
+}
+
+void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(!is(DT == struct) && !is(DT U == U[]) && is(StripModifier!DT == StripModifier!ST))
+{
+  dest = source;
 }

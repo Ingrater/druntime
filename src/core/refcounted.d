@@ -174,8 +174,7 @@ public:
     }
   }
   
-  static auto AllocateArray(InitializeMemoryWith meminit = InitializeMemoryWith.INIT)
-                           (size_t size, bool doInit = true)
+  static auto AllocateArray(size_t size, InitializeMemoryWith meminit = InitializeMemoryWith.INIT)
   {
     //TODO replace enforce
     //enforce(size > 0,"can not create a array of size 0");
@@ -190,26 +189,27 @@ public:
     (cast(byte[]) blop)[0..headerSize] = typeid(typeof(this)).init[];
     auto result = cast(typeof(this))mem;
     
-    static if(meminit == InitializeMemoryWith.NULL)
+    final switch(meminit)
     {
-      if(doInit)
+      case InitializeMemoryWith.NULL:
         memset(mem + headerSize,0,bytesToAllocate - headerSize);
-    }
-    static if(meminit == InitializeMemoryWith.INIT)
-    {
-      if(doInit)
-      {
-        auto arrayData = (cast(BT*)(mem + headerSize))[0..size];
-        foreach(ref BT e; arrayData)
+        break;
+      case InitializeMemoryWith.INIT:
         {
-          // If it is a struct cant use the assignment operator
-          // otherwise the assignment operator might work on a non initialized instance
-          static if(is(BT == struct))
-            memcpy(&e,&BT.init,BT.sizeof);
-          else
-            e = BT.init;
+          auto arrayData = (cast(BT*)(mem + headerSize))[0..size];
+          foreach(ref BT e; arrayData)
+          {
+            // If it is a struct cant use the assignment operator
+            // otherwise the assignment operator might work on a non initialized instance
+            static if(is(BT == struct))
+              memcpy(&e,&BT.init,BT.sizeof);
+            else
+              e = BT.init;
+          }
         }
-      }
+        break;
+      case InitializeMemoryWith.NOTHING:
+        break;
     }   
     
     result.data = (cast(T*)(mem + headerSize))[0..size];
@@ -276,12 +276,11 @@ struct RCArray(T,AT = StdAllocator)
   private void ConstructFromArray(U)(U init) 
     if(is(U : BT[]) || is(U : immutable(BT)[]) || is(U : const(BT)[]))
   {
-    m_DataObject = data_t.AllocateArray(init.length,false);
+    m_DataObject = data_t.AllocateArray(init.length, InitializeMemoryWith.NOTHING);
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
     auto mem = cast(BT[])m_Data;
-    mem[] = cast(BT[])init[];
-    callPostBlit(mem);
+    uninitializedCopy(mem[], cast(BT[])init[]);
   }
   
   static if(IsPOD!(BT))
@@ -385,7 +384,7 @@ struct RCArray(T,AT = StdAllocator)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
-    auto newData = data_t.AllocateArray(rh.length,false);
+    auto newData = data_t.AllocateArray(rh.length,InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])newData.data;
     mem[] = rh[];
     m_DataObject = newData;
@@ -399,10 +398,9 @@ struct RCArray(T,AT = StdAllocator)
     {
       if(m_DataObject !is null)
         m_DataObject.RemoveReference();
-      auto newData = data_t.AllocateArray(rh.length,false);
+      auto newData = data_t.AllocateArray(rh.length,InitializeMemoryWith.NOTHING);
       auto mem = cast(BT[])newData.data;
-      mem[] = rh[];
-      callPostBlit(mem);
+      uninitializedCopy(mem[],rh[]);
       m_DataObject = newData;
       m_DataObject.AddReference();
       m_Data = newData.data;      
@@ -415,7 +413,7 @@ struct RCArray(T,AT = StdAllocator)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
-    auto newData = data_t.AllocateArray(rh.length,false);
+    auto newData = data_t.AllocateArray(rh.length,InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])newData.data;
     mem[] = rh[];
     m_DataObject = newData;
@@ -436,10 +434,9 @@ struct RCArray(T,AT = StdAllocator)
   this_t dup()
   {
     assert(m_Data !is null,"nothing to duplicate");
-    auto copy = data_t.AllocateArray(m_Data.length,false);
+    auto copy = data_t.AllocateArray(m_Data.length,InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])copy.data;
-    mem[] = m_Data[];
-    callPostBlit(mem);
+    uninitializedCopy(mem[], m_Data[]);
     return this_t(copy);
   }
   
@@ -491,16 +488,17 @@ struct RCArray(T,AT = StdAllocator)
   
   void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == this_t) || is(U : BT[]) || is(U : const(BT)[]) || is(U : immutable(BT)[])))
   {
-    auto newData = data_t.AllocateArray(m_Data.length + rh.length, false);
+    auto newData = data_t.AllocateArray(m_Data.length + rh.length, InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])newData.data;
     if(m_Data.length > 0)
     {
-      mem[0..m_Data.length] = m_Data[];
-      callPostBlit(mem[0..m_Data.length]);
-      mem[m_Data.length..$] = rh[];
+      uninitializedCopy(mem[0..m_Data.length], m_Data[]);
+      uninitializedCopy(mem[m_Data.length..$], rh[]);
     }
     else
-      mem[0..$] = rh[];
+    {
+      uninitializedCopy(mem[0..$], rh[]);
+    }
 
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -511,17 +509,17 @@ struct RCArray(T,AT = StdAllocator)
   
   void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == T) || IsPOD!(BT) && is(U == BT)))
   {
-    auto newData = data_t.AllocateArray(m_Data.length + 1);
+    auto newData = data_t.AllocateArray(m_Data.length + 1, InitializeMemoryWith.NOTHING);
     if(m_Data.length > 0)
     {
       auto mem = cast(BT[])newData.data;
-      mem[0..m_Data.length] = m_Data[];
-      callPostBlit(mem[0..m_Data.length]);
-      mem[m_Data.length] = rh;
+
+      uninitializedCopy(mem[0..m_Data.length], m_Data[]);
+      uninitializedCopy(mem[m_Data.length], rh);
     }
     else
     {
-      (cast(BT[])newData.data)[m_Data.length] = rh;
+      uninitializedCopy((cast(BT[])newData.data)[m_Data.length], rh);
     }
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -540,7 +538,7 @@ struct RCArray(T,AT = StdAllocator)
                                       (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
                                      ))
   {
-    auto result = data_t.AllocateArray(this.length + rh.length,false);
+    auto result = data_t.AllocateArray(this.length + rh.length,InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])result[];
     mem[0..this.length] = this[];
     mem[this.length..$] = rh[];
@@ -554,9 +552,8 @@ struct RCArray(T,AT = StdAllocator)
   {
     auto result = data_t.AllocateArray(this.length + 1);
     auto mem = cast(BT[])result[];
-    mem[0..this.length] = this[];
-    callPostBlit(mem[0..this.length]);
-    mem[this.length] = rh;
+    uninitializedCopy(mem[0..this.length], this[]);
+    uninitializedCopy(mem[this.length], rh);
     return this_t(result);
   }
   
@@ -567,9 +564,10 @@ struct RCArray(T,AT = StdAllocator)
   {
     auto result = data_t.AllocateArray(this.length + lh.length);
     auto mem = cast(BT[])result[];
-    mem[0..lh.length] = lh[];
-    mem[lh.length..$] = this[];
-    callPostBlit(mem);
+
+    uninitializedCopy(mem[0..lh.length], lh[]);
+    uninitializedCopy(mem[lh.length..$], this[]);
+
     return this_t(result);
   }
   
@@ -579,9 +577,8 @@ struct RCArray(T,AT = StdAllocator)
   {
     auto result = data_t.AllocateArray(this.length + 1);
     auto mem = cast(BT[])result[];
-    mem[0] = lh;
-    mem[1..$] = this[];
-    callPostBlit(mem[1..$]);
+    uninitializedCopy(mem[0], lh);
+    uninitializedCopy(mem[1..$], this[]);
     return this_t(result);
   }
   

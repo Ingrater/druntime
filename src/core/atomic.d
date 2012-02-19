@@ -1084,7 +1084,7 @@ version( unittest )
         testType!(int)();
         testType!(uint)();
 
-        testType!(shared int*)();
+        //testType!(shared int*)();
 
         static class Klass {}
         testCAS!(shared Klass)( new shared(Klass) );

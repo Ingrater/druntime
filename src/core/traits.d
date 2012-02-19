@@ -67,30 +67,57 @@ unittest
   static assert(is(int == StripModifier!(int)));
 }
 
+private bool IsPODStruct(T)()
+{
+  foreach(m; __traits(allMembers,T))
+  {
+    static if((m.length < 2 || m[0..2] != "__") && m != "this"){
+      static if(__traits(compiles,typeof(__traits(getMember,T,m)))){
+        static if(IsPOD!(typeof(__traits(getMember,T,m))) == false)
+          return false;
+      }
+    }
+  }
+  return true;
+}
+
 /**
  * Checks if a given type is a POD or not
  */
 template IsPOD(T)
 {
-  static if(is(T U : U*))
+  static if(is(T U : U*)) //pointer
   {
     enum bool IsPOD = false;
   }
-  else static if(is(T U : U[]))
+  else static if(is(T U : U[N], size_t N)) //static array
+  {
+    enum bool IsPOD = IsPOD!U;
+  }
+  else static if(is(T U : U[N], N)) //associative array
   {
     enum bool IsPOD = false;
   }
-  else static if(is(T == class))
+  else static if(is(T U : U[])) //array
   {
     enum bool IsPOD = false;
   }
-  else static if(is(T == struct)) //TODO better checking for structs
+  else static if(is(T == class)) //reference
+  {
+    enum bool IsPOD = false;
+  }
+  else static if(is(T == struct)) //struct
+  {
+    enum bool IsPOD = IsPODStruct!T();
+  }
+  else static if(is(T == function) || is(T == delegate)) //function / delegate
   {
     enum bool IsPOD = false;
   }
   else {
-    enum bool IsPOD = true;
+    enum bool IsPOD = true; //the rest (int,float,double etc)
   }
+  //TODO check for static arrays
 }
 
 unittest
@@ -111,6 +138,52 @@ unittest
   static assert(IsPOD!(shared(int[])) == false);
   static assert(IsPOD!(immutable(int)[]) == false);
   static assert(IsPOD!(immutable(int[])) == false);
+
+  struct TestStruct1
+  {
+    alias int custom_t;
+    alias void function(int) func_t;
+    int i;
+    double d;
+    float f;
+  }
+
+  static assert(IsPOD!TestStruct1 == true);
+
+  struct TestStruct2
+  {
+    Object o;
+  }
+
+  static assert(IsPOD!TestStruct2 == false);
+
+  struct TestStruct3
+  {
+    int* ptr;
+  }
+
+  static assert(IsPOD!TestStruct3 == false);
+
+  struct TestStruct4
+  {
+    int*[4] ptrArray;
+  }
+
+  static assert(IsPOD!TestStruct4 == false);
+
+  struct TestStruct5
+  {
+    int[4] array;
+  }
+
+  static assert(IsPOD!TestStruct5 == true);
+
+  struct TestStruct6
+  {
+    int[string] hashtable;
+  }
+
+  static assert(IsPOD!TestStruct6 == false);
 }
 
 template RCArrayType(T : RCArray!T)
