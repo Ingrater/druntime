@@ -4,6 +4,7 @@ public import core.allocator;
 import core.atomic;
 import core.stdc.string; // for memcpy
 import core.traits;
+import core.hashmap;
 
 abstract class RefCountedBase
 {
@@ -107,15 +108,15 @@ struct SmartPtr(T)
       ptr.RemoveReference();
   }
   
-  static if(!is(typeof(null) == void*))
-  {
+  //static if(!is(typeof(null) == void*))
+  //{
     void opAssign(typeof(null) obj)
     {
       if(ptr !is null)
         ptr.RemoveReference();
       ptr = null;
     }
-  }
+  //}
   
   void opAssign(T obj)
   {
@@ -645,6 +646,16 @@ struct RCArray(T,AT = StdAllocator)
   int opCmp(this_t rh)
   {
     return (this[] < rh[]);
+  }
+
+  uint Hash() const
+  {
+    return hashOf(m_Data.ptr, m_Data.length);
+  }
+
+  uint Hash() immutable
+  {
+    return hashOf(m_Data.ptr, m_Data.length);
   }
 }
 

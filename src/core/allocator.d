@@ -485,7 +485,7 @@ auto NewArray(T)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.I
 auto AllocatorNewArray(T,AT)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT)
 {
   size_t memSize = T.sizeof * size;
-  void* mem = AT.AllocateMemory(memsize);
+  void* mem = AT.AllocateMemory(memSize);
   
   T[] data = (cast(T*)mem)[0..size];
   final switch(init)
@@ -510,7 +510,7 @@ auto AllocatorNewArray(T,AT)(size_t size, InitializeMemoryWith init = Initialize
       }
       break;
     case InitializeMemoryWith.NULL:
-      memset(mem,0,memsize);
+      memset(mem,0,memSize);
       break;
   }
   return data;
@@ -531,6 +531,33 @@ void callPostBlit(T)(T[] array) if(!is(T == struct))
 {
 }
 
+void callDtor(T)(T subject)
+{
+  static if(is(T U == V[], V))
+  {
+    static if(is(V == struct))
+    {
+      static if(is(typeof(array[0].__dtor)))
+      {
+        foreach(ref el; array)
+        {
+          el.__dtor();
+        }
+      }
+    }
+  }
+  else
+  {
+    static if(is(T == struct))
+    {
+      static if(is(typeof(subject.__dtor)))
+      {
+        subject.__dtor();
+      }
+    }
+  }
+}
+
 void uninitializedCopy(DT,ST)(DT dest, ST source) 
 if(is(DT DBT == DBT[]) && is(ST SBT == SBT[]) 
    && is(StripModifier!DBT == StripModifier!SBT))
@@ -539,6 +566,17 @@ if(is(DT DBT == DBT[]) && is(ST SBT == SBT[])
   memcpy(dest.ptr,source.ptr,dest.length * typeof(*dest.ptr).sizeof);
   callPostBlit(dest);
 }
+
+void copy(DT,ST)(DT dest, ST source) 
+if(is(DT DBT == DBT[]) && is(ST SBT == SBT[]) 
+   && is(StripModifier!DBT == StripModifier!SBT))
+{
+  assert(dest.length == source.length, "array lengths do not match");
+  callDtor(dest);
+  memcpy(dest.ptr,source.ptr,dest.length * typeof(*dest.ptr).sizeof);
+  callPostBlit(dest);
+}
+
 
 void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(is(DT == struct) && is(DT == ST))
 {
@@ -552,4 +590,12 @@ void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(is(DT == struct) &&
 void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(!is(DT == struct) && !is(DT U == U[]) && is(StripModifier!DT == StripModifier!ST))
 {
   dest = source;
+}
+
+void uninitializedMove(DT,ST)(DT dest, ST source) 
+if(is(DT DBT == DBT[]) && is(ST SBT == SBT[]) 
+   && is(StripModifier!DBT == StripModifier!SBT))
+{
+  assert(dest.length == source.length, "array lengths do not match");
+  memcpy(dest.ptr,source.ptr,dest.length * typeof(*dest.ptr).sizeof);
 }
