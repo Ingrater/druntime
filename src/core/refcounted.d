@@ -68,15 +68,19 @@ protected:
     m_allocator = &allocator;
   }
 
-  this()
+  static if(is(typeof(allocator_t.globalInstance)))
   {
-    this(g_stdAllocator);
+    this()
+    {
+      this(allocator_t.globalInstance);
+    }
   }
 
   override void Release()
   {
+    AT* allocator = m_allocator;
     clear(this);
-    m_allocator.FreeMemory(cast(void*)this);
+    allocator.FreeMemory(cast(void*)this);
   }
 }
 
@@ -201,6 +205,9 @@ public:
     //initialize header
     (cast(byte[]) blop)[0..headerSize] = typeid(typeof(this)).init[];
     auto result = cast(typeof(this))mem;
+
+    //call default ctor
+    result.__ctor();
     
     final switch(meminit)
     {
@@ -212,10 +219,10 @@ public:
           auto arrayData = (cast(BT*)(mem + headerSize))[0..size];
           foreach(ref BT e; arrayData)
           {
-            // If it is a struct cant use the assignment operator
+            // If it is a struct can't use the assignment operator
             // otherwise the assignment operator might work on a non initialized instance
             static if(is(BT == struct))
-              memcpy(&e,&BT.init,BT.sizeof);
+              memcpy(&e,BT.init.ptr,BT.sizeof);
             else
               e = BT.init;
           }
