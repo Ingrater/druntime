@@ -56,18 +56,18 @@ private struct PointerHashPolicy
 private {
   extern(C) void _initMemoryTracking()
   {
-    StdAllocator.InitMemoryTracking();
+    StdAllocator.globalInstance.InitMemoryTracking();
   }
 
   extern(C) void _deinitMemoryTracking()
   {
-    StdAllocator.DeinitMemoryTracking();
+    StdAllocator.globalInstance.DeinitMemoryTracking();
   }
 }
 
 private struct TrackingAllocator
 {
-  static void* AllocateMemory(size_t size, size_t alignment = 0)
+  void* AllocateMemory(size_t size, size_t alignment = 0)
   {
     version(DUMA)
       return _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
@@ -75,7 +75,7 @@ private struct TrackingAllocator
       return malloc(size);
   }
   
-  static void* RellocateMemory(void* mem, size_t size)
+  void* RellocateMemory(void* mem, size_t size)
   {
     version(DUMA)
     {
@@ -87,7 +87,7 @@ private struct TrackingAllocator
       return realloc(mem,size);
   }
   
-  static void FreeMemory(void* mem)
+  void FreeMemory(void* mem)
   {
     version(DUMA)
       return _duma_free(mem,__FILE__,__LINE__);
@@ -96,8 +96,12 @@ private struct TrackingAllocator
   }
 }
 
+private TrackingAllocator g_trackingAllocator;
+
 struct StdAllocator 
 {
+  alias g_stdAllocator globalInstance;
+
   struct MemoryBlockInfo
   {
     size_t size;
@@ -125,21 +129,21 @@ struct StdAllocator
   alias void* delegate(void* ptr, size_t newSize) OnReallocateMemoryDelegate;
 
   
-  private __gshared Mutex m_allocMutex;
-  private __gshared Hashmap!(void*, MemoryBlockInfo, PointerHashPolicy, TrackingAllocator) m_memoryMap;
-  __gshared OnAllocateMemoryDelegate OnAllocateMemoryCallback;
-  __gshared OnFreeMemoryDelegate OnFreeMemoryCallback;
-  __gshared OnReallocateMemoryDelegate OnReallocateMemoryCallback;
+  private Mutex m_allocMutex;
+  private Hashmap!(void*, MemoryBlockInfo, PointerHashPolicy, TrackingAllocator) m_memoryMap;
+  OnAllocateMemoryDelegate OnAllocateMemoryCallback;
+  OnFreeMemoryDelegate OnFreeMemoryCallback;
+  OnReallocateMemoryDelegate OnReallocateMemoryCallback;
 
   
-  static void InitMemoryTracking()
+  void InitMemoryTracking()
   {
     printf("initializing memory tracking\n");
-    m_memoryMap = New!(typeof(m_memoryMap))();
+    m_memoryMap = AllocatorNew!(typeof(m_memoryMap), TrackingAllocator)(g_trackingAllocator, g_trackingAllocator);
     m_allocMutex = New!Mutex();
   }
   
-  static void DeinitMemoryTracking()
+  void DeinitMemoryTracking()
   {
     //Set the allocation mutex to null so that any allocations that happen during
     //resolving don't get added to the hashmap to prevent recursion and changing of
@@ -150,9 +154,11 @@ struct StdAllocator
     printf("deinitializing memory tracking\n");
     printf("Found %d memory leaks",m_memoryMap.count);
     FILE* log = null;
+    void* min = null;
+    void* max = null;
     if(m_memoryMap.count > 0)
       log = fopen("memoryleaks.log","wb");
-    foreach(ref leak; m_memoryMap)
+    foreach(ref void* addr, ref leak; m_memoryMap)
     {
       printf("---------------------------------\n");
       if(log !is null) fprintf(log,"---------------------------------\n");
@@ -165,10 +171,69 @@ struct StdAllocator
         printf("%s\n",line.ptr);
         if(log !is null) fprintf(log, "%s\n",line.ptr);
       }
+
+      if(min == null)
+      {
+        min = addr;
+        max = addr;
+      }
+      else
+      {
+        min = (min > addr) ? addr : min;
+        max = (max < addr) ? addr : max;
+      }
     }
 
     if( m_memoryMap.count > 0)
     {
+      //find root leaks
+      auto nonRootMap = AllocatorNew!(Hashmap!(void*, bool, PointerHashPolicy, TrackingAllocator), TrackingAllocator)(g_trackingAllocator, g_trackingAllocator);
+      
+      foreach(void* addr, ref leak; m_memoryMap)
+      {
+        void*[] ptrs = (cast(void**)addr)[0..(leak.size / (void*).sizeof)];
+        foreach(ptr; ptrs)
+        {
+          if(ptr >= min && ptr <= max && cast(size_t)ptr % 4 == 0)
+          {
+            if(m_memoryMap.exists(ptr))
+            {
+              nonRootMap[ptr] = true;
+            }
+          }
+        }
+      }
+
+      if(m_memoryMap.count > nonRootMap.count)
+      {
+        printf("---------------------------------\n");
+        printf("ROOTS\n");
+        if(log !is null)
+        {
+          fprintf(log, "---------------------------------\n");
+          fprintf(log, "ROOTS\n");
+        }
+        foreach(void* addr, ref leak; m_memoryMap)
+        {
+          if(nonRootMap.exists(addr)) //skip non roots
+            continue;
+          printf("---------------------------------\n");
+          if(log !is null) fprintf(log,"---------------------------------\n");
+          printf("memory leak %d bytes\n",leak.size);
+          if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
+          auto trace = StackTrace.resolveAddresses(leak.backtrace);
+          foreach(ref line; trace)
+          {
+            line ~= "\0";
+            printf("%s\n",line.ptr);
+            if(log !is null) fprintf(log, "%s\n",line.ptr);
+          }
+        }
+      }
+
+      Delete(nonRootMap);
+
+      //close logfile
       if(log !is null) fclose(log);
       debug
       {
@@ -179,7 +244,7 @@ struct StdAllocator
     Delete(m_memoryMap);
   }
   
-  export static void* AllocateMemory(size_t size, size_t alignment = 0)
+  void* AllocateMemory(size_t size, size_t alignment = 0)
   {
     void* mem = (OnFreeMemoryCallback is null) ? null : OnAllocateMemoryCallback(size,alignment);
     if(mem is null)
@@ -207,7 +272,7 @@ struct StdAllocator
     return mem;
   }
   
-  export static void* ReallocateMemory(void* ptr, size_t size)
+  void* ReallocateMemory(void* ptr, size_t size)
   {
     if( m_allocMutex !is null)
     {
@@ -281,7 +346,7 @@ struct StdAllocator
     return mem;
   }
   
-  export static void FreeMemory(void* ptr)
+  void FreeMemory(void* ptr)
   {
     if( ptr !is null)
     {
@@ -305,9 +370,11 @@ struct StdAllocator
   }
 }
 
+StdAllocator g_stdAllocator;
+
 auto New(T,ARGS...)(ARGS args)
 {
-  return AllocatorNew!(T,StdAllocator,ARGS)(args);
+  return AllocatorNew!(T,StdAllocator,ARGS)(StdAllocator.globalInstance, args);
 }
 
 string ListAvailableCtors(T)()
@@ -318,7 +385,7 @@ string ListAvailableCtors(T)()
   return result;
 }
 
-auto AllocatorNew(T,AT,ARGS...)(ARGS args)
+auto AllocatorNew(T,AT,ARGS...)(ref AT allocator, ARGS args)
 {
   static if(is(T == class))
   {
@@ -328,7 +395,7 @@ auto AllocatorNew(T,AT,ARGS...)(ARGS args)
     size_t memSize = T.sizeof;
   }
   
-  void *mem = AT.AllocateMemory(memSize);
+  void *mem = allocator.AllocateMemory(memSize);
   assert(mem !is null,"Out of memory");
   auto address = cast(size_t)mem;
   assert(address % T.alignof == 0,"Missaligned memory");  
@@ -380,7 +447,7 @@ auto AllocatorNew(T,AT,ARGS...)(ARGS args)
 
 void Delete(T)(T mem)
 {
-  AllocatorDelete!(T,StdAllocator)(mem);
+  AllocatorDelete!(T,StdAllocator)(StdAllocator.globalInstance, mem);
 }
 
 void Destruct(Object obj)
@@ -442,7 +509,7 @@ struct composite(T)
   }
 }
 
-void AllocatorDelete(T,AT)(T obj)
+void AllocatorDelete(T,AT)(ref AT allocator, T obj)
 {
   static assert(!is(T U == composite!U), "can not delete composited instance");
   static if(is(T == class))
@@ -450,7 +517,7 @@ void AllocatorDelete(T,AT)(T obj)
     if(obj is null)
       return;
     rt_finalize(cast(void*)obj);
-    AT.FreeMemory(cast(void*)obj);
+    allocator.FreeMemory(cast(void*)obj);
   }
   else static if(is(T P == U*, U))
   {
@@ -460,7 +527,7 @@ void AllocatorDelete(T,AT)(T obj)
     {
       obj.__dtor();
     }
-    AT.FreeMemory(cast(void*)obj);
+    allocator.FreeMemory(cast(void*)obj);
   }
   else static if(is(T P == U[], U))
   {
@@ -474,18 +541,18 @@ void AllocatorDelete(T,AT)(T obj)
       }
     }
   
-    AT.FreeMemory(cast(void*)obj.ptr);    
+    allocator.FreeMemory(cast(void*)obj.ptr);    
   }
 }
 
 auto NewArray(T)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT){
-  return AllocatorNewArray!(T,StdAllocator)(size,init);
+  return AllocatorNewArray!(T,StdAllocator)(StdAllocator.globalInstance, size,init);
 }
 
-auto AllocatorNewArray(T,AT)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT)
+auto AllocatorNewArray(T,AT)(ref AT allocator, size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT)
 {
   size_t memSize = T.sizeof * size;
-  void* mem = AT.AllocateMemory(memSize);
+  void* mem = allocator.AllocateMemory(memSize);
   
   T[] data = (cast(T*)mem)[0..size];
   final switch(init)
@@ -516,19 +583,31 @@ auto AllocatorNewArray(T,AT)(size_t size, InitializeMemoryWith init = Initialize
   return data;
 }
 
-void callPostBlit(T)(T[] array) if(is(T == struct))
+void callPostBlit(T)(T subject)
 {
-  static if(is(typeof(array[0].__postblit)))
+  static if(is(T U == V[], V))
   {
-    foreach(ref el; array)
+    static if(is(V == struct))
     {
-      el.__postblit();
+      static if(is(typeof(subject[0].__postblit)))
+      {
+        foreach(ref el; subject)
+        {
+          el.__postblit();
+        }
+      }
     }
   }
-}
-
-void callPostBlit(T)(T[] array) if(!is(T == struct))
-{
+  else
+  {
+    static if(is(T == struct))
+    {
+      static if(is(typeof(subject.__postblit)))
+      {
+        subject.__postblit();
+      }
+    }
+  }
 }
 
 void callDtor(T)(T subject)
@@ -537,9 +616,9 @@ void callDtor(T)(T subject)
   {
     static if(is(V == struct))
     {
-      static if(is(typeof(array[0].__dtor)))
+      static if(is(typeof(subject.__dtor)))
       {
-        foreach(ref el; array)
+        foreach(ref el; subject)
         {
           el.__dtor();
         }

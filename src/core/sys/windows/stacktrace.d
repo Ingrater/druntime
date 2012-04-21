@@ -343,7 +343,7 @@ private:
             {
               if(addresses.ptr != addressesBuffer.ptr)
               {
-                StdAllocator.FreeMemory(addresses.ptr);
+                StdAllocator.globalInstance.FreeMemory(addresses.ptr);
               }
             }
             return result;
@@ -418,12 +418,12 @@ private:
                 {
                   if(allocated)
                   {
-                    long* mem = cast(long*)StdAllocator.ReallocateMemory(addresses.ptr,addresses.length * 2 * long.sizeof);
+                    long* mem = cast(long*)StdAllocator.globalInstance.ReallocateMemory(addresses.ptr,addresses.length * 2 * long.sizeof);
                     addresses = mem[0..(addresses.length * 2)];
                   }
                   else
                   {
-                    long* mem = cast(long*)StdAllocator.AllocateMemory(addresses.length * 2 * long.sizeof);
+                    long* mem = cast(long*)StdAllocator.globalInstance.AllocateMemory(addresses.length * 2 * long.sizeof);
                     addresses = mem[0..(addresses.length * 2)];
                     allocated = true;
                   }
@@ -499,7 +499,7 @@ private:
                         char[] demangledName = demangle( symbolName, demangleBuf );
                         cur ~= demangledName;
                         if(demangledName.ptr != demangleBuf.ptr)
-                          StdAllocator.FreeMemory(demangledName.ptr);
+                          StdAllocator.globalInstance.FreeMemory(demangledName.ptr);
                       }
                       catch(Exception ex)
                       {

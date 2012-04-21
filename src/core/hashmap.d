@@ -116,18 +116,28 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
   
     Pair[] m_Data;
     size_t m_FullCount = 0;
+    AT* m_allocator;
     
     enum uint INITIAL_SIZE = 4;
   
   public:
     
-    this()
+    this(ref AT allocator)
     {
-      m_Data = (cast(Pair*)AT.AllocateMemory(Pair.sizeof * INITIAL_SIZE))[0..INITIAL_SIZE];
+      m_allocator = &allocator;
+      m_Data = (cast(Pair*)allocator.AllocateMemory(Pair.sizeof * INITIAL_SIZE))[0..INITIAL_SIZE];
       
       foreach(ref entry;m_Data)
       {
         entry.state = State.Free;
+      }
+    }
+
+    static if(is(AT == StdAllocator))
+    {
+      this()
+      {
+        this(g_stdAllocator);
       }
     }
   
@@ -135,7 +145,7 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     {
       if(m_Data.ptr !is null)
       {
-        AT.FreeMemory(m_Data.ptr);
+        m_allocator.FreeMemory(m_Data.ptr);
         m_Data = [];
       }
     }
@@ -158,7 +168,7 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       if(m_FullCount > m_Data.length / 2 || m_FullCount >= m_Data.length)
       {
         Pair[] oldData = m_Data;
-        m_Data = (cast(Pair*)AT.AllocateMemory(oldData.length * 2 * Pair.sizeof))[0..oldData.length*2];
+        m_Data = (cast(Pair*)m_allocator.AllocateMemory(oldData.length * 2 * Pair.sizeof))[0..oldData.length*2];
         foreach(ref entry; m_Data)
         {
           entry.state = State.Free;
