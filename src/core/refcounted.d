@@ -55,16 +55,28 @@ public:
   }
 }
 
-abstract class RefCountedImpl(T) : RefCountedBase
+abstract class RefCountedImpl(AT) : RefCountedBase
 {
 public:
-  alias T allocator_t;
+  alias AT allocator_t;
+  AT* m_allocator;
 
 protected:
+
+  this(ref AT allocator)
+  {
+    m_allocator = &allocator;
+  }
+
+  this()
+  {
+    this(g_stdAllocator);
+  }
+
   override void Release()
   {
     clear(this);
-    T.FreeMemory(cast(void*)this);
+    m_allocator.FreeMemory(cast(void*)this);
   }
 }
 
@@ -181,7 +193,7 @@ public:
     //enforce(size > 0,"can not create a array of size 0");
     size_t headerSize = __traits(classInstanceSize,typeof(this));
     size_t bytesToAllocate = headerSize + (T.sizeof * size);
-    void* mem = allocator_t.AllocateMemory(bytesToAllocate);
+    void* mem = allocator_t.globalInstance.AllocateMemory(bytesToAllocate);
     auto address = cast(size_t)mem;
     assert(address % T.alignof == 0,"Missaligned array memory");
     void[] blop = mem[0..bytesToAllocate];
@@ -254,11 +266,13 @@ struct RCArray(T,AT = StdAllocator)
   alias typeof(this) this_t;
   private data_t m_DataObject;
   private T[] m_Data;
+
+  static assert(is(typeof(AT.globalInstance)), "the allocator for a refcounted array needs to have a global instance");
   
   alias StripModifier!(T) BT; //base type
   
-  
-  this(size_t size){
+  this(size_t size)
+  {
     m_DataObject = data_t.AllocateArray(size);
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
@@ -286,17 +300,17 @@ struct RCArray(T,AT = StdAllocator)
   
   static if(IsPOD!(BT))
   {
-  
+
     this(BT[] init) 
     {
       ConstructFromArray(init);
     }
-    
+
     this(const(BT[]) init)
     {
       ConstructFromArray(init);
     }
-    
+
     this(immutable(BT[]) init)
     {
       ConstructFromArray(init);
@@ -385,7 +399,7 @@ struct RCArray(T,AT = StdAllocator)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
-    auto newData = data_t.AllocateArray(rh.length,InitializeMemoryWith.NOTHING);
+    auto newData = data_t.AllocateArray(rh.length, InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])newData.data;
     mem[] = rh[];
     m_DataObject = newData;
@@ -399,7 +413,7 @@ struct RCArray(T,AT = StdAllocator)
     {
       if(m_DataObject !is null)
         m_DataObject.RemoveReference();
-      auto newData = data_t.AllocateArray(rh.length,InitializeMemoryWith.NOTHING);
+      auto newData = data_t.AllocateArray(rh.length, InitializeMemoryWith.NOTHING);
       auto mem = cast(BT[])newData.data;
       uninitializedCopy(mem[],rh[]);
       m_DataObject = newData;
@@ -435,7 +449,7 @@ struct RCArray(T,AT = StdAllocator)
   this_t dup()
   {
     assert(m_Data !is null,"nothing to duplicate");
-    auto copy = data_t.AllocateArray(m_Data.length,InitializeMemoryWith.NOTHING);
+    auto copy = data_t.AllocateArray(m_Data.length, InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])copy.data;
     uninitializedCopy(mem[], m_Data[]);
     return this_t(copy);
