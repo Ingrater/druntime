@@ -337,9 +337,9 @@ auto AllocatorNew(T,AT,ARGS...)(ARGS args)
   static if(is(T == class))
   {
     void[] blop = mem[0..memSize];
-    auto ti = typeid(T);
+    auto ti = typeid(StripModifier!T);
     assert(memSize == ti.init.length,"classInstanceSize and typeid(T).init.length do not match");
-    (cast(byte[])blop)[] = ti.init[];
+    blop[] = (cast(void[])ti.init)[];
     auto result = (cast(T)mem);
     static if(is(typeof(result.__ctor(args))))
     {
