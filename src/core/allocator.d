@@ -101,6 +101,7 @@ private TrackingAllocator g_trackingAllocator;
 struct StdAllocator 
 {
   alias g_stdAllocator globalInstance;
+  enum size_t alignment = 4; //default alignment 4 byte
 
   struct MemoryBlockInfo
   {
@@ -445,9 +446,20 @@ auto AllocatorNew(T,AT,ARGS...)(ref AT allocator, ARGS args)
   }
 }
 
+/**
+ * Deletes an object / array and destroys it
+ */
 void Delete(T)(T mem)
 {
   AllocatorDelete!(T,StdAllocator)(StdAllocator.globalInstance, mem);
+}
+
+/**
+ * Frees the memory pointed at by the object / array
+ */
+void Free(T)(T mem)
+{
+  AlloactorFree!(T,StdAllocator)(StdAllocator.globalInstance, mem);
 }
 
 void Destruct(Object obj)
@@ -541,6 +553,29 @@ void AllocatorDelete(T,AT)(ref AT allocator, T obj)
       }
     }
   
+    allocator.FreeMemory(cast(void*)obj.ptr);    
+  }
+}
+
+void AllocatorFree(T,AT)(ref AT allocator, T obj)
+{
+  static assert(!is(T U == composite!U), "can not free composited instance");
+  static if(is(T == class))
+  {
+    if(obj is null)
+      return;
+    allocator.FreeMemory(cast(void*)obj);
+  }
+  else static if(is(T P == U*, U))
+  {
+    if(obj is null)
+      return;
+    allocator.FreeMemory(cast(void*)obj);
+  }
+  else static if(is(T P == U[], U))
+  {
+    if(!obj)
+      return;
     allocator.FreeMemory(cast(void*)obj.ptr);    
   }
 }
