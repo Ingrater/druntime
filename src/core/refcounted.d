@@ -197,7 +197,7 @@ public:
     //enforce(size > 0,"can not create a array of size 0");
     size_t headerSize = __traits(classInstanceSize,typeof(this));
     size_t bytesToAllocate = headerSize + (T.sizeof * size);
-    void* mem = allocator_t.globalInstance.AllocateMemory(bytesToAllocate);
+    void* mem = allocator_t.globalInstance.AllocateMemory(bytesToAllocate).ptr;
     auto address = cast(size_t)mem;
     assert(address % T.alignof == 0,"Missaligned array memory");
     void[] blop = mem[0..bytesToAllocate];

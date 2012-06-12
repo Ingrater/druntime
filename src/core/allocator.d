@@ -56,26 +56,62 @@ private struct PointerHashPolicy
 private {
   extern(C) void _initMemoryTracking()
   {
+    g_stdAllocatorMem[] = typeid(StdAllocator).init[];
+    g_stdAllocator = cast(StdAllocator)g_stdAllocatorMem.ptr;
+    static if(is(typeof(g_stdAllocator.__ctor())))
+    {
+      g_stdAllocator.__ctor();
+    }
     StdAllocator.globalInstance.InitMemoryTracking();
   }
 
   extern(C) void _deinitMemoryTracking()
   {
     StdAllocator.globalInstance.DeinitMemoryTracking();
+    Destruct(g_stdAllocator);
   }
 }
 
-private struct TrackingAllocator
+interface IAllocator
 {
-  void* AllocateMemory(size_t size, size_t alignment = 0)
+  /**
+   * allocates a block of memory
+   * Params:
+   *   size = the size in bytes to allocate
+   * Returns: the allocated block of memory or a empty array if allocation failed
+   */
+  void[] AllocateMemory(size_t size);
+
+  /**
+   * Frees a block of memory
+   * Params:
+   *   mem = pointer to the start of the memory block to free
+   */
+  void FreeMemory(void* mem);
+}
+
+interface IAdvancedAllocator : IAllocator
+{
+  /**
+  * tries to resize a block of memory, if not possible allocates a new block and copies all data to it
+  * Params:
+  *   mem = pointer to the block of memory which should be resized
+  *   size = new size the block should have in bytes
+  */
+  void[] ReallocateMemory(void* mem, size_t size);
+}
+
+private class TrackingAllocator : IAdvancedAllocator
+{
+  final void[] AllocateMemory(size_t size)
   {
     version(DUMA)
       return _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
     else
-      return malloc(size);
+      return malloc(size)[0..size];
   }
   
-  void* RellocateMemory(void* mem, size_t size)
+  final void[] ReallocateMemory(void* mem, size_t size)
   {
     version(DUMA)
     {
@@ -84,10 +120,10 @@ private struct TrackingAllocator
       return temp;
     }
     else
-      return realloc(mem,size);
+      return realloc(mem,size)[0..size];
   }
   
-  void FreeMemory(void* mem)
+  final void FreeMemory(void* mem)
   {
     version(DUMA)
       return _duma_free(mem,__FILE__,__LINE__);
@@ -98,7 +134,7 @@ private struct TrackingAllocator
 
 private TrackingAllocator g_trackingAllocator;
 
-struct StdAllocator 
+class StdAllocator : IAdvancedAllocator
 {
   alias g_stdAllocator globalInstance;
   enum size_t alignment = 4; //default alignment 4 byte
@@ -137,14 +173,15 @@ struct StdAllocator
   OnReallocateMemoryDelegate OnReallocateMemoryCallback;
 
   
-  void InitMemoryTracking()
+  final void InitMemoryTracking()
   {
     printf("initializing memory tracking\n");
+    g_trackingAllocator = New!TrackingAllocator();
     m_memoryMap = AllocatorNew!(typeof(m_memoryMap), TrackingAllocator)(g_trackingAllocator, g_trackingAllocator);
     m_allocMutex = New!Mutex();
   }
   
-  void DeinitMemoryTracking()
+  final void DeinitMemoryTracking()
   {
     //Set the allocation mutex to null so that any allocations that happen during
     //resolving don't get added to the hashmap to prevent recursion and changing of
@@ -243,9 +280,10 @@ struct StdAllocator
     }
     Delete(temp);
     Delete(m_memoryMap);
+    Delete(g_trackingAllocator);
   }
   
-  void* AllocateMemory(size_t size, size_t alignment = 0)
+  final void[] AllocateMemory(size_t size)
   {
     void* mem = (OnFreeMemoryCallback is null) ? null : OnAllocateMemoryCallback(size,alignment);
     if(mem is null)
@@ -270,10 +308,10 @@ struct StdAllocator
         map[mem] = info;
       }
     }
-    return mem;
+    return mem[0..size];
   }
   
-  void* ReallocateMemory(void* ptr, size_t size)
+  final void[] ReallocateMemory(void* ptr, size_t size)
   {
     if( m_allocMutex !is null)
     {
@@ -328,7 +366,7 @@ struct StdAllocator
           //printf("changeing size of %x to %d\n",mem,size);
           m_memoryMap[mem].size = size;
         }
-        return mem;
+        return mem[0..size];
       }
     }
 
@@ -337,17 +375,17 @@ struct StdAllocator
     {
       version(DUMA)
       {
-        throw new Error("Nested duma reallocate");
+        throw New!Error("Nested duma reallocate");
       }
       else
       {
         mem = realloc(ptr,size);
       }
     }
-    return mem;
+    return mem[0..size];
   }
   
-  void FreeMemory(void* ptr)
+  final void FreeMemory(void* ptr)
   {
     if( ptr !is null)
     {
@@ -371,7 +409,8 @@ struct StdAllocator
   }
 }
 
-StdAllocator g_stdAllocator;
+__gshared StdAllocator g_stdAllocator;
+__gshared void[__traits(classInstanceSize, StdAllocator)] g_stdAllocatorMem = void;
 
 auto New(T,ARGS...)(ARGS args)
 {
@@ -396,19 +435,18 @@ auto AllocatorNew(T,AT,ARGS...)(ref AT allocator, ARGS args)
     size_t memSize = T.sizeof;
   }
   
-  void *mem = allocator.AllocateMemory(memSize);
-  assert(mem !is null,"Out of memory");
-  auto address = cast(size_t)mem;
+  void[] mem = allocator.AllocateMemory(memSize);
+  assert(mem.ptr !is null,"Out of memory");
+  auto address = cast(size_t)mem.ptr;
   assert(address % T.alignof == 0,"Missaligned memory");  
   
   //initialize
   static if(is(T == class))
   {
-    void[] blop = mem[0..memSize];
     auto ti = typeid(StripModifier!T);
     assert(memSize == ti.init.length,"classInstanceSize and typeid(T).init.length do not match");
-    blop[] = (cast(void[])ti.init)[];
-    auto result = (cast(T)mem);
+    mem[] = (cast(void[])ti.init)[];
+    auto result = (cast(T)mem.ptr);
     static if(is(typeof(result.__ctor(args))))
     {
       result.__ctor(args);
@@ -535,24 +573,14 @@ void AllocatorDelete(T,AT)(ref AT allocator, T obj)
   {
     if(obj is null)
       return;
-    static if(is(U == struct) && is(typeof(obj.__dtor())))
-    {
-      obj.__dtor();
-    }
+    callDtor(obj);
     allocator.FreeMemory(cast(void*)obj);
   }
   else static if(is(T P == U[], U))
   {
     if(!obj)
       return;
-    static if(is(U == struct) && is(typeof(obj[0].__dtor())))
-    {
-      foreach(ref e; obj)
-      {
-        e.__dtor();
-      }
-    }
-  
+    callDtor(obj);
     allocator.FreeMemory(cast(void*)obj.ptr);    
   }
 }
@@ -587,7 +615,7 @@ auto NewArray(T)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.I
 auto AllocatorNewArray(T,AT)(ref AT allocator, size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT)
 {
   size_t memSize = T.sizeof * size;
-  void* mem = allocator.AllocateMemory(memSize);
+  void* mem = allocator.AllocateMemory(memSize).ptr;
   
   T[] data = (cast(T*)mem)[0..size];
   final switch(init)
@@ -633,14 +661,21 @@ void callPostBlit(T)(T subject)
       }
     }
   }
-  else
+  else static if(is(T P == U*, U))
   {
-    static if(is(T == struct))
+    static if(is(U == struct))
     {
       static if(is(typeof(subject.__postblit)))
       {
         subject.__postblit();
       }
+    }
+  }
+  else
+  {
+    static if(is(T == struct))
+    {
+      static assert(0, "can not call postblit on copy");
     }
   }
 }
@@ -651,23 +686,52 @@ void callDtor(T)(T subject)
   {
     static if(is(V == struct))
     {
-      static if(is(typeof(subject.__dtor)))
+      auto typeinfo = typeid(V);
+      if(typeinfo.xdtor !is null)
       {
         foreach(ref el; subject)
         {
-          el.__dtor();
+          typeinfo.xdtor(&el);
         }
       }
+      //TODO: structs are currently only destroyable over a typeinfo object, fix
+      /*static if(is(typeof(subject[0].__fieldDtor)))
+      {
+        foreach(ref el; subject)
+          el.__fieldDtor();
+      }
+      else static if(is(typeof(subject[0].__dtor)))
+      {
+        foreach(ref el; subject)
+          el.__dtor();
+      }*/
+    }
+  }
+  else static if(is(T P == U*, U))
+  {
+    static if(is(U == struct))
+    {
+      auto typeinfo = typeid(U);
+      if(typeinfo.xdtor !is null)
+      {
+        typeinfo.xdtor(subject);
+      }
+      //TODO: structs are currently only destroyable over a type info object, fix
+      /*static if(is(typeof(subject.__fieldDtor)))
+      {
+        subject.__fieldDtor();
+      }
+      else static if(is(typeof(subject.__dtor)))
+      {
+        subject.__dtor();
+      }*/
     }
   }
   else
   {
     static if(is(T == struct))
     {
-      static if(is(typeof(subject.__dtor)))
-      {
-        subject.__dtor();
-      }
+      static assert(0, "can not destruct copy");
     }
   }
 }
