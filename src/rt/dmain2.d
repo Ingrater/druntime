@@ -73,6 +73,7 @@ extern (C) void rt_moduleTlsDtor();
 extern (C) void thread_joinAll();
 extern (C) void rt_lifetimeInit();
 
+extern(C) void _initStdAllocator();
 extern(C) void _initMemoryTracking();
 extern(C) void _deinitMemoryTracking();
 // NOTE: This is to preserve compatibility with old Windows DLLs.
@@ -750,6 +751,7 @@ extern (C) int main(int argc, char** argv)
 
     void runAll()
     {
+        _initStdAllocator();
         gc_init();
         initStaticDataGC();
         _initMemoryTracking();

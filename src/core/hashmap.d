@@ -116,15 +116,15 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
   
     Pair[] m_Data;
     size_t m_FullCount = 0;
-    AT* m_allocator;
+    AT m_allocator;
     
     enum uint INITIAL_SIZE = 4;
   
   public:
     
-    this(ref AT allocator)
+    this(AT allocator)
     {
-      m_allocator = &allocator;
+      m_allocator = allocator;
       m_Data = (cast(Pair*)allocator.AllocateMemory(Pair.sizeof * INITIAL_SIZE))[0..INITIAL_SIZE];
       
       foreach(ref entry;m_Data)

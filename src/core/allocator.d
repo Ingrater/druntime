@@ -54,7 +54,8 @@ private struct PointerHashPolicy
 }
 
 private {
-  extern(C) void _initMemoryTracking()
+
+  extern(C) void _initStdAllocator()
   {
     g_stdAllocatorMem[] = typeid(StdAllocator).init[];
     g_stdAllocator = cast(StdAllocator)g_stdAllocatorMem.ptr;
@@ -62,6 +63,10 @@ private {
     {
       g_stdAllocator.__ctor();
     }
+  }
+
+  extern(C) void _initMemoryTracking()
+  {
     StdAllocator.globalInstance.InitMemoryTracking();
   }
 
