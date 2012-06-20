@@ -449,6 +449,7 @@ version( unittest )
     private import core.thread;
     private import core.sync.mutex;
     private import core.sync.semaphore;
+    private import core.allocator;
 
 
     void testNotify()
@@ -582,7 +583,7 @@ version( unittest )
             }
         }
 
-        auto thread = new Thread( &waiter );
+        auto thread = New!Thread( &waiter );
         thread.start();
 
         while( true )

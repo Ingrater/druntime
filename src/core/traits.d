@@ -186,17 +186,22 @@ unittest
   static assert(IsPOD!TestStruct6 == false);
 }
 
-template RCArrayType(T : RCArray!T)
+template RCArrayType(T : RCArray!(T,AT), AT)
 {
   alias T RCArrayType;
 }
 
-template isRCArray(T) if(is(T U : RCArray!U))
+template RCAllocatorType(T : RCArray!(T, AT), AT)
+{
+  alias AT RCAllocatorType;
+}
+
+template isRCArray(T) if(is(T U : RCArray!U) || is(T U : RCArray!(U,AT), AT))
 {
   enum bool isRCArray = true;
 }
 
-template isRCArray(T) if(!is(T U : RCArray!U))
+template isRCArray(T) if(!is(T U : RCArray!U) && !is(T U : RCArray!(U,AT), AT))
 {
   enum bool isRCArray = false;
 }

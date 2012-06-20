@@ -463,8 +463,9 @@ auto AllocatorNew(T,AT,ARGS...)(AT allocator, ARGS args)
                 ~ T.stringof ~ " with arguments:\n" ~ ARGS.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
     }
     
-    static if(is(T : RefCountedBase))
+    static if(is(T : RefCounted))
     {
+      result.SetAllocator(allocator);
       return SmartPtr!T(result);
     }
     else {

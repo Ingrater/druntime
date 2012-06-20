@@ -6,10 +6,11 @@ import core.stdc.string; // for memcpy
 import core.traits;
 import core.hashmap;
 
-abstract class RefCountedBase
+abstract class RefCounted
 {
 private:
   shared(int) m_iRefCount = 0;
+  IAllocator m_allocator;
   
   final void AddReference()
   {
@@ -30,22 +31,28 @@ private:
     
   final void AddReference() shared
   {
-    (cast(RefCountedBase)this).AddReference();
+    (cast(RefCounted)this).AddReference();
   }
   
   final void RemoveReference() shared
   {
-    (cast(RefCountedBase)this).RemoveReference();
+    (cast(RefCounted)this).RemoveReference();
   }
 
 protected:
   // Release also needs to be protected so that the invariant handler does not get
   // called on a already freed object
-  abstract void Release();
+  void Release()
+  {
+    assert(m_allocator !is null, "no allocator given during construction!");
+    auto allocator = m_allocator;
+    clear(this);
+    allocator.FreeMemory(cast(void*)this);
+  }
   
   final void Release() shared
   {
-    (cast(RefCountedBase)this).Release();
+    (cast(RefCounted)this).Release();
   }
   
 public:
@@ -53,42 +60,23 @@ public:
   {
     return m_iRefCount;
   }
-}
 
-abstract class RefCountedImpl(AT) : RefCountedBase
-{
-public:
-  alias AT allocator_t;
-  AT m_allocator;
-
-protected:
-
-  this(AT allocator)
+  this(IAllocator allocator)
   {
     m_allocator = allocator;
   }
 
-  static if(is(typeof(allocator_t.globalInstance)))
-  {
-    this()
-    {
-      this(allocator_t.globalInstance);
-    }
-  }
+  this() { }
 
-  override void Release()
+  final void SetAllocator(IAllocator allocator)
   {
-    AT allocator = m_allocator;
-    clear(this);
-    allocator.FreeMemory(cast(void*)this);
+    m_allocator = allocator;
   }
 }
 
-alias RefCountedImpl!StdAllocator RefCounted;
-
 struct SmartPtr(T)
 {
-  static assert(is(T : RefCountedBase),T.stringof ~ " is not a reference counted object");
+  static assert(is(T : RefCounted),T.stringof ~ " is not a reference counted object");
   
   T ptr;
   alias ptr this;
@@ -171,7 +159,7 @@ struct SmartPtr(T)
   }
 }
 
-final class RCArrayData(T,AT = StdAllocator) : RefCountedImpl!AT
+final class RCArrayData(T, AT = StdAllocator) : RefCounted
 {
 private:
   T[] data;
@@ -182,10 +170,10 @@ public:
 
   static if(is(typeof(AT.globalInstance)))
   {
-    this() { }
+    this() { super(AT.globalInstance); }
   }
 
-  this(AT allocator)
+  this(IAllocator allocator)
   {
     super(allocator);
   }
@@ -201,7 +189,7 @@ public:
     }
   }
   
-  static auto AllocateArray(size_t size, AT allocator, InitializeMemoryWith meminit = InitializeMemoryWith.INIT)
+  static auto AllocateArray(Allocator)(size_t size, Allocator allocator, InitializeMemoryWith meminit = InitializeMemoryWith.INIT)
   {
     //TODO replace enforce
     //enforce(size > 0,"can not create a array of size 0");
@@ -438,7 +426,47 @@ struct RCArray(T,AT = StdAllocator)
   }
   
   // TODO replace this bullshit with a template once it is supported by dmd
-  void opAssign(this_t rh)
+  void opAssign(T)(auto ref T rh) if(!is(T == this_t) && isRCArray!T && is(RCArrayType!T == RCArrayType!this_t) 
+                                     && is(typeof( true ? RCAllocatorType!T : AT) == AT))
+  {
+    static assert(__traits(classInstanceSize, typeof(m_DataObject)) == __traits(classInstanceSize, typeof(rh.m_DataObject)), "can not cast because sizes don't match");
+    static union UglyCastHelper
+    {
+      typeof(m_DataObject) to;
+      typeof(rh.m_DataObject) from;
+    }
+
+    if(m_DataObject !is null)
+      m_DataObject.RemoveReference();
+
+    UglyCastHelper helper;
+    helper.from = rh.m_DataObject;
+    m_DataObject = helper.to;
+
+    assert(m_DataObject !is null);
+    m_Data = rh.m_Data;
+    if(m_DataObject !is null)
+      m_DataObject.AddReference();
+  }
+
+  void opAssign(T)(auto ref T rh) if(is(T == this_t))
+  {
+    if(m_DataObject !is null)
+      m_DataObject.RemoveReference();
+    m_DataObject = rh.m_DataObject;
+    m_Data = rh.m_Data;
+    if(m_DataObject !is null)
+      m_DataObject.AddReference();
+  }
+
+  //ugly workaround
+  private mixin template _workaround4424()
+  {
+    @disable void opAssign(typeof(this) );
+  }
+  mixin _workaround4424;
+
+  /*void opAssign(this_t rh)
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -476,21 +504,24 @@ struct RCArray(T,AT = StdAllocator)
         m_Data = newData.data;      
       }
     }
-  }
-  
-  /*void opAssign(U)(U rh) if(is(U == T[]) || 
-                            (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
-                           )
-  {
-    if(m_DataObject !is null)
-      m_DataObject.RemoveReference();
-    auto newData = data_t.AllocateArray(rh.length,InitializeMemoryWith.NOTHING);
-    auto mem = cast(BT[])newData.data;
-    mem[] = rh[];
-    m_DataObject = newData;
-    m_DataObject.AddReference();
-    m_Data = newData.data;
   }*/
+  
+  static if(is(typeof(AT.globalInstance)))
+  {
+    void opAssign(U)(U rh) if(is(U == T[]) || 
+                              (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
+                             )
+    {
+      if(m_DataObject !is null)
+        m_DataObject.RemoveReference();
+      auto newData = data_t.AllocateArray(rh.length, AT.globalInstance, InitializeMemoryWith.NOTHING);
+      auto mem = cast(BT[])newData.data;
+      mem[] = rh[];
+      m_DataObject = newData;
+      m_DataObject.AddReference();
+      m_Data = newData.data;
+    }
+  }
   
   /*void opAssign(ref shared(this_t) rh) shared
   {
@@ -569,7 +600,7 @@ struct RCArray(T,AT = StdAllocator)
     }
     else
     {
-      AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+      IAllocator allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
       static if(isRCArray!U)
       {
         if(allocator is null && rh.m_DataObject !is null)
@@ -602,13 +633,13 @@ struct RCArray(T,AT = StdAllocator)
   {
     static if(is(typeof(AT.globalInstance)))
     {
-      AT allocator = (m_DataObject !is null) ? m_DataObject.m_allocator : AT.globalInstance;
+      auto allocator = AT.globalInstance;
     }
     else
     {
-      AT allocator = (m_DataObject !is null) ? m_DataObject.m_allocator : null;
+      IAllocator allocator = (m_DataObject !is null) ? m_DataObject.m_allocator : null;
+      assert(allocator, "couldn't find allocator");
     }
-    assert(allocator, "couldn't find allocator");
 
     auto newData = data_t.AllocateArray(m_Data.length + 1, allocator, InitializeMemoryWith.NOTHING);
     if(m_Data.length > 0)
@@ -646,7 +677,7 @@ struct RCArray(T,AT = StdAllocator)
     }
     else
     {
-      AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+      IAllocator allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
       static if(isRCArray!U)
       {
         if(allocator is null && rh.m_DataObject !is null)
@@ -674,7 +705,7 @@ struct RCArray(T,AT = StdAllocator)
     }
     else
     {
-      AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+      IAllocator allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
       assert(allocator !is null, "couldn't find an allocator");
     }
 
@@ -697,7 +728,7 @@ struct RCArray(T,AT = StdAllocator)
     }
     else
     {
-      AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+      IAllocator allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
       assert(allocator !is null, "couldn't find an allocator");
     }
 
