@@ -190,3 +190,13 @@ template RCArrayType(T : RCArray!T)
 {
   alias T RCArrayType;
 }
+
+template isRCArray(T) if(is(T U : RCArray!U))
+{
+  enum bool isRCArray = true;
+}
+
+template isRCArray(T) if(!is(T U : RCArray!U))
+{
+  enum bool isRCArray = false;
+}

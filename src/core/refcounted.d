@@ -180,6 +180,16 @@ private:
 
 public:
 
+  static if(is(typeof(AT.globalInstance)))
+  {
+    this() { }
+  }
+
+  this(AT allocator)
+  {
+    super(allocator);
+  }
+
   static if(is(T == struct) && is(typeof(T.__dtor())))
   {
     ~this()
@@ -207,7 +217,7 @@ public:
     auto result = cast(typeof(this))mem;
 
     //call default ctor
-    result.__ctor();
+    result.__ctor(allocator);
     
     final switch(meminit)
     {
@@ -551,20 +561,22 @@ struct RCArray(T,AT = StdAllocator)
   }
   
   //Appending of a other RCArray or normal array with the ~= operator
-  void opOpAssign(string op,U)(U rh) if(op == "~" && ((isRCArray!U && RCArrayType!U == RCArrayType!this_t) || is(U : BT[]) || is(U : const(BT)[]) || is(U : immutable(BT)[])))
+  void opOpAssign(string op,U)(U rh) if(op == "~" && ((isRCArray!U && is(RCArrayType!U == RCArrayType!this_t)) || is(U : BT[]) || is(U : const(BT)[]) || is(U : immutable(BT)[])))
   {
-    AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
     static if(is(typeof(AT.globalInstance)))
     {
-      if(allocator is null)
-        allocator = AT.globalInstance;
+      AT allocator = AT.globalInstance;
     }
-    static if(isRCArray!U)
+    else
     {
-      if(allocator is null && rh.m_DataObject !is null)
-       allocator = rh.m_DataObject.allocator;
+      AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+      static if(isRCArray!U)
+      {
+        if(allocator is null && rh.m_DataObject !is null)
+         allocator = rh.m_DataObject.allocator;
+      }
+      assert(allocator !is null, "no allocator could be found");
     }
-    assert(allocator !is null, "no allocator could be found");
 
     auto newData = data_t.AllocateArray(m_Data.length + rh.length, allocator, InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])newData.data;
@@ -628,18 +640,20 @@ struct RCArray(T,AT = StdAllocator)
                                       (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
                                      ))
   {
-    AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
     static if(is(typeof(AT.globalInstance)))
     {
-      if(allocator is null)
-        allocator = AT.globalInstance;
+      AT allocator = AT.globalInstance;
     }
-    static if(isRCArray!U)
+    else
     {
-      if(allocator is null && rh.m_DataObject !is null)
-        allocator = rh.m_DataObject.allocator;
+      AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+      static if(isRCArray!U)
+      {
+        if(allocator is null && rh.m_DataObject !is null)
+          allocator = rh.m_DataObject.allocator;
+      }
+      assert(allocator !is null, "no allocator could be found");
     }
-    assert(allocator !is null, "no allocator could be found");
 
     auto result = data_t.AllocateArray(this.length + rh.length, allocator, InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])result[];
@@ -649,23 +663,45 @@ struct RCArray(T,AT = StdAllocator)
     return this_t(result);
   }
   
+  //Appending a single element
   this_t opBinary(string op,U)(auto ref U rh) if(op == "~" && (is(U == T) || 
                                                  (IsPOD!(BT) && (is(U == BT) || is(U == const(BT)) || is(U == immutable(BT))))
                                                 ))
   {
-    auto result = data_t.AllocateArray(this.length + 1);
+    static if(is(typeof(AT.globalInstance)))
+    {
+      AT allocator = AT.globalInstance;
+    }
+    else
+    {
+      AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+      assert(allocator !is null, "couldn't find an allocator");
+    }
+
+    auto result = data_t.AllocateArray(this.length + 1, allocator);
     auto mem = cast(BT[])result[];
     uninitializedCopy(mem[0..this.length], this[]);
     uninitializedCopy(mem[this.length], rh);
     return this_t(result);
   }
   
+  //The same as above, but swaped operands
   this_t opBinaryRight(string op,U)(U lh) if(op == "~" && (
                                       is(U == T[]) || 
                                       (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT))))
                                      ))
   {
-    auto result = data_t.AllocateArray(this.length + lh.length);
+    static if(is(typeof(AT.globalInstance)))
+    {
+      AT allocator = AT.globalInstance;
+    }
+    else
+    {
+      AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+      assert(allocator !is null, "couldn't find an allocator");
+    }
+
+    auto result = data_t.AllocateArray(this.length + lh.length, allocator);
     auto mem = cast(BT[])result[];
 
     uninitializedCopy(mem[0..lh.length], lh[]);

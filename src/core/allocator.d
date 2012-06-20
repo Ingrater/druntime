@@ -516,6 +516,7 @@ struct composite(T)
 {
   static assert(is(T == class),"can only composite classes");
   void[__traits(classInstanceSize, T)] _classMemory = void;
+  bool m_destructed = false;
 
   @property T _instance()
   {
@@ -558,9 +559,20 @@ struct composite(T)
     }
   }
 
+  void destruct()
+  {
+    assert(!m_destructed);
+    Destruct(_instance);
+    m_destructed = true;
+  }
+
   ~this()
   {
-    Destruct(_instance);
+    if(!m_destructed)
+    {
+      Destruct(_instance);
+      m_destructed = true;
+    }
   }
 }
 
