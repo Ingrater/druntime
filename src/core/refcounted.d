@@ -217,12 +217,14 @@ public:
       case InitializeMemoryWith.INIT:
         {
           auto arrayData = (cast(BT*)(mem + headerSize))[0..size];
+          static if(is(BT == struct))
+            BT inithelper;
           foreach(ref BT e; arrayData)
           {
             // If it is a struct can't use the assignment operator
             // otherwise the assignment operator might work on a non initialized instance
             static if(is(BT == struct))
-              memcpy(&e,BT.init.ptr,BT.sizeof);
+              memcpy(&e,&inithelper,BT.sizeof);
             else
               e = BT.init;
           }

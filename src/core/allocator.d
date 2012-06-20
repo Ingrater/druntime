@@ -430,7 +430,7 @@ string ListAvailableCtors(T)()
   return result;
 }
 
-auto AllocatorNew(T,AT,ARGS...)(ref AT allocator, ARGS args)
+auto AllocatorNew(T,AT,ARGS...)(AT allocator, ARGS args)
 {
   static if(is(T == class))
   {
@@ -564,7 +564,7 @@ struct composite(T)
   }
 }
 
-void AllocatorDelete(T,AT)(ref AT allocator, T obj)
+void AllocatorDelete(T,AT)(AT allocator, T obj)
 {
   static assert(!is(T U == composite!U), "can not delete composited instance");
   static if(is(T == class))
@@ -590,7 +590,7 @@ void AllocatorDelete(T,AT)(ref AT allocator, T obj)
   }
 }
 
-void AllocatorFree(T,AT)(ref AT allocator, T obj)
+void AllocatorFree(T,AT)(AT allocator, T obj)
 {
   static assert(!is(T U == composite!U), "can not free composited instance");
   static if(is(T == class))
@@ -617,7 +617,7 @@ auto NewArray(T)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.I
   return AllocatorNewArray!(T,StdAllocator)(StdAllocator.globalInstance, size,init);
 }
 
-auto AllocatorNewArray(T,AT)(ref AT allocator, size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT)
+auto AllocatorNewArray(T,AT)(AT allocator, size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT)
 {
   size_t memSize = T.sizeof * size;
   void* mem = allocator.AllocateMemory(memSize).ptr;
