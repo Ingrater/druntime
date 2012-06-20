@@ -59,13 +59,13 @@ abstract class RefCountedImpl(AT) : RefCountedBase
 {
 public:
   alias AT allocator_t;
-  AT* m_allocator;
+  AT m_allocator;
 
 protected:
 
-  this(ref AT allocator)
+  this(AT allocator)
   {
-    m_allocator = &allocator;
+    m_allocator = allocator;
   }
 
   static if(is(typeof(allocator_t.globalInstance)))
@@ -78,7 +78,7 @@ protected:
 
   override void Release()
   {
-    AT* allocator = m_allocator;
+    AT allocator = m_allocator;
     clear(this);
     allocator.FreeMemory(cast(void*)this);
   }
@@ -191,13 +191,13 @@ public:
     }
   }
   
-  static auto AllocateArray(size_t size, InitializeMemoryWith meminit = InitializeMemoryWith.INIT)
+  static auto AllocateArray(size_t size, AT allocator, InitializeMemoryWith meminit = InitializeMemoryWith.INIT)
   {
     //TODO replace enforce
     //enforce(size > 0,"can not create a array of size 0");
     size_t headerSize = __traits(classInstanceSize,typeof(this));
     size_t bytesToAllocate = headerSize + (T.sizeof * size);
-    void* mem = allocator_t.globalInstance.AllocateMemory(bytesToAllocate).ptr;
+    void* mem = allocator.AllocateMemory(bytesToAllocate).ptr;
     auto address = cast(size_t)mem;
     assert(address % T.alignof == 0,"Missaligned array memory");
     void[] blop = mem[0..bytesToAllocate];
@@ -275,14 +275,22 @@ struct RCArray(T,AT = StdAllocator)
   alias typeof(this) this_t;
   private data_t m_DataObject;
   private T[] m_Data;
-
-  static assert(is(typeof(AT.globalInstance)), "the allocator for a refcounted array needs to have a global instance");
   
   alias StripModifier!(T) BT; //base type
   
-  this(size_t size)
+  static if(is(typeof(AT.globalInstance)))
   {
-    m_DataObject = data_t.AllocateArray(size);
+    this(size_t size)
+    {
+      m_DataObject = data_t.AllocateArray(size, AT.globalInstance);
+      m_DataObject.AddReference();
+      m_Data = m_DataObject.data;
+    }
+  }
+
+  this(size_t size, AT allocator)
+  {
+    m_DataObject = data_t.AllocateArray(size, allocator);
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
   }
@@ -297,38 +305,64 @@ struct RCArray(T,AT = StdAllocator)
     }
   }
   
-  private void ConstructFromArray(U)(U init) 
+  private void ConstructFromArray(U)(U init, AT allocator) 
     if(is(U : BT[]) || is(U : immutable(BT)[]) || is(U : const(BT)[]))
   {
-    m_DataObject = data_t.AllocateArray(init.length, InitializeMemoryWith.NOTHING);
+    m_DataObject = data_t.AllocateArray(init.length, allocator, InitializeMemoryWith.NOTHING);
     m_DataObject.AddReference();
     m_Data = m_DataObject.data;
     auto mem = cast(BT[])m_Data;
     uninitializedCopy(mem[], cast(BT[])init[]);
   }
   
+  static if(is(typeof(AT.globalInstance)))
+  {
+    static if(IsPOD!(BT))
+    {
+      this(BT[] init) 
+      {
+        ConstructFromArray(init, AT.globalInstance);
+      }
+
+      this(const(BT[]) init)
+      {
+        ConstructFromArray(init, AT.globalInstance);
+      }
+
+      this(immutable(BT[]) init)
+      {
+        ConstructFromArray(init, AT.globalInstance);
+      }
+    }
+    else {
+      this(T[] init)
+      {
+        ConstructFromArray(init, AT.globalInstance);
+      }
+    }
+  }
+
   static if(IsPOD!(BT))
   {
-
-    this(BT[] init) 
+    this(BT[] init, AT allocator) 
     {
-      ConstructFromArray(init);
+      ConstructFromArray(init, allocator);
     }
 
-    this(const(BT[]) init)
+    this(const(BT[]) init, AT allocator)
     {
-      ConstructFromArray(init);
+      ConstructFromArray(init, allocator);
     }
 
-    this(immutable(BT[]) init)
+    this(immutable(BT[]) init, AT allocator)
     {
-      ConstructFromArray(init);
+      ConstructFromArray(init, allocator);
     }
   }
   else {
-    this(T[] init)
+    this(T[] init, AT allocator)
     {
-      ConstructFromArray(init);
+      ConstructFromArray(init, allocator);
     }
   }
   
@@ -404,30 +438,33 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.AddReference();
   }
   
-  void opAssign(T[] rh)
+  static if(is(typeof(AT.globalInstance)))
   {
-    if(m_DataObject !is null)
-      m_DataObject.RemoveReference();
-    auto newData = data_t.AllocateArray(rh.length, InitializeMemoryWith.NOTHING);
-    auto mem = cast(BT[])newData.data;
-    mem[] = rh[];
-    m_DataObject = newData;
-    m_DataObject.AddReference();
-    m_Data = newData.data;
-  }
-  
-  static if(IsPOD!(BT) && !is(T == BT))
-  {
-    void opAssign(BT[] rh)
+    void opAssign(T[] rh)
     {
       if(m_DataObject !is null)
         m_DataObject.RemoveReference();
-      auto newData = data_t.AllocateArray(rh.length, InitializeMemoryWith.NOTHING);
+      auto newData = data_t.AllocateArray(rh.length, AT.globalInstance, InitializeMemoryWith.NOTHING);
       auto mem = cast(BT[])newData.data;
-      uninitializedCopy(mem[],rh[]);
+      mem[] = rh[];
       m_DataObject = newData;
       m_DataObject.AddReference();
-      m_Data = newData.data;      
+      m_Data = newData.data;
+    }
+  
+    static if(IsPOD!(BT) && !is(T == BT))
+    {
+      void opAssign(BT[] rh)
+      {
+        if(m_DataObject !is null)
+          m_DataObject.RemoveReference();
+        auto newData = data_t.AllocateArray(rh.length, AT.globalInstance, InitializeMemoryWith.NOTHING);
+        auto mem = cast(BT[])newData.data;
+        uninitializedCopy(mem[],rh[]);
+        m_DataObject = newData;
+        m_DataObject.AddReference();
+        m_Data = newData.data;      
+      }
     }
   }
   
@@ -455,13 +492,16 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.AddReference();
   }*/
   
-  this_t dup()
+  static if(is(typeof(AT.globalInstance)))
   {
-    assert(m_Data !is null,"nothing to duplicate");
-    auto copy = data_t.AllocateArray(m_Data.length, InitializeMemoryWith.NOTHING);
-    auto mem = cast(BT[])copy.data;
-    uninitializedCopy(mem[], m_Data[]);
-    return this_t(copy);
+    this_t dup()
+    {
+      assert(m_Data !is null,"nothing to duplicate");
+      auto copy = data_t.AllocateArray(m_Data.length, AT.globalInstance, InitializeMemoryWith.NOTHING);
+      auto mem = cast(BT[])copy.data;
+      uninitializedCopy(mem[], m_Data[]);
+      return this_t(copy);
+    }
   }
   
   //TODO fix
@@ -510,9 +550,23 @@ struct RCArray(T,AT = StdAllocator)
     return immutable(this_t)(m_DataObject, m_Data[start..end]);
   }
   
-  void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == this_t) || is(U : BT[]) || is(U : const(BT)[]) || is(U : immutable(BT)[])))
+  //Appending of a other RCArray or normal array with the ~= operator
+  void opOpAssign(string op,U)(U rh) if(op == "~" && ((isRCArray!U && RCArrayType!U == RCArrayType!this_t) || is(U : BT[]) || is(U : const(BT)[]) || is(U : immutable(BT)[])))
   {
-    auto newData = data_t.AllocateArray(m_Data.length + rh.length, InitializeMemoryWith.NOTHING);
+    AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+    static if(is(typeof(AT.globalInstance)))
+    {
+      if(allocator is null)
+        allocator = AT.globalInstance;
+    }
+    static if(isRCArray!U)
+    {
+      if(allocator is null && rh.m_DataObject !is null)
+       allocator = rh.m_DataObject.allocator;
+    }
+    assert(allocator !is null, "no allocator could be found");
+
+    auto newData = data_t.AllocateArray(m_Data.length + rh.length, allocator, InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])newData.data;
     if(m_Data.length > 0)
     {
@@ -531,9 +585,20 @@ struct RCArray(T,AT = StdAllocator)
     m_Data = newData.data;
   }
   
+  //Appending of a single element using the ~= operator
   void opOpAssign(string op,U)(U rh) if(op == "~" && (is(U == T) || IsPOD!(BT) && is(U == BT)))
   {
-    auto newData = data_t.AllocateArray(m_Data.length + 1, InitializeMemoryWith.NOTHING);
+    static if(is(typeof(AT.globalInstance)))
+    {
+      AT allocator = (m_DataObject !is null) ? m_DataObject.m_allocator : AT.globalInstance;
+    }
+    else
+    {
+      AT allocator = (m_DataObject !is null) ? m_DataObject.m_allocator : null;
+    }
+    assert(allocator, "couldn't find allocator");
+
+    auto newData = data_t.AllocateArray(m_Data.length + 1, allocator, InitializeMemoryWith.NOTHING);
     if(m_Data.length > 0)
     {
       auto mem = cast(BT[])newData.data;
@@ -557,12 +622,26 @@ struct RCArray(T,AT = StdAllocator)
     static assert(0,U.stringof);
   }*/
   
-  this_t opBinary(string op,U)(auto ref U rh) if(op == "~" && (is(U == this_t) || 
+  //Append another array using the ~ operator
+  this_t opBinary(string op,U)(auto ref U rh) if(op == "~" && ((isRCArray!U && is(RCArrayType!this_t == RCArrayType!U)) || 
                                       is(U == T[]) || 
                                       (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
                                      ))
   {
-    auto result = data_t.AllocateArray(this.length + rh.length,InitializeMemoryWith.NOTHING);
+    AT allocator = (m_DataObject is null) ? null : m_DataObject.m_allocator;
+    static if(is(typeof(AT.globalInstance)))
+    {
+      if(allocator is null)
+        allocator = AT.globalInstance;
+    }
+    static if(isRCArray!U)
+    {
+      if(allocator is null && rh.m_DataObject !is null)
+        allocator = rh.m_DataObject.allocator;
+    }
+    assert(allocator !is null, "no allocator could be found");
+
+    auto result = data_t.AllocateArray(this.length + rh.length, allocator, InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])result[];
     mem[0..this.length] = this[];
     mem[this.length..$] = rh[];

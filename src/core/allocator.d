@@ -44,7 +44,7 @@ enum InitializeMemoryWith
   INIT
 }
 
-private struct PointerHashPolicy
+struct PointerHashPolicy
 {
   static size_t Hash(void* ptr)
   {
