@@ -604,7 +604,7 @@ struct RCArray(T,AT = StdAllocator)
       static if(isRCArray!U)
       {
         if(allocator is null && rh.m_DataObject !is null)
-         allocator = rh.m_DataObject.allocator;
+         allocator = rh.m_DataObject.m_allocator;
       }
       assert(allocator !is null, "no allocator could be found");
     }
@@ -681,7 +681,7 @@ struct RCArray(T,AT = StdAllocator)
       static if(isRCArray!U)
       {
         if(allocator is null && rh.m_DataObject !is null)
-          allocator = rh.m_DataObject.allocator;
+          allocator = rh.m_DataObject.m_allocator;
       }
       assert(allocator !is null, "no allocator could be found");
     }
@@ -781,11 +781,28 @@ struct RCArray(T,AT = StdAllocator)
     return m_DataObject !is null; 
   }
 
-  auto opCast(U)() if(is(U V : RCArray!V) && is(BT == U.BT) )
+  //this cast operator eithers casts to from different storage types, or to a lower allocator type
+  auto opCast(U)() if(is(U V : RCArray!(V,A), A) && is(BT == U.BT) && (is(RCAllocatorType!U == AT) || is(typeof( true ? RCAllocatorType!U : AT) == RCAllocatorType!U)) )
   {
     return U(cast(U.data_t)(cast(void*)m_DataObject), //need to use very ugly cast here
              cast(RCArrayType!U[])m_Data);
   }
+
+  /*U opCast(U)() if(isRCArray!U && is(RCArrayType!U == RCArrayType!this_t)
+    && is(typeof( true ? RCAllocatorType!U : AT) == AT))
+  {
+    static union UglyCastHelper
+    {
+      typeof(m_DataObject) to;
+      RCArrayData!(RCArrayType!U, RCAllocatorType!U) from;
+    }
+    UglyCastHelper helper;
+    static assert(__traits(classInstanceSize, typeof(helper.form)) == __traits(classInstanceSize, typeof(helper.to)));
+
+    helper.from = value.m_DataObject;
+
+    return U(helper.to, value[]);
+  }*/
   
   @property auto ptr()
   {
