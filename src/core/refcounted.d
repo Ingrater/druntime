@@ -430,20 +430,12 @@ struct RCArray(T,AT = StdAllocator)
                                      && is(typeof( true ? RCAllocatorType!T : AT) == AT))
   {
     static assert(__traits(classInstanceSize, typeof(m_DataObject)) == __traits(classInstanceSize, typeof(rh.m_DataObject)), "can not cast because sizes don't match");
-    static union UglyCastHelper
-    {
-      typeof(m_DataObject) to;
-      typeof(rh.m_DataObject) from;
-    }
 
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
 
-    UglyCastHelper helper;
-    helper.from = rh.m_DataObject;
-    m_DataObject = helper.to;
+    m_DataObject = cast(typeof(m_DataObject))cast(void*)rh.m_DataObject; //very ugly cast
 
-    assert(m_DataObject !is null);
     m_Data = rh.m_Data;
     if(m_DataObject !is null)
       m_DataObject.AddReference();
