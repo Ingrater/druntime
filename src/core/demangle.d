@@ -1531,10 +1531,10 @@ unittest
 /*
  *
  */
-string decodeDmdString( const(char)[] ln, ref size_t p )
+char[] decodeDmdString( const(char)[] ln, ref size_t p, char[] buffer )
 {
-    string s;
-    uint zlen, zpos;
+    uint zlen, zpos, curpos;
+    curpos = 0;
 
     // decompress symbol
     while( p < ln.length )
@@ -1544,9 +1544,16 @@ string decodeDmdString( const(char)[] ln, ref size_t p )
         {
             zlen = (ch & 0x7) + 1;
             zpos = ((ch >> 3) & 7) + 1; // + zlen;
-            if( zpos > s.length )
+            if( zpos > curpos )
                 break;
-            s ~= s[$ - zpos .. $ - zpos + zlen];
+            
+            //s ~= s[$ - zpos .. $ - zpos + zlen];
+            uint start = curpos - zpos;
+            uint end = curpos - zpos - zlen;
+            if(end - start > buffer.length - curpos)
+              return buffer[0..curpos];
+            buffer[curpos..(end-start)] = buffer[start..end];
+            
         }
         else if( ch >= 0x80 )
         {
@@ -1558,17 +1565,28 @@ string decodeDmdString( const(char)[] ln, ref size_t p )
                 break;
             int ch3 = cast(ubyte) ln[p++];
             zpos = (ch3 & 0x7f) | ((ch & 7) << 7);
-            if( zpos > s.length )
+            if( zpos > curpos )
                 break;
-            s ~= s[$ - zpos .. $ - zpos + zlen];
+            //s ~= s[$ - zpos .. $ - zpos + zlen];
+            uint start = curpos - zpos;
+            uint end = curpos - zpos - zlen;
+            if(end - start > buffer.length - curpos)
+              return buffer[0..curpos];
+            buffer[curpos..(end-start)] = buffer[start..end];
         }
         else if( Demangle.isAlpha(cast(char)ch) || Demangle.isDigit(cast(char)ch) || ch == '_' )
-            s ~= cast(char) ch;
+        {
+            //s ~= cast(char) ch;
+            if(curpos >= buffer.length)
+              return buffer[0..$];
+            buffer[curpos] = cast(char)ch;
+            curpos++;
+        }
         else
         {
             p--;
             break;
         }
     }
-    return s;
+    return buffer[0..curpos];
 }

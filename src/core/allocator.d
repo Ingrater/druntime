@@ -587,6 +587,16 @@ void AllocatorDelete(T,AT)(AT allocator, T obj)
     rt_finalize(cast(void*)obj);
     allocator.FreeMemory(cast(void*)obj);
   }
+  else static if(is(T == interface))
+  {
+    if(obj is null)
+      return;
+    Object realObj = cast(Object)obj;
+    if(realObj is null)
+      return;
+    rt_finalize(cast(void*)realObj);
+    allocator.FreeMemory(cast(void*)realObj);
+  }
   else static if(is(T P == U*, U))
   {
     if(obj is null)

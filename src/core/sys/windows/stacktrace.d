@@ -496,7 +496,10 @@ private:
                       cur ~= format( temp[], line.LineNumber );
                       cur ~= "):";
                       try {
-                        char[] demangledName = demangle( symbolName, demangleBuf );
+                        char[2048] decodeBuffer;
+                        size_t index = 0;
+                        char[] decodedName = decodeDmdString( symbolName, index, decodeBuffer);
+                        char[] demangledName = demangle( decodedName, demangleBuf );
                         cur ~= demangledName;
                         if(demangledName.ptr != demangleBuf.ptr)
                           StdAllocator.globalInstance.FreeMemory(demangledName.ptr);
@@ -509,10 +512,13 @@ private:
                       trace ~= cur;
                     }
                     else {
+                      char[2048] decodeBuffer;
+                      size_t index = 0;
+                      char[] decodedName = decodeDmdString( symbolName, index, decodeBuffer);
                       // displacement bytes from beginning of line
                       trace ~= line.FileName[0 .. strlen( line.FileName )] ~
                                "(" ~ format( temp[], line.LineNumber ) ~ "): " ~
-                               demangle( symbolName, demangleBuf );
+                               demangle( decodedName, demangleBuf );
                     }
                 }
                 else {
