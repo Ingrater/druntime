@@ -180,6 +180,7 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
           if(entry.state == State.Data)
             insert(entry.key,entry.value);
         }
+        m_allocator.FreeMemory(oldData.ptr);
       }
       
       insert(key,value);

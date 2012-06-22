@@ -527,14 +527,14 @@ struct composite(T)
   alias _instance this;
 
   @disable this();
+  @disable this(this); //prevent evil stuff from happening
 
   this(DefaultCtor c){ };
 
   void construct(ARGS...)(ARGS args) //TODO fix: workaround because constructor can not be a template
   {
-    //c = DontDefaultConstruct(DefaultCtor());
     _classMemory[] = typeid(T).init[];
-    auto result = (cast(T)_classMemory.ptr);
+    T result = (cast(T)_classMemory.ptr);
     static if(ARGS.length == 1 && is(ARGS[0] == DefaultCtor))
     {
       static if(is(typeof(result.__ctor())))
