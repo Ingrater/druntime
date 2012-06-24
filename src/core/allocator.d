@@ -67,12 +67,18 @@ private {
 
   extern(C) void _initMemoryTracking()
   {
+    version(MEMORY_TRACKING)
+    {
     StdAllocator.globalInstance.InitMemoryTracking();
+    }
   }
 
   extern(C) void _deinitMemoryTracking()
   {
+    version(MEMORY_TRACKING)
+    {
     StdAllocator.globalInstance.DeinitMemoryTracking();
+    }
     Destruct(g_stdAllocator);
   }
 }
@@ -171,121 +177,126 @@ class StdAllocator : IAdvancedAllocator
   alias void* delegate(void* ptr, size_t newSize) OnReallocateMemoryDelegate;
 
   
+  //The following two members are only needed for the memory tracking version
+  //We leave them always in to not change the memory layout beetween the two versions
   private Mutex m_allocMutex;
   private Hashmap!(void*, MemoryBlockInfo, PointerHashPolicy, TrackingAllocator) m_memoryMap;
+  
   OnAllocateMemoryDelegate OnAllocateMemoryCallback;
   OnFreeMemoryDelegate OnFreeMemoryCallback;
   OnReallocateMemoryDelegate OnReallocateMemoryCallback;
 
-  
-  final void InitMemoryTracking()
-  {
-    printf("initializing memory tracking\n");
-    g_trackingAllocator = New!TrackingAllocator();
-    m_memoryMap = AllocatorNew!(typeof(m_memoryMap), TrackingAllocator)(g_trackingAllocator, g_trackingAllocator);
-    m_allocMutex = New!Mutex();
-  }
-  
-  final void DeinitMemoryTracking()
-  {
-    //Set the allocation mutex to null so that any allocations that happen during
-    //resolving don't get added to the hashmap to prevent recursion and changing of
-    //the hashmap while it is in use
-    auto temp = m_allocMutex;
-    m_allocMutex = null;
-    
-    printf("deinitializing memory tracking\n");
-    printf("Found %d memory leaks",m_memoryMap.count);
-    FILE* log = null;
-    void* min = null;
-    void* max = null;
-    if(m_memoryMap.count > 0)
-      log = fopen("memoryleaks.log","wb");
-    foreach(ref void* addr, ref leak; m_memoryMap)
+  version(MEMORY_TRACKING)
+  {  
+    final void InitMemoryTracking()
     {
-      printf("---------------------------------\n");
-      if(log !is null) fprintf(log,"---------------------------------\n");
-      printf("memory leak %d bytes\n",leak.size);
-      if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
-      auto trace = StackTrace.resolveAddresses(leak.backtrace);
-      foreach(ref line; trace)
-      {
-        line ~= "\0";
-        printf("%s\n",line.ptr);
-        if(log !is null) fprintf(log, "%s\n",line.ptr);
-      }
-
-      if(min == null)
-      {
-        min = addr;
-        max = addr;
-      }
-      else
-      {
-        min = (min > addr) ? addr : min;
-        max = (max < addr) ? addr : max;
-      }
+      printf("initializing memory tracking\n");
+      g_trackingAllocator = New!TrackingAllocator();
+      m_memoryMap = AllocatorNew!(typeof(m_memoryMap), TrackingAllocator)(g_trackingAllocator, g_trackingAllocator);
+      m_allocMutex = New!Mutex();
     }
-
-    if( m_memoryMap.count > 0)
+  
+    final void DeinitMemoryTracking()
     {
-      //find root leaks
-      auto nonRootMap = AllocatorNew!(Hashmap!(void*, bool, PointerHashPolicy, TrackingAllocator), TrackingAllocator)(g_trackingAllocator, g_trackingAllocator);
-      
-      foreach(void* addr, ref leak; m_memoryMap)
+      //Set the allocation mutex to null so that any allocations that happen during
+      //resolving don't get added to the hashmap to prevent recursion and changing of
+      //the hashmap while it is in use
+      auto temp = m_allocMutex;
+      m_allocMutex = null;
+    
+      printf("deinitializing memory tracking\n");
+      printf("Found %d memory leaks",m_memoryMap.count);
+      FILE* log = null;
+      void* min = null;
+      void* max = null;
+      if(m_memoryMap.count > 0)
+        log = fopen("memoryleaks.log","wb");
+      foreach(ref void* addr, ref leak; m_memoryMap)
       {
-        void*[] ptrs = (cast(void**)addr)[0..(leak.size / (void*).sizeof)];
-        foreach(ptr; ptrs)
+        printf("---------------------------------\n");
+        if(log !is null) fprintf(log,"---------------------------------\n");
+        printf("memory leak %d bytes\n",leak.size);
+        if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
+        auto trace = StackTrace.resolveAddresses(leak.backtrace);
+        foreach(ref line; trace)
         {
-          if(ptr >= min && ptr <= max && cast(size_t)ptr % 4 == 0)
+          line ~= "\0";
+          printf("%s\n",line.ptr);
+          if(log !is null) fprintf(log, "%s\n",line.ptr);
+        }
+
+        if(min == null)
+        {
+          min = addr;
+          max = addr;
+        }
+        else
+        {
+          min = (min > addr) ? addr : min;
+          max = (max < addr) ? addr : max;
+        }
+      }
+
+      if( m_memoryMap.count > 0)
+      {
+        //find root leaks
+        auto nonRootMap = AllocatorNew!(Hashmap!(void*, bool, PointerHashPolicy, TrackingAllocator), TrackingAllocator)(g_trackingAllocator, g_trackingAllocator);
+      
+        foreach(void* addr, ref leak; m_memoryMap)
+        {
+          void*[] ptrs = (cast(void**)addr)[0..(leak.size / (void*).sizeof)];
+          foreach(ptr; ptrs)
           {
-            if(m_memoryMap.exists(ptr))
+            if(ptr >= min && ptr <= max && cast(size_t)ptr % 4 == 0)
             {
-              nonRootMap[ptr] = true;
+              if(m_memoryMap.exists(ptr))
+              {
+                nonRootMap[ptr] = true;
+              }
             }
           }
         }
-      }
 
-      if(m_memoryMap.count > nonRootMap.count)
-      {
-        printf("---------------------------------\n");
-        printf("ROOTS\n");
-        if(log !is null)
+        if(m_memoryMap.count > nonRootMap.count)
         {
-          fprintf(log, "---------------------------------\n");
-          fprintf(log, "ROOTS\n");
-        }
-        foreach(void* addr, ref leak; m_memoryMap)
-        {
-          if(nonRootMap.exists(addr)) //skip non roots
-            continue;
           printf("---------------------------------\n");
-          if(log !is null) fprintf(log,"---------------------------------\n");
-          printf("memory leak %d bytes\n",leak.size);
-          if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
-          auto trace = StackTrace.resolveAddresses(leak.backtrace);
-          foreach(ref line; trace)
+          printf("ROOTS\n");
+          if(log !is null)
           {
-            line ~= "\0";
-            printf("%s\n",line.ptr);
-            if(log !is null) fprintf(log, "%s\n",line.ptr);
+            fprintf(log, "---------------------------------\n");
+            fprintf(log, "ROOTS\n");
+          }
+          foreach(void* addr, ref leak; m_memoryMap)
+          {
+            if(nonRootMap.exists(addr)) //skip non roots
+              continue;
+            printf("---------------------------------\n");
+            if(log !is null) fprintf(log,"---------------------------------\n");
+            printf("memory leak %d bytes\n",leak.size);
+            if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
+            auto trace = StackTrace.resolveAddresses(leak.backtrace);
+            foreach(ref line; trace)
+            {
+              line ~= "\0";
+              printf("%s\n",line.ptr);
+              if(log !is null) fprintf(log, "%s\n",line.ptr);
+            }
           }
         }
-      }
 
-      Delete(nonRootMap);
+        Delete(nonRootMap);
 
-      //close logfile
-      if(log !is null) fclose(log);
-      debug
-      {
-        asm { int 3; }
+        //close logfile
+        if(log !is null) fclose(log);
+        debug
+        {
+          asm { int 3; }
+        }
       }
+      Delete(temp);
+      Delete(m_memoryMap);
+      Delete(g_trackingAllocator);
     }
-    Delete(temp);
-    Delete(m_memoryMap);
-    Delete(g_trackingAllocator);
   }
   
   final void[] AllocateMemory(size_t size)
@@ -298,19 +309,22 @@ class StdAllocator : IAdvancedAllocator
       else
         mem = malloc(size);
     }
-    if(m_allocMutex !is null)
+    version(MEMORY_TRACKING)
     {
-      synchronized(m_allocMutex)
+      if(m_allocMutex !is null)
       {
-        //printf("adding %x (%d)to memory map\n",mem,size);
-        auto info = MemoryBlockInfo(size);
-        // TODO implement for linux / osx
-        version(Windows)
+        synchronized(m_allocMutex)
         {
-          info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false,3).length;
+          //printf("adding %x (%d)to memory map\n",mem,size);
+          auto info = MemoryBlockInfo(size);
+          // TODO implement for linux / osx
+          version(Windows)
+          {
+            info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false,3).length;
+          }
+          auto map = m_memoryMap;
+          map[mem] = info;
         }
-        auto map = m_memoryMap;
-        map[mem] = info;
       }
     }
     return mem[0..size];
@@ -318,60 +332,63 @@ class StdAllocator : IAdvancedAllocator
   
   final void[] ReallocateMemory(void* ptr, size_t size)
   {
-    if( m_allocMutex !is null)
+    version(MEMORY_TRACKING)
     {
-      synchronized( m_allocMutex )
+      if( m_allocMutex !is null)
       {
-        size_t oldSize = 0;
-        if(ptr !is null)
+        synchronized( m_allocMutex )
         {
-          assert( m_memoryMap.exists(ptr), "trying to realloc already freed memory");
-          oldSize = m_memoryMap[ptr].size;
-          assert( oldSize < size, "trying to realloc smaller size");
-        }
-
-        void *mem = (OnReallocateMemoryCallback is null) ? null : OnReallocateMemoryCallback(ptr,size);
-
-        if(mem is null)
-        {      
-          version(DUMA)
+          size_t oldSize = 0;
+          if(ptr !is null)
           {
-            mem = _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
-            if( ptr !is null)
+            assert( m_memoryMap.exists(ptr), "trying to realloc already freed memory");
+            oldSize = m_memoryMap[ptr].size;
+            assert( oldSize < size, "trying to realloc smaller size");
+          }
+
+          void *mem = (OnReallocateMemoryCallback is null) ? null : OnReallocateMemoryCallback(ptr,size);
+
+          if(mem is null)
+          {      
+            version(DUMA)
             {
-              _duma_memcpy(mem,ptr,oldSize,__FILE__,__LINE__);
-              _duma_free(ptr,__FILE__,__LINE__);
+              mem = _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
+              if( ptr !is null)
+              {
+                _duma_memcpy(mem,ptr,oldSize,__FILE__,__LINE__);
+                _duma_free(ptr,__FILE__,__LINE__);
+              }
             }
+            else
+            {
+              mem = realloc(ptr,size);
+            }
+          }
+        
+          if(mem != ptr)
+          {
+            if(ptr !is null)
+            {
+              //printf("realloc removing %x\n",ptr);
+              m_memoryMap.remove(ptr);
+            }
+            auto info = MemoryBlockInfo(size);
+            // TODO implement for linux / osx
+            version(Windows)
+            {
+              info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false,0).length;
+            }
+
+            //printf("realloc adding %x(%d)\n",mem,size);
+            m_memoryMap[mem] = info;        
           }
           else
           {
-            mem = realloc(ptr,size);
+            //printf("changeing size of %x to %d\n",mem,size);
+            m_memoryMap[mem].size = size;
           }
+          return mem[0..size];
         }
-        
-        if(mem != ptr)
-        {
-          if(ptr !is null)
-          {
-            //printf("realloc removing %x\n",ptr);
-            m_memoryMap.remove(ptr);
-          }
-          auto info = MemoryBlockInfo(size);
-          // TODO implement for linux / osx
-          version(Windows)
-          {
-            info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false,0).length;
-          }
-
-          //printf("realloc adding %x(%d)\n",mem,size);
-          m_memoryMap[mem] = info;        
-        }
-        else
-        {
-          //printf("changeing size of %x to %d\n",mem,size);
-          m_memoryMap[mem].size = size;
-        }
-        return mem[0..size];
       }
     }
 
@@ -392,15 +409,18 @@ class StdAllocator : IAdvancedAllocator
   
   final void FreeMemory(void* ptr)
   {
-    if( ptr !is null)
+    version(MEMORY_TRACKING)
     {
-      if( m_allocMutex !is null)
+      if( ptr !is null)
       {
-        synchronized( m_allocMutex )
+        if( m_allocMutex !is null)
         {
-          //printf("removing %x from memory map\n",ptr);
-          assert( m_memoryMap.exists(ptr), "double free");
-          m_memoryMap.remove(ptr);
+          synchronized( m_allocMutex )
+          {
+            //printf("removing %x from memory map\n",ptr);
+            assert( m_memoryMap.exists(ptr), "double free");
+            m_memoryMap.remove(ptr);
+          }
         }
       }
     }

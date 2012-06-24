@@ -6,18 +6,21 @@ CC=dmc
 DOCDIR=doc
 IMPDIR=import
 
-DFLAGS=-debug -g -nofloat -w -d -Isrc -Iimport -property -version=NOGCSAFE
+DFLAGS=-nofloat -w -d -Isrc -Iimport -property -version=NOGCSAFE
 UDFLAGS=-debug -g -nofloat -w -d -Isrc -Iimport -property
+DFLAGS_RELEASE=-release -g -O -noboundscheck
+DFLAGS_DEBUG=-debug -g -version=MEMORY_TRACKING
 
 CFLAGS=
 
 DRUNTIME_BASE=druntimenogc
-DRUNTIME=lib\$(DRUNTIME_BASE).lib
+DRUNTIME_DEBUG=lib\$(DRUNTIME_BASE)d.lib
+DRUNTIME_RELEASE=lib\$(DRUNTIME_BASE).lib
 GCSTUB=lib\gcstub.obj
 
 DOCFMT=
 
-target : import $(DRUNTIME) doc $(GCSTUB)
+target : import $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE) doc $(GCSTUB)
 
 MANIFEST= \
 	LICENSE_1_0.txt \
@@ -827,11 +830,14 @@ $(GCSTUB) : src\gcstub\gc.d win32.mak
 
 ################### Library generation #########################
 
-$(DRUNTIME): $(OBJS) $(SRCS) win32.mak
-	$(DMD) -lib -of$(DRUNTIME) -Xfdruntime.json $(DFLAGS) $(SRCS) $(OBJS)
+$(DRUNTIME_RELEASE): $(OBJS) $(SRCS) win32.mak
+	$(DMD) -lib -of$(DRUNTIME_RELEASE) -Xfdruntime.json $(DFLAGS_RELEASE) $(DFLAGS) $(SRCS) $(OBJS)
 
+$(DRUNTIME_DEBUG): $(OBJS) $(SRCS) win32.mak
+	$(DMD) -lib -of$(DRUNTIME_DEBUG) -Xfdruntimed.json $(DFLAGS_DEBUG) $(DFLAGS) $(SRCS) $(OBJS)
+	
 unittest : $(SRCS) $(DRUNTIME) src\unittest.d
-	$(DMD) $(UDFLAGS) -L/co -unittest src\unittest.d $(SRCS) $(DRUNTIME) -debuglib=$(DRUNTIME) -defaultlib=$(DRUNTIME)
+	$(DMD) $(UDFLAGS) -L/co -unittest src\unittest.d $(SRCS) $(DRUNTIME_DEBUG) -debuglib=$(DRUNTIME_DEBUG) -defaultlib=$(DRUNTIME_DEBUG)
 
 zip: druntime.zip
 
@@ -843,4 +849,4 @@ install: druntime.zip
 	unzip -o druntime.zip -d \dmd2\src\druntime
 
 clean:
-	del $(DOCS) $(IMPORTS) $(DRUNTIME) $(OBJS_TO_DELETE) $(GCSTUB)
+	del $(DOCS) $(IMPORTS) $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE) $(OBJS_TO_DELETE) $(GCSTUB)
