@@ -157,9 +157,10 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       {
         index = (index + 1) % m_Data.length;
       }
-      m_Data[index].key = key;
+      m_Data[index] = Pair(key, value, State.Data);
+      /*m_Data[index].key = key;
       m_Data[index].value = value;
-      m_Data[index].state = State.Data;
+      m_Data[index].state = State.Data;*/
     }
     
     void opIndexAssign(V value, K key)
@@ -237,8 +238,9 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       //TODO remove when compiler no longer allocates on K.init
       static if(is(K == struct))
       {
-        K temp;
-        m_Data[index].key = temp;
+        // K temp;
+        //m_Data[index].key = temp;
+        m_Data[index].key = K();
       }
       else
         m_Data[index].key = K.init;
@@ -246,8 +248,9 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       //TODO remove when compiler no longer allocates on V.init
       static if(is(V == struct))
       {
-        V temp;
-        m_Data[index].value = temp;
+        //V temp;
+        //m_Data[index].value = temp;
+        m_Data[index].value = V();
       }
       else
         m_Data[index].value = V.init;
@@ -276,6 +279,53 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
           break;
       }
       return result;
+    }
+
+    static struct KeyRange
+    {
+      private Hashmap!(K,V,HP,AT).Pair* m_start;
+      private Hashmap!(K,V,HP,AT).Pair* m_end;
+
+      ref K front()
+      {
+        return m_start.key;
+      }
+
+      ref K back()
+      {
+        return m_end.key;
+      }
+
+      void popFront()
+      {
+        m_start++;
+        while(m_start <= m_end && m_start.state != State.Data)
+        {
+          m_start++;
+        }
+      }
+
+      void popBack()
+      {
+        m_end--;
+        while(m_end >= m_start && m_end.state != State.Data)
+        {
+          m_end--;
+        }
+      }
+
+      @property bool empty()
+      {
+        return m_start <= m_end;
+      }
+    }
+
+    @property KeyRange keys()
+    {
+      KeyRange r;
+      r.m_start = &m_Data[0];
+      r.m_end = &m_Data[$-1];
+      return r;
     }
     
     size_t count() @property

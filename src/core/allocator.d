@@ -673,10 +673,17 @@ auto AllocatorNewArray(T,AT)(AT allocator, size_t size, InitializeMemoryWith ini
     case InitializeMemoryWith.INIT:
       static if(is(T == struct))
       {
-        T temp;
-        foreach(ref e;data)
+        void initMem[] = typeid(T).init();
+        if(initMem.ptr is null)
         {
-          memcpy(&e,&temp,T.sizeof);
+          memset(data.ptr, 0, data.length * T.sizeof);
+        }
+        else
+        {
+          foreach(ref e;data)
+          {
+            memcpy(&e,initMem.ptr,initMem.length);
+          }
         }
       }
       else 
