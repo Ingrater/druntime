@@ -269,6 +269,38 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       }
       return result;
     }
+
+    /**
+     * Removes all entries from the hashmap
+     */
+    void clear()
+    {
+      foreach(ref p; m_Data)
+      {
+        if(p.state == State.Data)
+        {
+          static if(is(V == struct))
+          {
+            p.value = V();
+          }
+          else
+          {
+            p.value = V.init;
+          }
+
+          static if(is(K == struct))
+          {
+            p.key = K();
+          }
+          else
+          {
+            p.key = K.init;
+          }
+          p.state = State.Free;
+        }
+      }
+      m_FullCount = 0;
+    }
     
     int opApply( scope int delegate(ref K, ref V) dg )
     {

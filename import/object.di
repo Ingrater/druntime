@@ -19,7 +19,8 @@ private
 
 version(NOGCSAFE)
 {
-  import core.refcounted;
+  public import core.refcounted;
+  public import core.allocator;
 }
 
 alias typeof(int.sizeof)                    size_t;
