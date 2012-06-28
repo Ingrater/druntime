@@ -295,7 +295,7 @@ struct RCArray(T,AT = StdAllocator)
 
   static if(IsPOD!(BT))
   {
-    this(T[] data, IsStatic isStatic) pure
+    this(T[] data, IsStatic isStatic)
     {
       assert(isStatic == IsStatic.Yes);
       m_Data = data;
@@ -419,7 +419,7 @@ struct RCArray(T,AT = StdAllocator)
     m_Data = data;
   }
     
-  pure ~this()
+  ~this()
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -837,7 +837,7 @@ struct RCArray(T,AT = StdAllocator)
   }
 }
 
-RCArray!(immutable(char)) _T(immutable(char)[] data) pure
+RCArray!(immutable(char)) _T(immutable(char)[] data)
 {
   return RCArray!(immutable(char))(data,IsStatic.Yes);
 }

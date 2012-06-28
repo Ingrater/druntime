@@ -8,7 +8,7 @@ IMPDIR=import
 
 DFLAGS=-nofloat -w -d -Isrc -Iimport -property -version=NOGCSAFE
 UDFLAGS=-debug -g -nofloat -w -d -Isrc -Iimport -property
-DFLAGS_RELEASE=-release -g -O -noboundscheck
+DFLAGS_RELEASE=-release -g -O -noboundscheck -version=NO_INVARIANTS
 DFLAGS_DEBUG=-debug -g -version=MEMORY_TRACKING
 
 CFLAGS=
