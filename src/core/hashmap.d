@@ -93,9 +93,14 @@ struct StdHashPolicy
     return value.Hash();
   }
 
-  static uint Hash(T)(T value) if(is(T == struct))
+  static uint Hash(T)(ref T value) if(is(T == struct))
   {
     return value.Hash();
+  }
+
+  static uint Hash(T)(T value) if(!is(T == struct) && !is(T == class))
+  {
+    return hashOf(&value, T.sizeof);
   }
 }
 
@@ -103,15 +108,22 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
 {
   private:
     enum State {
-      Free,
-      Deleted,
-      Data
+      Free, // 0
+      Deleted, // 1
+      Data // 2
     }
     
     struct Pair {
       K key;
       V value;
       State state;
+
+      this(ref K key, ref V value, State state)
+      {
+        this.key = key;
+        this.value = value;
+        this.state = state;
+      }
     }
   
     Pair[] m_Data;
@@ -157,34 +169,43 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       {
         index = (index + 1) % m_Data.length;
       }
-      m_Data[index] = Pair(key, value, State.Data);
-      /*m_Data[index].key = key;
-      m_Data[index].value = value;
-      m_Data[index].state = State.Data;*/
+      void[] initMem = typeid(Pair).init();
+      if(initMem.ptr !is null)
+        (cast(void*)&m_Data[index])[0..Pair.sizeof] = initMem[];
+      else
+        memset(&m_Data[index], 0, Pair.sizeof);
+      m_Data[index].__ctor(key, value, State.Data);
     }
     
     void opIndexAssign(V value, K key)
     {
-      m_FullCount++;
-      if(m_FullCount > m_Data.length / 2 || m_FullCount >= m_Data.length)
+      size_t index = getIndex(key);
+      if(index == size_t.max) //not in the hashmap yet
       {
-        Pair[] oldData = m_Data;
-        m_Data = (cast(Pair*)m_allocator.AllocateMemory(oldData.length * 2 * Pair.sizeof))[0..oldData.length*2];
-        foreach(ref entry; m_Data)
+        m_FullCount++;
+        if(m_FullCount > m_Data.length / 2 || m_FullCount >= m_Data.length)
         {
-          entry.state = State.Free;
-        }
+          Pair[] oldData = m_Data;
+          m_Data = (cast(Pair*)m_allocator.AllocateMemory(oldData.length * 2 * Pair.sizeof))[0..oldData.length*2];
+          foreach(ref entry; m_Data)
+          {
+            entry.state = State.Free;
+          }
         
-        //rehash all values
-        foreach(ref entry; oldData)
-        {
-          if(entry.state == State.Data)
-            insert(entry.key,entry.value);
+          //rehash all values
+          foreach(ref entry; oldData)
+          {
+            if(entry.state == State.Data)
+              insert(entry.key,entry.value);
+          }
+          m_allocator.FreeMemory(oldData.ptr);
         }
-        m_allocator.FreeMemory(oldData.ptr);
+        insert(key,value);
       }
-      
-      insert(key,value);
+      else //already in hashmap
+      {
+        m_Data[index].value = value; 
+      }
     }
     
     ref V opIndex(K key)
@@ -192,7 +213,7 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t index = HP.Hash(key) % m_Data.length;
       while(m_Data[index].state != State.Free)
       {
-        if(m_Data[index].key == key)
+        if(m_Data[index].state == State.Data && m_Data[index].key == key)
           return m_Data[index].value;
         index = (index + 1) % m_Data.length;
       }
@@ -206,11 +227,23 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t index = HP.Hash(key) % m_Data.length;
       while(m_Data[index].state != State.Free)
       {
-        if(m_Data[index].key == key)
+        if(m_Data[index].state == State.Data && m_Data[index].key == key)
           return true;
         index = (index + 1) % m_Data.length;
       }
       return false;
+    }
+
+    size_t getIndex(K key)
+    {
+      size_t index = HP.Hash(key) % m_Data.length;
+      while(m_Data[index].state != State.Free)
+      {
+        if(m_Data[index].state == State.Data && m_Data[index].key == key)
+          return index;
+        index = (index + 1) % m_Data.length;
+      }
+      return size_t.max;
     }
     
     bool remove(K key)
@@ -219,7 +252,7 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       bool found = false;
       while(m_Data[index].state != State.Free)
       {
-        if(m_Data[index].key == key)
+        if(m_Data[index].state == State.Data && m_Data[index].key == key)
         {
           found = true;
           break;
@@ -238,9 +271,21 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       //TODO remove when compiler no longer allocates on K.init
       static if(is(K == struct))
       {
-        // K temp;
-        //m_Data[index].key = temp;
-        m_Data[index].key = K();
+        static if(__traits(compiles, (){ K constructTest; return constructTest; }))
+        {
+          K keyTemp;
+          m_Data[index].key = keyTemp;
+        }
+        else
+        {
+          void[K.sizeof] keyTemp;
+          void[] initMem = typeid(K).init();
+          if(initMem.ptr is null)
+            memset(keyTemp.ptr, 0, keyTemp.length);
+          else
+            keyTemp[] = initMem[];
+          m_Data[index].key = *cast(K*)keyTemp.ptr; 
+        }
       }
       else
         m_Data[index].key = K.init;
@@ -248,9 +293,21 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       //TODO remove when compiler no longer allocates on V.init
       static if(is(V == struct))
       {
-        //V temp;
-        //m_Data[index].value = temp;
-        m_Data[index].value = V();
+        static if(__traits(compiles, (){ V constructTest; return constructTest; }))
+        {
+          V valueTemp;
+          m_Data[index].value = valueTemp;
+        }
+        else
+        {
+          void[V.sizeof] valueTemp;
+          void[] initMem = typeid(V).init();
+          if(initMem.ptr is null)
+            memset(valueTemp.ptr, 0, valueTemp.length);
+          else
+            valueTemp[] = initMem[];
+          m_Data[index].value = *cast(V*)valueTemp.ptr; 
+        }
       }
       else
         m_Data[index].value = V.init;
@@ -265,6 +322,17 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       foreach(ref entry; m_Data)
       {
         if( entry.state == State.Data && (result = dg(entry.value)) != 0)
+          break;
+      }
+      return result;
+    }
+
+    int opApply( scope int delegate(ref K, ref V) dg )
+    {
+      int result = void;
+      foreach(ref entry; m_Data)
+      {
+        if( entry.state == State.Data && (result = dg(entry.key, entry.value)) != 0)
           break;
       }
       return result;
@@ -301,17 +369,6 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       }
       m_FullCount = 0;
     }
-    
-    int opApply( scope int delegate(ref K, ref V) dg )
-    {
-      int result = void;
-      foreach(ref entry; m_Data)
-      {
-        if( entry.state == State.Data && (result = dg(entry.key,entry.value)) != 0)
-          break;
-      }
-      return result;
-    }
 
     static struct KeyRange
     {
@@ -328,27 +385,86 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
         return m_end.key;
       }
 
-      void popFront()
+      private void validateFront()
       {
-        m_start++;
         while(m_start <= m_end && m_start.state != State.Data)
         {
           m_start++;
         }
       }
 
-      void popBack()
+      void popFront()
       {
-        m_end--;
+        m_start++;
+        validateFront();
+      }
+
+      private void validateBack()
+      {
         while(m_end >= m_start && m_end.state != State.Data)
         {
           m_end--;
         }
       }
 
+      void popBack()
+      {
+        m_end--;
+        validateBack();
+      }
+
       @property bool empty()
       {
-        return m_start <= m_end;
+        return m_start > m_end;
+      }
+    }
+
+    static struct ValueRange
+    {
+      private Hashmap!(K,V,HP,AT).Pair* m_start;
+      private Hashmap!(K,V,HP,AT).Pair* m_end;
+
+      ref V front()
+      {
+        return m_start.value;
+      }
+
+      ref V back()
+      {
+        return m_end.value;
+      }
+
+      private void validateFront()
+      {
+        while(m_start <= m_end && m_start.state != State.Data)
+        {
+          m_start++;
+        }
+      }
+
+      void popFront()
+      {
+        m_start++;
+        validateFront();
+      }
+
+      private void validateBack()
+      {
+        while(m_end >= m_start && m_end.state != State.Data)
+        {
+          m_end--;
+        }
+      }
+
+      void popBack()
+      {
+        m_end--;
+        validateBack();
+      }
+
+      @property bool empty()
+      {
+        return m_start > m_end;
       }
     }
 
@@ -357,6 +473,18 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       KeyRange r;
       r.m_start = &m_Data[0];
       r.m_end = &m_Data[$-1];
+      r.validateFront();
+      r.validateBack();
+      return r;
+    }
+
+    @property ValueRange values()
+    {
+      ValueRange r;
+      r.m_start = &m_Data[0];
+      r.m_end = &m_Data[$-1];
+      r.validateFront();
+      r.validateBack();
       return r;
     }
     

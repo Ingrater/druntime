@@ -567,6 +567,11 @@ struct RCArray(T,AT = StdAllocator)
   {
     return m_Data;
   }
+
+  const(T[]) opSlice() const
+  {
+    return m_Data;
+  }
   
   this_t opSlice(size_t start, size_t end)
   {
@@ -770,7 +775,7 @@ struct RCArray(T,AT = StdAllocator)
   
   bool opCast(U)() if(is(U == bool))
   {
-    return m_DataObject !is null; 
+    return (m_Data !is null && m_Data.length != 0); 
   }
 
   //this cast operator eithers casts to from different storage types, or to a lower allocator type

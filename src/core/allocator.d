@@ -117,7 +117,7 @@ private class TrackingAllocator : IAdvancedAllocator
   final void[] AllocateMemory(size_t size)
   {
     version(DUMA)
-      return _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
+      return _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__)[0..size];
     else
       return malloc(size)[0..size];
   }
@@ -128,7 +128,7 @@ private class TrackingAllocator : IAdvancedAllocator
     {
       void* temp = _duma_realloc(mem,size,__FILE__,__LINE__);
       assert(cast(size_t)temp / size_t.sizeof == 0,"alignment changed");
-      return temp;
+      return temp[0..size];
     }
     else
       return realloc(mem,size)[0..size];
@@ -209,6 +209,7 @@ class StdAllocator : IAdvancedAllocator
       FILE* log = null;
       void* min = null;
       void* max = null;
+      size_t leakSum = 0;
       if(m_memoryMap.count > 0)
         log = fopen("memoryleaks.log","wb");
       foreach(ref void* addr, ref leak; m_memoryMap)
@@ -216,6 +217,7 @@ class StdAllocator : IAdvancedAllocator
         printf("---------------------------------\n");
         if(log !is null) fprintf(log,"---------------------------------\n");
         printf("memory leak %d bytes\n",leak.size);
+        leakSum += leak.size;
         if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
         auto trace = StackTrace.resolveAddresses(leak.backtrace);
         foreach(ref line; trace)
@@ -283,6 +285,9 @@ class StdAllocator : IAdvancedAllocator
             }
           }
         }
+
+        printf("\ntotal leaked memory %d bytes\nTotal leaks %d\n", leakSum, m_memoryMap.count);
+        if(log !is null) fprintf(log, "\ntotal leaked memory %d bytes\nTotal leaks %d\n", leakSum, m_memoryMap.count);
 
         Delete(nonRootMap);
 
@@ -455,15 +460,19 @@ auto AllocatorNew(T,AT,ARGS...)(AT allocator, ARGS args)
   static if(is(T == class))
   {
     size_t memSize = __traits(classInstanceSize,T);
+    static assert(!__traits(compiles, { T temp; bool test = temp.outer !is null; }), "inner classes are not implemented yet");
   } 
   else {
     size_t memSize = T.sizeof;
   }
   
   void[] mem = allocator.AllocateMemory(memSize);
-  assert(mem.ptr !is null,"Out of memory");
-  auto address = cast(size_t)mem.ptr;
-  assert(address % T.alignof == 0,"Missaligned memory");  
+  debug {
+    assert(mem.ptr !is null,"Out of memory");
+    auto address = cast(size_t)mem.ptr;
+    auto alignment = T.alignof;
+    assert(address % alignment == 0,"Missaligned memory");  
+  }
   
   //initialize
   static if(is(T == class))
@@ -474,6 +483,10 @@ auto AllocatorNew(T,AT,ARGS...)(AT allocator, ARGS args)
     auto result = (cast(T)mem.ptr);
     static if(is(typeof(result.__ctor(args))))
     {
+      scope(failure)
+      {
+        AllocatorDelete(allocator, result);
+      }
       result.__ctor(args);
     }
     else

@@ -1168,8 +1168,8 @@ export extern (C) void rt_finalize(void* p, bool det = true)
               byte[]    w = c.init;
             }
 
-            try
-            {
+            //try
+            //{
                 if (det || collectHandler is null || collectHandler(cast(Object)p))
                 {
                     do
@@ -1190,11 +1190,11 @@ export extern (C) void rt_finalize(void* p, bool det = true)
                 else {
                   (cast(byte*) p)[0 .. w.length] = w[];
                 }
-            }
+            /*}
             catch (Throwable e)
             {
                 onFinalizeError(**pc, e);
-            }
+            }*/
         }
     }
 }
