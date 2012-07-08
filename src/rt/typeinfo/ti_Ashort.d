@@ -88,6 +88,8 @@ class TypeInfo_As : TypeInfo
         arg2 = typeid(void*);
         return 0;
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 
@@ -128,6 +130,8 @@ class TypeInfo_At : TypeInfo_As
     {
         return typeid(ushort);
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // wchar[]
@@ -146,4 +150,6 @@ class TypeInfo_Au : TypeInfo_At
     {
         return typeid(wchar);
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }

@@ -64,4 +64,6 @@ class TypeInfo_m : TypeInfo
     {
         return ulong.alignof;
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }

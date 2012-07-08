@@ -92,4 +92,6 @@ class TypeInfo_q : TypeInfo
     {   arg1 = typeid(double);
         return 0;
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }

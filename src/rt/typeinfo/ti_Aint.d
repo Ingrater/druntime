@@ -89,6 +89,8 @@ class TypeInfo_Ai : TypeInfo
         //arg2 = typeid(void*);
         return 0;
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 unittest
@@ -139,6 +141,8 @@ class TypeInfo_Ak : TypeInfo_Ai
     {
         return typeid(uint);
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // dchar[]
@@ -157,4 +161,6 @@ class TypeInfo_Aw : TypeInfo_Ak
     {
         return typeid(dchar);
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }

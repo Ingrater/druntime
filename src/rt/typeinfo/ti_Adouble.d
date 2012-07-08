@@ -96,6 +96,8 @@ class TypeInfo_Ad : TypeInfo
         //arg2 = typeid(void*);
         return 0;
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // idouble[]
@@ -114,4 +116,6 @@ class TypeInfo_Ap : TypeInfo_Ad
     {
         return typeid(idouble);
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }

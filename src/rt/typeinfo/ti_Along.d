@@ -90,6 +90,8 @@ class TypeInfo_Al : TypeInfo
         //arg2 = typeid(void*);
         return 0;
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 
@@ -131,4 +133,6 @@ class TypeInfo_Am : TypeInfo_Al
     {
         return typeid(ulong);
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }

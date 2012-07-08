@@ -55,4 +55,6 @@ class TypeInfo_P : TypeInfo
     {
         return 1;
     }
+
+    @property override Type type() nothrow pure { return Type.Pointer; }
 }

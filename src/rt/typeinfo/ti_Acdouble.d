@@ -96,4 +96,6 @@ class TypeInfo_Ar : TypeInfo
         //arg2 = typeid(void*);
         return 0;
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }

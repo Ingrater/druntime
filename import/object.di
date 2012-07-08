@@ -87,6 +87,28 @@ struct OffsetTypeInfo
 
 class TypeInfo
 {
+	  enum Type {
+		  Info,
+      Native,
+		  Vector,
+		  Typedef,
+		  Enum,
+		  Pointer,
+		  Array,
+		  StaticArray,
+		  AssociativeArray,
+		  Function,
+		  Delegate,
+		  Class,
+		  Interface,
+		  Struct,
+		  Tuple,
+		  Const,
+		  Immutable,
+      Shared,
+		  Inout
+	  }
+
     hash_t   getHash(in void* p);
     equals_t equals(in void* p1, in void* p2);
     int      compare(in void* p1, in void* p2);
@@ -101,6 +123,7 @@ class TypeInfo
     void postblit(void* p);
     @property size_t talign() nothrow pure;
     version (X86_64) int argTypes(out TypeInfo arg1, out TypeInfo arg2);
+	  @property Type type() nothrow pure;
 }
 
 class TypeInfo_Typedef : TypeInfo

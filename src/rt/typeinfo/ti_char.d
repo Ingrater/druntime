@@ -59,4 +59,6 @@ class TypeInfo_a : TypeInfo
 
         return (cast(char *)&c)[0 .. 1];
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }

@@ -96,6 +96,8 @@ class TypeInfo_Ae : TypeInfo
         //arg2 = typeid(void*);
         return 0;
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // ireal[]
@@ -114,4 +116,6 @@ class TypeInfo_Aj : TypeInfo_Ae
     {
         return typeid(ireal);
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }

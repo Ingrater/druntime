@@ -53,4 +53,6 @@ class TypeInfo_s : TypeInfo
         *cast(short *)p1 = *cast(short *)p2;
         *cast(short *)p2 = t;
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }

@@ -53,6 +53,8 @@ class TypeInfo_h : TypeInfo
         *cast(ubyte *)p1 = *cast(ubyte *)p2;
         *cast(ubyte *)p2 = t;
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }
 
 class TypeInfo_b : TypeInfo_h

@@ -57,4 +57,6 @@ class TypeInfo_k : TypeInfo
         *cast(uint *)p1 = *cast(uint *)p2;
         *cast(uint *)p2 = t;
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }

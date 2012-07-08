@@ -26,4 +26,6 @@ class TypeInfo_j : TypeInfo_e
       else
         return "ireal"; 
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }

@@ -96,6 +96,8 @@ class TypeInfo_Af : TypeInfo
         //arg2 = typeid(void*);
         return 0;
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // ifloat[]
@@ -114,4 +116,6 @@ class TypeInfo_Ao : TypeInfo_Af
     {
         return typeid(ifloat);
     }
+
+    @property override Type type() nothrow pure { return Type.Array; }
 }

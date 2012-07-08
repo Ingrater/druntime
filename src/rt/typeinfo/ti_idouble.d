@@ -26,4 +26,6 @@ class TypeInfo_p : TypeInfo_d
       else
         return "idouble"; 
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }

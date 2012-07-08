@@ -26,4 +26,6 @@ class TypeInfo_o : TypeInfo_f
       else
         return "ifloat"; 
     }
+
+    @property override Type type() nothrow pure { return Type.Native; }
 }
