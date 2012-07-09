@@ -10,7 +10,7 @@ version( X86_64 )
 version( AnyX86 )
   version = HasUnalignedOps;
 
-/* take from rt.utils.hash */
+/* taken from rt.utils.hash */
 hash_t hashOf( const (void)* buf, size_t len, hash_t seed = 0 )
 {
   /*
@@ -237,11 +237,13 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     size_t getIndex(K key)
     {
       size_t index = HP.Hash(key) % m_Data.length;
-      while(m_Data[index].state != State.Free)
+      size_t searched = 0;
+      while(m_Data[index].state != State.Free && searched < m_FullCount)
       {
         if(m_Data[index].state == State.Data && m_Data[index].key == key)
           return index;
         index = (index + 1) % m_Data.length;
+        searched++;
       }
       return size_t.max;
     }

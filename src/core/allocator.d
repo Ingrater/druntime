@@ -150,7 +150,7 @@ class StdAllocator : IAdvancedAllocator
   alias g_stdAllocator globalInstance;
   enum size_t alignment = 4; //default alignment 4 byte
 
-  struct MemoryBlockInfo
+  static struct MemoryBlockInfo
   {
     size_t size;
     long[10] backtrace;
@@ -159,6 +159,32 @@ class StdAllocator : IAdvancedAllocator
     this(size_t size)
     {
       this.size = size;
+    }
+
+    uint Hash()
+    {
+      return hashOf(backtrace.ptr, typeof(backtrace[0]).sizeof * backtraceSize);
+    }
+
+    int opEquals(ref const(MemoryBlockInfo) rh)
+    {
+      if(backtraceSize != rh.backtraceSize)
+        return 0;
+      for(int i=0; i<backtraceSize; i++)
+      {
+        if(backtrace[i] != rh.backtrace[i])
+          return 0;
+      }
+      return 1;
+    }
+  }
+
+  version(MEMORY_TRACKING)
+  {  
+    public static struct TraceInfo 
+    {
+      char[][10] trace;
+      size_t count;
     }
   }
 
@@ -203,6 +229,8 @@ class StdAllocator : IAdvancedAllocator
       //the hashmap while it is in use
       auto temp = m_allocMutex;
       m_allocMutex = null;
+
+      auto traceCache = AllocatorNew!(Hashmap!(MemoryBlockInfo, TraceInfo, StdHashPolicy, TrackingAllocator))(g_trackingAllocator, g_trackingAllocator);
     
       printf("deinitializing memory tracking\n");
       printf("Found %d memory leaks",m_memoryMap.count);
@@ -214,17 +242,28 @@ class StdAllocator : IAdvancedAllocator
         log = fopen("memoryleaks.log","wb");
       foreach(ref void* addr, ref leak; m_memoryMap)
       {
-        printf("---------------------------------\n");
-        if(log !is null) fprintf(log,"---------------------------------\n");
-        printf("memory leak %d bytes\n",leak.size);
         leakSum += leak.size;
-        if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
-        auto trace = StackTrace.resolveAddresses(leak.backtrace);
-        foreach(ref line; trace)
+        if( !traceCache.exists(leak) )
         {
-          line ~= "\0";
-          printf("%s\n",line.ptr);
-          if(log !is null) fprintf(log, "%s\n",line.ptr);
+          auto trace = StackTrace.resolveAddresses(leak.backtrace[0..leak.backtraceSize]);
+          TraceInfo traceinfo;
+          traceinfo.count = 1;
+          int i=0;
+          foreach(ref line; trace)
+          {
+            line ~= "\0";
+            if(i < traceinfo.trace.length)
+            {
+              traceinfo.trace[i] = AllocatorNewArray!char(g_trackingAllocator, line.length);
+              traceinfo.trace[i][] = line[];
+              i++;
+            }
+          }
+          traceCache[leak] = traceinfo;
+        }
+        else
+        {
+          traceCache[leak].count++;
         }
 
         if(min == null)
@@ -236,6 +275,19 @@ class StdAllocator : IAdvancedAllocator
         {
           min = (min > addr) ? addr : min;
           max = (max < addr) ? addr : max;
+        }
+      }
+
+      foreach(ref leak, ref info; traceCache)
+      {
+        printf("---------------------------------\n");
+        if(log !is null) fprintf(log,"---------------------------------\n");
+        printf("memory leak %d bytes %d times\n",leak.size, info.count);
+        if(log !is null) fprintf(log,"memory leak %d bytes %d times\n",leak.size, info.count);
+        for(int i=0; i<leak.backtraceSize; i++)
+        {
+          printf("%s\n",info.trace[i].ptr);
+          if(log !is null) fprintf(log, "%s\n",info.trace[i].ptr);
         }
       }
 
@@ -276,12 +328,14 @@ class StdAllocator : IAdvancedAllocator
             if(log !is null) fprintf(log,"---------------------------------\n");
             printf("memory leak %d bytes\n",leak.size);
             if(log !is null) fprintf(log,"memory leak %d bytes\n",leak.size);
-            auto trace = StackTrace.resolveAddresses(leak.backtrace);
-            foreach(ref line; trace)
+            if( traceCache.exists(leak) )
             {
-              line ~= "\0";
-              printf("%s\n",line.ptr);
-              if(log !is null) fprintf(log, "%s\n",line.ptr);
+              auto info = &traceCache[leak];
+              for(int i=0; i<leak.backtraceSize; i++)
+              {
+                printf("%s\n",info.trace[i].ptr);
+                if(log !is null) fprintf(log, "%s\n",info.trace[i].ptr);
+              }
             }
           }
         }
@@ -298,6 +352,8 @@ class StdAllocator : IAdvancedAllocator
           asm { int 3; }
         }
       }
+
+      AllocatorDelete(g_trackingAllocator, traceCache);
       Delete(temp);
       Delete(m_memoryMap);
       Delete(g_trackingAllocator);
@@ -727,6 +783,17 @@ void callPostBlit(T)(T subject)
           el.__postblit();
         }
       }
+      else
+      {
+        TypeInfo_Struct tt = typeid(V);
+        if(tt.xpostblit !is null)
+        {
+          foreach(ref el; subject)
+          {
+            (*(tt.xpostblit))(&el);
+          }
+        }
+      }
     }
   }
   else static if(is(T P == U*, U))
@@ -736,6 +803,14 @@ void callPostBlit(T)(T subject)
       static if(is(typeof(subject.__postblit)))
       {
         subject.__postblit();
+      }
+      else
+      {
+        TypeInfo_Struct tt = typeid(U);
+        if(tt.xpostblit !is null)
+        {
+          (*(tt.xpostblit))(subject);
+        }
       }
     }
   }
