@@ -94,11 +94,11 @@ struct SmartPtr(T)
     (cast(T)ptr).AddReference();
   }
   
-  this(immutable(T) obj) immutable
+  /*this(immutable(T) obj) immutable
   {
     ptr = obj;
     (cast(T)ptr).AddReference();
-  }
+  }*/
   
   this(this)
   {
