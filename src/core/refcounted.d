@@ -88,18 +88,6 @@ struct SmartPtr(T)
     ptr.AddReference();
   }
   
-  this(const(T) obj) const
-  {
-    ptr = obj;
-    (cast(T)ptr).AddReference();
-  }
-  
-  /*this(immutable(T) obj) immutable
-  {
-    ptr = obj;
-    (cast(T)ptr).AddReference();
-  }*/
-  
   this(this)
   {
     if(ptr !is null)
@@ -112,15 +100,12 @@ struct SmartPtr(T)
       ptr.RemoveReference();
   }
   
-  //static if(!is(typeof(null) == void*))
-  //{
-    void opAssign(typeof(null) obj)
-    {
-      if(ptr !is null)
-        ptr.RemoveReference();
-      ptr = null;
-    }
-  //}
+  void opAssign(typeof(null) obj)
+  {
+    if(ptr !is null)
+      ptr.RemoveReference();
+    ptr = null;
+  }
   
   void opAssign(T obj)
   {
@@ -542,6 +527,21 @@ struct RCArray(T,AT = StdAllocator)
   {
     return cast(immutable(this_t))dup();
   }*/
+
+  static if(is(BT == T))
+  {
+    ref T opIndexAssign(T value, size_t index)
+    {
+      m_Data[index] = value;
+    }
+
+    void opIndexAssign(T value, size_t from, size_t to)
+    {
+      m_Data[from..to] = value;
+    }
+
+    //TODO implement op slice assign
+  }
   
   ref T opIndex(size_t index)
   {
