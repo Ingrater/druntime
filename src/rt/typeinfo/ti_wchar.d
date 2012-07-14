@@ -60,5 +60,5 @@ class TypeInfo_u : TypeInfo
         return (cast(wchar *)&c)[0 .. 1];
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.WChar; }
 }

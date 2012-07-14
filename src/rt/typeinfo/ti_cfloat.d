@@ -93,5 +93,5 @@ class TypeInfo_q : TypeInfo
         return 0;
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.CFloat; }
 }

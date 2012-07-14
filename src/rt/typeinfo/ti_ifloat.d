@@ -27,5 +27,5 @@ class TypeInfo_o : TypeInfo_f
         return "ifloat"; 
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.IFloat; }
 }

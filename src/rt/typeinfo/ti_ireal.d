@@ -27,5 +27,5 @@ class TypeInfo_j : TypeInfo_e
         return "ireal"; 
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.IReal; }
 }

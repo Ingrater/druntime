@@ -157,6 +157,13 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     {
       if(m_Data.ptr !is null)
       {
+        foreach(ref p; m_Data)
+        {
+          if(p.state == State.Data)
+          {
+            callDtor(&p);
+          }
+        }
         m_allocator.FreeMemory(m_Data.ptr);
         m_Data = [];
       }
@@ -175,6 +182,16 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       else
         memset(&m_Data[index], 0, Pair.sizeof);
       m_Data[index].__ctor(key, value, State.Data);
+    }
+
+    private void move(ref Pair data)
+    {
+      size_t index = HP.Hash(data.key) % m_Data.length;
+      while(m_Data[index].state == State.Data)
+      {
+        index = (index + 1) % m_Data.length;
+      }
+      memcpy(m_Data.ptr + index, &data, Pair.sizeof);
     }
     
     void opIndexAssign(V value, K key)
@@ -196,7 +213,7 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
           foreach(ref entry; oldData)
           {
             if(entry.state == State.Data)
-              insert(entry.key,entry.value);
+              move(entry);
           }
           m_allocator.FreeMemory(oldData.ptr);
         }

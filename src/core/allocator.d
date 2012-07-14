@@ -150,11 +150,17 @@ class StdAllocator : IAdvancedAllocator
   alias g_stdAllocator globalInstance;
   enum size_t alignment = 4; //default alignment 4 byte
 
+  enum BlockFlags
+  {
+    IsClass = 0x01
+  }
+
   static struct MemoryBlockInfo
   {
     size_t size;
-    long[10] backtrace;
-    int backtraceSize;
+    size_t[10] backtrace;
+    byte backtraceSize;
+    ubyte flags; //combination of BlockFlags
     
     this(size_t size)
     {
@@ -245,7 +251,12 @@ class StdAllocator : IAdvancedAllocator
         leakSum += leak.size;
         if( !traceCache.exists(leak) )
         {
-          auto trace = StackTrace.resolveAddresses(leak.backtrace[0..leak.backtraceSize]);
+          long[10] backtrace;
+          for(int i=0; i<leak.backtraceSize; i++)
+          {
+            backtrace[i] = leak.backtrace[i];
+          }
+          auto trace = StackTrace.resolveAddresses(backtrace[0..leak.backtraceSize]);
           TraceInfo traceinfo;
           traceinfo.count = 1;
           int i=0;
@@ -337,6 +348,36 @@ class StdAllocator : IAdvancedAllocator
                 if(log !is null) fprintf(log, "%s\n",info.trace[i].ptr);
               }
             }
+            if( leak.flags & BlockFlags.IsClass )
+            {
+              Object obj = cast(Object)addr;
+              TypeInfo t = obj.classinfo;
+              if(t is null)
+              {
+                printf("Already destroyed object");
+                if(log !is null) fprintf(log, "Already destroyed object");
+              }
+              else
+              {
+                string name = t.GetName();
+                printf("Object of type '");
+                if(log !is null) fprintf(log, "Object of type '");
+                for(int i=0; i<name.length; i++)
+                {
+                  printf("%c", name[i]);
+                  if(log !is null) fprintf(log, "%c", name[i]);
+                }
+                printf("'\n");
+                if(log !is null) fprintf(log, "'\n");
+              }
+
+              RefCounted refCounted = cast(RefCounted)obj;
+              if(refCounted !is null)
+              {
+                printf("Reference counted object: ref-count = %d\n", refCounted.refcount);
+                if(log !is null) fprintf(log, "Reference counted object: ref-count = %d\n", refCounted.refcount);
+              }
+            }
           }
         }
 
@@ -359,10 +400,18 @@ class StdAllocator : IAdvancedAllocator
       Delete(g_trackingAllocator);
     }
   }
+
+  public void SetIsClass(void* mem)
+  {
+    if(m_memoryMap !is null && m_memoryMap.exists(mem))
+    {
+      m_memoryMap[mem].flags |= BlockFlags.IsClass;
+    }
+  }
   
   final void[] AllocateMemory(size_t size)
   {
-    void* mem = (OnFreeMemoryCallback is null) ? null : OnAllocateMemoryCallback(size,alignment);
+    void* mem = (OnAllocateMemoryCallback is null) ? null : OnAllocateMemoryCallback(size,alignment);
     if(mem is null)
     {
       version(DUMA)
@@ -381,7 +430,12 @@ class StdAllocator : IAdvancedAllocator
           // TODO implement for linux / osx
           version(Windows)
           {
-            info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false,3).length;
+            long backtrace[10];
+            info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace,false,3).length;
+            for(int i=0; i<info.backtraceSize; i++)
+            {
+              info.backtrace[i] = cast(size_t)backtrace[i];
+            }
           }
           auto map = m_memoryMap;
           map[mem] = info;
@@ -437,7 +491,12 @@ class StdAllocator : IAdvancedAllocator
             // TODO implement for linux / osx
             version(Windows)
             {
-              info.backtraceSize = StackTrace.traceAddresses(info.backtrace,false,0).length;
+              long backtrace[10];
+              info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace,false,3).length;
+              for(int i=0; i<info.backtraceSize; i++)
+              {
+                info.backtrace[i] = cast(size_t)backtrace[i];
+              }
             }
 
             //printf("realloc adding %x(%d)\n",mem,size);
@@ -551,13 +610,19 @@ auto AllocatorNew(T,AT,ARGS...)(AT allocator, ARGS args)
                 "Don't know how to initialize an object of type "
                 ~ T.stringof ~ " with arguments:\n" ~ ARGS.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
     }
+
+    static if(is(AT == StdAllocator))
+    {
+      allocator.SetIsClass(mem.ptr);
+    }
     
     static if(is(T : RefCounted))
     {
       result.SetAllocator(allocator);
-      return SmartPtr!T(result);
+      return ReturnRefCounted!T(result);
     }
-    else {
+    else
+    {
       return result;
     }
   }
@@ -669,6 +734,10 @@ struct composite(T)
 void AllocatorDelete(T,AT)(AT allocator, T obj)
 {
   static assert(!is(T U == composite!U), "can not delete composited instance");
+  static if(is(T : RefCounted))
+  {
+    assert(obj.refcount == 0, "trying to delete reference counted object which is still referenced");
+  }
   static if(is(T == class))
   {
     if(obj is null)
@@ -699,6 +768,10 @@ void AllocatorDelete(T,AT)(AT allocator, T obj)
       return;
     callDtor(obj);
     allocator.FreeMemory(cast(void*)obj.ptr);    
+  }
+  else
+  {
+    static assert(0, "Can not delete " ~ T.stringof);
   }
 }
 

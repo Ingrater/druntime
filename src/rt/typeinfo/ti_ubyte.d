@@ -54,7 +54,7 @@ class TypeInfo_h : TypeInfo
         *cast(ubyte *)p2 = t;
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.UByte; }
 }
 
 class TypeInfo_b : TypeInfo_h
@@ -66,4 +66,6 @@ class TypeInfo_b : TypeInfo_h
       else
         return "bool"; 
     }
+
+    @property override Type type() nothrow pure { return Type.Bool; }
 }

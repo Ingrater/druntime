@@ -74,6 +74,23 @@ public:
   }
 }
 
+/**
+ * Wrapper object without implicit conversion so the user recognizes he just allocated a reference counted object
+ */
+struct ReturnRefCounted(T)
+{
+  static assert(is(T : RefCounted),T.stringof ~ " is not a reference counted object");
+  T ptr;
+
+  this(T obj)
+  {
+    ptr = obj;
+  }
+}
+
+/**
+ * Smart pointer to safely hold reference counted objects
+ */
 struct SmartPtr(T)
 {
   static assert(is(T : RefCounted),T.stringof ~ " is not a reference counted object");
@@ -92,6 +109,14 @@ struct SmartPtr(T)
   {
     if(ptr !is null)
       ptr.AddReference();
+  }
+
+  this(ReturnRefCounted!T rh)
+  {
+    ptr = rh.ptr;
+    if(ptr !is null)
+      ptr.AddReference();
+    rh.ptr = null;
   }
   
   ~this()
@@ -142,6 +167,27 @@ struct SmartPtr(T)
     if(ptr !is null)
       ptr.AddReference();
   }
+
+  void opAssign(ReturnRefCounted!T rh)
+  {
+    if(ptr !is null)
+      ptr.RemoveReference();
+    ptr = rh.ptr;
+    if(ptr !is null)
+      ptr.AddReference();
+    rh.ptr = null;
+  }
+
+  //TODO reenable when bug 8295 is fixed
+  /*void opAssign(shared(ReturnRefCounted!T) rh) shared
+  {
+    if(ptr !is null)
+      ptr.RemoveReference();
+    ptr = rh.ptr;
+    if(ptr !is null)
+      ptr.AddReference();
+    rh.ptr = null;
+  }*/
 }
 
 final class RCArrayData(T, AT = StdAllocator) : RefCounted
@@ -191,6 +237,10 @@ public:
 
     //call default ctor
     result.__ctor(allocator);
+    static if(is(Allocator == StdAllocator))
+    {
+      allocator.SetIsClass(mem);
+    }
     
     final switch(meminit)
     {
@@ -533,6 +583,7 @@ struct RCArray(T,AT = StdAllocator)
     ref T opIndexAssign(T value, size_t index)
     {
       m_Data[index] = value;
+      return m_Data[index];
     }
 
     void opIndexAssign(T value, size_t from, size_t to)

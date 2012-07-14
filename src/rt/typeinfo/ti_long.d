@@ -65,5 +65,5 @@ class TypeInfo_l : TypeInfo
         return long.alignof;
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.Long; }
 }

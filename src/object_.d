@@ -259,7 +259,6 @@ class TypeInfo
 {
 	enum Type {
 		Info,
-    Native,
 		Vector,
 		Typedef,
 		Enum,
@@ -270,13 +269,36 @@ class TypeInfo
 		Function,
 		Delegate,
 		Class,
+    Obj,
 		Interface,
 		Struct,
 		Tuple,
 		Const,
 		Immutable,
     Shared,
-		Inout
+		Inout,
+    Byte,
+    UByte,
+    Short,
+    UShort,
+    Int,
+    UInt,
+    Long,
+    ULong,
+    Float,
+    IFloat,
+    CFloat,
+    Double,
+    IDouble,
+    CDouble,
+    Real,
+    IReal,
+    CReal,
+    Char,
+    WChar,
+    DChar,
+    Void,
+    Bool
 	}
 
     override hash_t toHash()
@@ -298,6 +320,8 @@ class TypeInfo
           return dstrcmp(this.toString(), ti.toString());
     }
 
+    string GetName() nothrow pure { return ""; } //name, only implemented for structs, interfaces, classes, typedef, enum
+
     override equals_t opEquals(Object o)
     {
         /* TypeInfo instances are singletons, but duplicates can exist
@@ -306,11 +330,26 @@ class TypeInfo
          */
         if (this is o)
             return true;
-        TypeInfo ti = cast(TypeInfo)o;
-        version(NOGCSAFE)
-          return ti && this.toString()[] == ti.toString()[];
-        else
-          return ti && this.toString() == ti.toString();
+        TypeInfo ti1 = this;
+        TypeInfo ti2 = cast(TypeInfo)o;
+
+        do
+        {
+          Type tt1 = ti1.type;
+          Type tt2 = ti2.type;
+          if(tt1 != tt2)
+            return false;
+          if(tt1 == Type.Struct || tt1 == Type.Class || tt1 == Type.Interface || Type.Typedef || Type.Enum)
+          {
+            if(ti1.GetName() != ti2.GetName())
+              return false;
+          }
+          ti1 = ti1.next;
+          ti2 = ti2.next;
+        } while(ti1 !is null && ti2 !is null);
+        if(ti1 !is null || ti2 !is null)
+          return false;
+        return true;
     }
 
     /// Returns a hash of the instance of a type.
@@ -389,7 +428,7 @@ class TypeInfo_Vector : TypeInfo
     @property override size_t tsize() nothrow pure { return base.tsize; }
     override void swap(void* p1, void* p2) { return base.swap(p1, p2); }
 
-    @property override TypeInfo next() nothrow pure { return base.next; }
+    @property override TypeInfo next() nothrow pure { return base; }
     @property override uint flags() nothrow pure { return base.flags; }
     override void[] init() nothrow pure { return base.init(); }
 
@@ -429,7 +468,7 @@ class TypeInfo_Typedef : TypeInfo
     @property override size_t tsize() nothrow pure { return base.tsize; }
     override void swap(void* p1, void* p2) { return base.swap(p1, p2); }
 
-    @property override TypeInfo next() nothrow pure { return base.next; }
+    @property override TypeInfo next() nothrow pure { return base; }
     @property override uint flags() nothrow pure { return base.flags; }
     override void[] init() nothrow pure { return m_init.length ? m_init : base.init(); }
 
@@ -440,6 +479,8 @@ class TypeInfo_Typedef : TypeInfo
     }
 
 	  @property override Type type() nothrow pure { return Type.Typedef; }
+
+    override string GetName() nothrow pure { return name; }
 
     TypeInfo base;
     string   name;
@@ -759,7 +800,7 @@ class TypeInfo_Function : TypeInfo
 {
     override to_string_t toString()
     {
-        return next.toString() ~ "()";
+        return base.toString() ~ "()";
     }
 
     override equals_t opEquals(Object o)
@@ -771,6 +812,7 @@ class TypeInfo_Function : TypeInfo
     }
 
     // BUG: need to add the rest of the functions
+    @property override TypeInfo next() nothrow pure { return base; }
 
     @property override size_t tsize() nothrow pure
     {
@@ -779,7 +821,7 @@ class TypeInfo_Function : TypeInfo
 
 	  @property override Type type() nothrow pure { return Type.Function; }
 
-    TypeInfo next;
+    TypeInfo base;
     string deco;
 }
 
@@ -787,7 +829,7 @@ class TypeInfo_Delegate : TypeInfo
 {
     override to_string_t toString()
     {
-        return next.toString() ~ " delegate()";
+        return base.toString() ~ " delegate()";
     }
 
     override equals_t opEquals(Object o)
@@ -808,7 +850,9 @@ class TypeInfo_Delegate : TypeInfo
 
     @property override uint flags() nothrow pure { return 1; }
 
-    TypeInfo next;
+    @property override TypeInfo next() nothrow pure { return base; }
+
+    TypeInfo base;
     string deco;
 
     @property override size_t talign() nothrow pure
@@ -970,6 +1014,8 @@ class TypeInfo_Class : TypeInfo
     }
 
 	  @property override Type type() nothrow pure { return Type.Class; }
+
+    override string GetName() nothrow pure { return name; }
 }
 
 alias TypeInfo_Class ClassInfo;
@@ -1042,6 +1088,8 @@ class TypeInfo_Interface : TypeInfo
     @property override uint flags() nothrow pure { return 1; }
 
 	  @property override Type type() nothrow pure { return Type.Interface; }
+
+    override string GetName() nothrow pure { return info.name; }
 
     TypeInfo_Class info;
 }
@@ -1165,6 +1213,8 @@ class TypeInfo_Struct : TypeInfo
     }
 
 	  @property override Type type() nothrow pure { return Type.Struct; }
+
+    @property override string GetName() nothrow pure { return name; }
 }
 
 unittest

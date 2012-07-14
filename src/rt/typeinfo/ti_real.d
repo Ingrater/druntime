@@ -87,5 +87,5 @@ class TypeInfo_e : TypeInfo
         return real.alignof;
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.Real; }
 }

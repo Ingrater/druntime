@@ -87,5 +87,5 @@ class TypeInfo_d : TypeInfo
         return double.alignof;
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.Double; }
 }

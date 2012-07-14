@@ -54,5 +54,5 @@ class TypeInfo_g : TypeInfo
         *cast(byte *)p2 = t;
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.Byte; }
 }

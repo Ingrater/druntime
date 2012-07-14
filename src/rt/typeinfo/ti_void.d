@@ -59,5 +59,5 @@ class TypeInfo_v : TypeInfo
         return 1;
     }
 
-    @property override Type type() nothrow pure { return Type.Native; }
+    @property override Type type() nothrow pure { return Type.Void; }
 }

@@ -89,7 +89,6 @@ class TypeInfo
 {
 	  enum Type {
 		  Info,
-      Native,
 		  Vector,
 		  Typedef,
 		  Enum,
@@ -100,15 +99,39 @@ class TypeInfo
 		  Function,
 		  Delegate,
 		  Class,
+      Obj,
 		  Interface,
 		  Struct,
 		  Tuple,
 		  Const,
 		  Immutable,
       Shared,
-		  Inout
+		  Inout,
+      Byte,
+      UByte,
+      Short,
+      UShort,
+      Int,
+      UInt,
+      Long,
+      ULong,
+      Float,
+      IFloat,
+      CFloat,
+      Double,
+      IDouble,
+      CDouble,
+      Real,
+      IReal,
+      CReal,
+      Char,
+      WChar,
+      DChar,
+      Void,
+      Bool
 	  }
 
+    string GetName() nothrow pure; //name, only implemented for structs, interfaces, classes, typedef, enum
     hash_t   getHash(in void* p);
     equals_t equals(in void* p1, in void* p2);
     int      compare(in void* p1, in void* p2);
