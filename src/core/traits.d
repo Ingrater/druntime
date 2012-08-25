@@ -56,7 +56,25 @@ unittest {
  */
 template StripModifier(T)
 {
-  alias StripConst!(StripShared!(StripImmutable!(T))) StripModifier;
+  //alias StripConst!(StripShared!(StripImmutable!(T))) StripModifier;
+  version (none) // Error: recursive alias declaration @@@BUG1308@@@
+  {
+    static if (is(T U ==     const U)) alias StripModifier!U StripModifier;
+    else static if (is(T U == immutable U)) alias StripModifier!U StripModifier;
+    else static if (is(T U ==     inout U)) alias StripModifier!U StripModifier;
+    else static if (is(T U ==    shared U)) alias StripModifier!U StripModifier;
+    else                                    alias        T StripModifier;
+  }
+  else // workaround
+  {
+    static if (is(T   ==   const(void[]))) alias void[] StripModifier;
+    else static if (is(T U == shared(const U))) alias U StripModifier;
+    else static if (is(T U ==        const U )) alias U StripModifier;
+    else static if (is(T U ==    immutable U )) alias U StripModifier;
+    else static if (is(T U ==        inout U )) alias U StripModifier;
+    else static if (is(T U ==       shared U )) alias U StripModifier;
+    else                                        alias T StripModifier;
+  }
 }
 
 unittest 
@@ -67,14 +85,25 @@ unittest
   static assert(is(int == StripModifier!(int)));
 }
 
+template IsStaticMember(T, string N)
+{
+  mixin("enum bool IsStaticMember = __traits(compiles, { auto temp = T." ~ N ~ "; });");
+}
+
 private bool IsPODStruct(T)()
 {
   foreach(m; __traits(allMembers,T))
   {
     static if((m.length < 2 || m[0..2] != "__") && m != "this"){
       static if(__traits(compiles,typeof(__traits(getMember,T,m)))){
-        static if(IsPOD!(typeof(__traits(getMember,T,m))) == false)
-          return false;
+        //pragma(msg, "checking " ~ m);
+        static if(!IsStaticMember!(T, m))
+        {
+          static if(IsPOD!(typeof(__traits(getMember,T,m))) == false)
+          {
+            return false;
+          }
+        }
       }
     }
   }
@@ -87,8 +116,11 @@ private bool IsPODStruct(T)()
 template IsPOD(T)
 {
   static if(is(T U : U*)) //pointer
-  {
-    enum bool IsPOD = false;
+  { 
+    static if(is(U == function))
+      enum bool IsPOD = true;
+    else
+      enum bool IsPOD = false;
   }
   else static if(is(T U : U[N], size_t N)) //static array
   {
@@ -102,22 +134,21 @@ template IsPOD(T)
   {
     enum bool IsPOD = false;
   }
-  else static if(is(T == class)) //reference
+  else static if(is(T == class) || is(T == interface)) //reference
   {
     enum bool IsPOD = false;
   }
-  else static if(is(T == struct)) //struct
+  else static if(is(T == struct) || is(T == union)) //struct, union
   {
     enum bool IsPOD = IsPODStruct!T();
   }
-  else static if(is(T == function) || is(T == delegate)) //function / delegate
+  else static if(is(T == delegate)) //delegate
   {
     enum bool IsPOD = false;
   }
   else {
     enum bool IsPOD = true; //the rest (int,float,double etc)
   }
-  //TODO check for static arrays
 }
 
 unittest
@@ -139,7 +170,7 @@ unittest
   static assert(IsPOD!(immutable(int)[]) == false);
   static assert(IsPOD!(immutable(int[])) == false);
 
-  struct TestStruct1
+  static struct TestStruct1
   {
     alias int custom_t;
     alias void function(int) func_t;
@@ -150,40 +181,81 @@ unittest
 
   static assert(IsPOD!TestStruct1 == true);
 
-  struct TestStruct2
+  static struct TestStruct2
   {
     Object o;
   }
 
   static assert(IsPOD!TestStruct2 == false);
 
-  struct TestStruct3
+  static struct TestStruct3
   {
     int* ptr;
   }
 
   static assert(IsPOD!TestStruct3 == false);
 
-  struct TestStruct4
+  static struct TestStruct4
   {
     int*[4] ptrArray;
   }
 
   static assert(IsPOD!TestStruct4 == false);
 
-  struct TestStruct5
+  static struct TestStruct5
   {
     int[4] array;
   }
 
   static assert(IsPOD!TestStruct5 == true);
 
-  struct TestStruct6
+  static struct TestStruct6
   {
     int[string] hashtable;
   }
 
   static assert(IsPOD!TestStruct6 == false);
+
+  static struct TestStruct7
+  {
+    alias void function() func;
+    alias void delegate() del;
+    float f;
+  }
+
+  static assert(IsPOD!TestStruct7 == true);
+
+  static struct TestStruct8
+  {
+    alias void function() func;
+    func f;
+  }
+
+  static assert(IsPOD!TestStruct8 == true);
+
+  static struct TestStruct9
+  {
+    alias void delegate() del;
+    del d;
+  }
+
+  static assert(IsPOD!TestStruct9 == false);
+
+  static struct TestStruct10
+  {
+    void randomMethod() { }
+    float f;
+  }
+
+  static assert(IsPOD!TestStruct10 == true);
+
+  static struct TestStruct11
+  {
+    enum string name = "TestStruct11";
+    float f;
+  }
+
+  static assert(IsPOD!TestStruct11 == true);
 }
 
 template RCArrayType(T : RCArray!(T,AT), AT)
@@ -204,4 +276,19 @@ template isRCArray(T) if(is(T U : RCArray!U) || is(T U : RCArray!(U,AT), AT))
 template isRCArray(T) if(!is(T U : RCArray!U) && !is(T U : RCArray!(U,AT), AT))
 {
   enum bool isRCArray = false;
+}
+
+template arrayType(T : RCArray!(T,A), A)
+{
+  alias T arrayType;
+}
+
+template arrayType(T : T[])
+{
+  alias T arrayType;
+}
+
+template arrayType(T : U[n], U, size_t n)
+{
+  alias U arrayType;
 }

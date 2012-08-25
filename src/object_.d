@@ -75,7 +75,7 @@ version(NOGCSAFE)
 
 version(NOGCSAFE)
 {
-  alias rcstring to_string_t;
+  alias RCArray!(immutable(char)) to_string_t;
 }
 else
 {

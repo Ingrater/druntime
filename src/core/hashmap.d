@@ -104,7 +104,7 @@ struct StdHashPolicy
   }
 }
 
-class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
+final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
 {
   private:
     enum State {
@@ -264,29 +264,15 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       }
       return size_t.max;
     }
-    
-    bool remove(K key)
+
+    private void doRemove(size_t index)
     {
-      size_t index = HP.Hash(key) % m_Data.length;
-      bool found = false;
-      while(m_Data[index].state != State.Free)
-      {
-        if(m_Data[index].state == State.Data && m_Data[index].key == key)
-        {
-          found = true;
-          break;
-        }
-        index = (index + 1) % m_Data.length;
-      }
-      if(!found)
-        return false;
-      
       size_t nextIndex = (index + 1) % m_Data.length;
       if(m_Data[nextIndex].state != State.Free)
         m_Data[index].state = State.Deleted;
       else
         m_Data[index].state = State.Free;
-      
+
       //TODO remove when compiler no longer allocates on K.init
       static if(is(K == struct))
       {
@@ -308,7 +294,7 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       }
       else
         m_Data[index].key = K.init;
-      
+
       //TODO remove when compiler no longer allocates on V.init
       static if(is(V == struct))
       {
@@ -331,8 +317,40 @@ class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       else
         m_Data[index].value = V.init;
       m_FullCount--;
+    }
+    
+    bool remove(K key)
+    {
+      size_t index = HP.Hash(key) % m_Data.length;
+      bool found = false;
+      while(m_Data[index].state != State.Free)
+      {
+        if(m_Data[index].state == State.Data && m_Data[index].key == key)
+        {
+          found = true;
+          break;
+        }
+        index = (index + 1) % m_Data.length;
+      }
+      if(!found)
+        return false;
       
+      doRemove(index);
       return true;
+    }
+
+    size_t removeWhere(scope bool delegate(ref K, ref V) condition)
+    {
+      size_t removed = 0;
+      foreach(size_t index, ref entry; m_Data)
+      {
+        if( entry.state == State.Data && condition(entry.key, entry.value) )
+        {
+          doRemove(index);
+          removed++;
+        }
+      }
+      return removed;
     }
     
     int opApply( scope int delegate(ref V) dg )

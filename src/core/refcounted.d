@@ -88,6 +88,16 @@ struct ReturnRefCounted(T)
   }
 }
 
+template SmartPtrType(T : SmartPtr!T)
+{
+  alias T SmartPtrType;
+}
+
+template ReturnRefCountedType(T : ReturnRefCounted!T)
+{
+  alias T ReturnRefCountedType;
+}
+
 /**
  * Smart pointer to safely hold reference counted objects
  */
@@ -124,15 +134,24 @@ struct SmartPtr(T)
     if(ptr !is null)
       ptr.RemoveReference();
   }
+
+  //ugly workaround
+  private mixin template _workaround4424()
+  {
+    @disable void opAssign(typeof(this) );
+  }
+  mixin _workaround4424;
   
-  void opAssign(typeof(null) obj)
+  //assignment to null
+  void opAssign(U)(U obj) if(is(U == typeof(null)))
   {
     if(ptr !is null)
       ptr.RemoveReference();
     ptr = null;
   }
   
-  void opAssign(T obj)
+  //asignment from a normal reference
+  void opAssign(U)(U obj) if(!is(U V : SmartPtr!V) && (is(U == T) || is(U : T)))
   {
     if(ptr !is null)
       ptr.RemoveReference();
@@ -141,25 +160,8 @@ struct SmartPtr(T)
       ptr.AddReference();
   }
   
-  void opAssign(shared(T) obj) shared
-  {
-    if(ptr !is null)
-      ptr.RemoveReference();
-    ptr = obj;
-    if(ptr !is null)
-      ptr.AddReference();
-  }
-  
-  void opAssign(ref this_t rh)
-  {
-    if(ptr !is null)
-      ptr.RemoveReference();
-    ptr = rh.ptr;
-    if(ptr !is null)
-      ptr.AddReference();
-  }
-  
-  void opAssign(ref shared(this_t) rh) shared
+  //assignment from another smart ptr
+  void opAssign(U)(auto ref U rh) if(is(U V : SmartPtr!V) && is(SmartPtrType!U : T))
   {
     if(ptr !is null)
       ptr.RemoveReference();
@@ -168,7 +170,8 @@ struct SmartPtr(T)
       ptr.AddReference();
   }
 
-  void opAssign(ReturnRefCounted!T rh)
+  //assignemnt from a value New! returned
+  void opAssign(U)(U rh) if(is(U V : ReturnRefCounted!V) && is(ReturnRefCountedType!U : T))
   {
     if(ptr !is null)
       ptr.RemoveReference();
@@ -863,6 +866,11 @@ struct RCArray(T,AT = StdAllocator)
   }
 
   bool opEquals(this_t rh)
+  {
+    return (this[] == rh[]);
+  }
+
+  bool opEquals(const(this_t) rh) const
   {
     return (this[] == rh[]);
   }

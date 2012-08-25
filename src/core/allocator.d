@@ -672,10 +672,15 @@ struct composite(T)
   static assert(is(T == class),"can only composite classes");
   void[__traits(classInstanceSize, T)] _classMemory = void;
   bool m_destructed = false;
-
-  @property T _instance()
+  debug {
+    T _instance;
+  }
+  else
   {
-    return cast(T)_classMemory.ptr;
+    @property T _instance()
+    {
+      return cast(T)_classMemory.ptr;
+    }
   }
 
   alias _instance this;
@@ -683,41 +688,31 @@ struct composite(T)
   @disable this();
   @disable this(this); //prevent evil stuff from happening
 
-  this(DefaultCtor c){ };
+  this(DefaultCtor c){ 
+  };
 
   void construct(ARGS...)(ARGS args) //TODO fix: workaround because constructor can not be a template
   {
     _classMemory[] = typeid(T).init[];
     T result = (cast(T)_classMemory.ptr);
-    static if(ARGS.length == 1 && is(ARGS[0] == DefaultCtor))
+    static if(is(typeof(result.__ctor(args))))
     {
-      static if(is(typeof(result.__ctor())))
-      {
-        result.__ctor();
-      }
-      else
-      {
-        static assert(0,T.stringof ~ " does not have a default constructor");
-      }
+      result.__ctor(args);
     }
-    else {
-      static if(is(typeof(result.__ctor(args))))
-      {
-        result.__ctor(args);
-      }
-      else
-      {
-        static assert(args.length == 0 && !is(typeof(&T.__ctor)),
-                      "Don't know how to initialize an object of type "
-                      ~ T.stringof ~ " with arguments:\n" ~ ARGS.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
-      }
+    else
+    {
+      static assert(args.length == 0 && !is(typeof(&T.__ctor)),
+                    "Don't know how to initialize an object of type "
+                    ~ T.stringof ~ " with arguments:\n" ~ ARGS.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
     }
+    debug _instance = result;
   }
 
   void destruct()
   {
     assert(!m_destructed);
     Destruct(_instance);
+    debug _instance = null;
     m_destructed = true;
   }
 
@@ -952,14 +947,26 @@ void callDtor(T)(T subject)
   }
 }
 
-void uninitializedCopy(DT,ST)(DT dest, ST source) 
-if(is(DT DBT == DBT[]) && is(ST SBT == SBT[]) 
-   && is(StripModifier!DBT == StripModifier!SBT))
+void uninitializedCopy(DT,ST)(DT dest, ST source) if(!is(DT == struct))
 {
+  static assert(is(DT DBT == DBT[]), "Destination Type (DT) '" ~ DT.stringof ~ "' is not an array");
+  static assert(is(ST SBT == SBT[]), "Source Type (ST) '" ~ ST.stringof ~ "' is not an array");
+  static assert(is(StripModifier!(arrayType!DT) == StripModifier!(arrayType!ST)),
+                "Array Types are not copy compatible " ~ arrayType!DT.stringof ~ " and " ~ arrayType!ST.stringof);
   assert(dest.length == source.length, "array lengths do not match");
   memcpy(dest.ptr,source.ptr,dest.length * typeof(*dest.ptr).sizeof);
   callPostBlit(dest);
 }
+
+void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(is(DT == struct) && is(DT == ST))
+{
+  memcpy(&dest,&source,DT.sizeof);
+  static if(is(typeof(dest.__postblit)))
+  {
+    dest.__postblit();
+  }
+}
+
 
 void copy(DT,ST)(DT dest, ST source) 
 if(is(DT DBT == DBT[]) && is(ST SBT == SBT[]) 
@@ -971,15 +978,6 @@ if(is(DT DBT == DBT[]) && is(ST SBT == SBT[])
   callPostBlit(dest);
 }
 
-
-void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(is(DT == struct) && is(DT == ST))
-{
-  memcpy(&dest,&source,DT.sizeof);
-  static if(is(typeof(dest.__postblit)))
-  {
-    dest.__postblit();
-  }
-}
 
 void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(!is(DT == struct) && !is(DT U == U[]) && is(StripModifier!DT == StripModifier!ST))
 {
