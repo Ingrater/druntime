@@ -961,12 +961,13 @@ void uninitializedCopy(DT,ST)(DT dest, ST source) if(!is(DT == struct))
 void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(is(DT == struct) && is(DT == ST))
 {
   memcpy(&dest,&source,DT.sizeof);
-  static if(is(typeof(dest.__postblit)))
-  {
-    dest.__postblit();
-  }
+  callPostBlit(&dest);
 }
 
+void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(!is(DT == struct) && !is(DT U == U[]) && is(StripModifier!DT == StripModifier!ST))
+{
+  dest = source;
+}
 
 void copy(DT,ST)(DT dest, ST source) 
 if(is(DT DBT == DBT[]) && is(ST SBT == SBT[]) 
@@ -978,11 +979,6 @@ if(is(DT DBT == DBT[]) && is(ST SBT == SBT[])
   callPostBlit(dest);
 }
 
-
-void uninitializedCopy(DT,ST)(ref DT dest, ref ST source) if(!is(DT == struct) && !is(DT U == U[]) && is(StripModifier!DT == StripModifier!ST))
-{
-  dest = source;
-}
 
 void uninitializedMove(DT,ST)(DT dest, ST source) 
 if(is(DT DBT == DBT[]) && is(ST SBT == SBT[]) 

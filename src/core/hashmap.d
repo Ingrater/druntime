@@ -106,6 +106,10 @@ struct StdHashPolicy
 
 final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
 {
+  static if(is(K == class) || is(K == interface))
+  {
+    static assert(__traits(hasMember,K,"Equals"), "Classes and interfaces need a Equals member to be stored in the hashmap");
+  }
   private:
     enum State {
       Free, // 0
@@ -230,8 +234,16 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t index = HP.Hash(key) % m_Data.length;
       while(m_Data[index].state != State.Free)
       {
-        if(m_Data[index].state == State.Data && m_Data[index].key == key)
-          return m_Data[index].value;
+        static if(is(K == class) || is(K == interface))
+        {
+          if(m_Data[index].state == State.Data && m_Data[index].key.Equals(key) && key.Equals(m_Data[index].key))
+            return m_Data[index].value;
+        }
+        else
+        {
+          if(m_Data[index].state == State.Data && m_Data[index].key == key)
+            return m_Data[index].value;
+        }
         index = (index + 1) % m_Data.length;
       }
       
@@ -244,8 +256,16 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t index = HP.Hash(key) % m_Data.length;
       while(m_Data[index].state != State.Free)
       {
-        if(m_Data[index].state == State.Data && m_Data[index].key == key)
-          return true;
+        static if(is(K == class) || is(K == interface))
+        {
+          if(m_Data[index].state == State.Data && m_Data[index].key.Equals(key) && key.Equals(m_Data[index].key))
+            return true;
+        }
+        else
+        {
+          if(m_Data[index].state == State.Data && m_Data[index].key == key)
+            return true;
+        }
         index = (index + 1) % m_Data.length;
       }
       return false;
@@ -257,8 +277,16 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t searched = 0;
       while(m_Data[index].state != State.Free && searched < m_FullCount)
       {
-        if(m_Data[index].state == State.Data && m_Data[index].key == key)
-          return index;
+        static if(is(K == class) || is(K == interface))
+        {
+          if(m_Data[index].state == State.Data && m_Data[index].key.Equals(key) && key.Equals(m_Data[index].key))
+            return index;
+        }
+        else
+        {
+          if(m_Data[index].state == State.Data && m_Data[index].key == key)
+            return index;
+        }
         index = (index + 1) % m_Data.length;
         searched++;
       }
@@ -325,10 +353,21 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       bool found = false;
       while(m_Data[index].state != State.Free)
       {
-        if(m_Data[index].state == State.Data && m_Data[index].key == key)
+        static if(is(K == class) || is(K == interface))
         {
-          found = true;
-          break;
+          if(m_Data[index].state == State.Data && m_Data[index].key.Equals(key) && key.Equals(m_Data[index].key))
+          {
+            found = true;
+            break;
+          }
+        }
+        else
+        {
+          if(m_Data[index].state == State.Data && m_Data[index].key == key)
+          {
+            found = true;
+            break;
+          }
         }
         index = (index + 1) % m_Data.length;
       }
