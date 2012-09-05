@@ -2,6 +2,7 @@ module core.hashmap;
 
 import core.allocator;
 import core.stdc.string; //for memcpy
+import core.atomic;
 
 version( X86 )
   version = AnyX86;
@@ -133,6 +134,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     Pair[] m_Data;
     size_t m_FullCount = 0;
     AT m_allocator;
+    debug shared uint m_iterationCount = 0;
     
     enum uint INITIAL_SIZE = 4;
   
@@ -175,6 +177,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     
     private void insert(ref K key, ref V value)
     {
+      debug { assert(m_iterationCount == 0, "can't modify hashmap while iterating"); }
       size_t index = HP.Hash(key) % m_Data.length;
       while(m_Data[index].state == State.Data)
       {
@@ -349,6 +352,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     
     bool remove(K key)
     {
+      debug { assert(m_iterationCount == 0, "can't modify hashmap while iterating"); }
       size_t index = HP.Hash(key) % m_Data.length;
       bool found = false;
       while(m_Data[index].state != State.Free)
@@ -395,6 +399,10 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     int opApply( scope int delegate(ref V) dg )
     {
       int result = void;
+      debug {
+        atomicOp!"+="(m_iterationCount, 1);
+        scope(exit) atomicOp!"-="(m_iterationCount, 1);
+      }
       foreach(ref entry; m_Data)
       {
         if( entry.state == State.Data && (result = dg(entry.value)) != 0)
@@ -406,6 +414,10 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     int opApply( scope int delegate(ref K, ref V) dg )
     {
       int result = void;
+      debug {
+        atomicOp!"+="(m_iterationCount, 1);
+        scope(exit) atomicOp!"-="(m_iterationCount, 1);
+      }
       foreach(ref entry; m_Data)
       {
         if( entry.state == State.Data && (result = dg(entry.key, entry.value)) != 0)
@@ -419,6 +431,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
      */
     void clear()
     {
+      debug { assert(m_iterationCount == 0, "can't modify hashmap while iterating"); }
       foreach(ref p; m_Data)
       {
         if(p.state == State.Data)

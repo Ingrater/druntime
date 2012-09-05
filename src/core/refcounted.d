@@ -151,7 +151,7 @@ struct SmartPtr(T)
   }
   
   //asignment from a normal reference
-  void opAssign(U)(U obj) if(!is(U V : SmartPtr!V) && (is(U == T) || is(U : T)))
+  void opAssign(U)(U obj) if(!is(U == typeof(null)) && (!is(U V : SmartPtr!V) && (is(U == T) || is(U : T))))
   {
     if(ptr !is null)
       ptr.RemoveReference();

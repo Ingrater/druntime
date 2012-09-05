@@ -681,6 +681,11 @@ struct composite(T)
     {
       return cast(T)_classMemory.ptr;
     }
+
+    @property const(T) _instance() const
+    {
+      return cast(const(T))_classMemory.ptr;
+    }
   }
 
   alias _instance this;
