@@ -256,22 +256,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     
     bool exists(K key)
     {
-      size_t index = HP.Hash(key) % m_Data.length;
-      while(m_Data[index].state != State.Free)
-      {
-        static if(is(K == class) || is(K == interface))
-        {
-          if(m_Data[index].state == State.Data && m_Data[index].key.Equals(key) && key.Equals(m_Data[index].key))
-            return true;
-        }
-        else
-        {
-          if(m_Data[index].state == State.Data && m_Data[index].key == key)
-            return true;
-        }
-        index = (index + 1) % m_Data.length;
-      }
-      return false;
+      return getIndex(key) != size_t.max;
     }
 
     size_t getIndex(K key)

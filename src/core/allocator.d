@@ -390,7 +390,7 @@ class StdAllocator : IAdvancedAllocator
         if(log !is null) fclose(log);
         debug
         {
-          asm { int 3; }
+          asm { int 3; } //if you ended up here, you have memory leaks, see memoryleaks.log for details
         }
       }
 

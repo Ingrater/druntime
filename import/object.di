@@ -87,7 +87,7 @@ struct OffsetTypeInfo
 
 class TypeInfo
 {
-	  enum Type {
+	  enum Type : ubyte {
 		  Info,
 		  Vector,
 		  Typedef,
