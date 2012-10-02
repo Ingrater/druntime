@@ -263,7 +263,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     {
       size_t index = HP.Hash(key) % m_Data.length;
       size_t searched = 0;
-      while(m_Data[index].state != State.Free && searched < m_FullCount)
+      while(m_Data[index].state != State.Free && searched < m_Data.length)
       {
         static if(is(K == class) || is(K == interface))
         {
