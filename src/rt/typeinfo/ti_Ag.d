@@ -8,7 +8,7 @@
 
 /*          Copyright Digital Mars 2004 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_Ag;
@@ -19,8 +19,9 @@ private import rt.util.string;
 
 // byte[]
 
-class TypeInfo_Ag : TypeInfo
+class TypeInfo_Ag : TypeInfo_Array
 {
+    override equals_t opEquals(Object o) { return TypeInfo.opEquals(o); }
     override to_string_t toString() 
     { 
       version(NOGCSAFE)
@@ -29,8 +30,15 @@ class TypeInfo_Ag : TypeInfo
         return "byte[]"; 
     }
 
+    @trusted:
+    const:
+    pure:
+    nothrow:
+
+
     override hash_t getHash(in void* p)
-    {   byte[] s = *cast(byte[]*)p;
+    {
+        byte[] s = *cast(byte[]*)p;
         return hashOf(s.ptr, s.length * byte.sizeof);
     }
 
@@ -64,31 +72,9 @@ class TypeInfo_Ag : TypeInfo
         return 0;
     }
 
-    @property override size_t tsize() nothrow pure
-    {
-        return (byte[]).sizeof;
-    }
-
-    @property override uint flags() nothrow pure
-    {
-        return 1;
-    }
-
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(byte);
-    }
-
-    @property override size_t talign() nothrow pure
-    {
-        return (byte[]).alignof;
-    }
-
-    version (X86_64) override int argTypes(out TypeInfo arg1, out TypeInfo arg2)
-    {
-        //arg1 = typeid(size_t);
-        //arg2 = typeid(void*);
-        return 0;
     }
 
     @property override Type type() nothrow pure { return Type.Array; }
@@ -107,6 +93,11 @@ class TypeInfo_Ah : TypeInfo_Ag
         return "ubyte[]"; 
     }
 
+    @trusted:
+    const:
+    pure:
+    nothrow:
+	
     override int compare(in void* p1, in void* p2)
     {
         char[] s1 = *cast(char[]*)p1;
@@ -115,7 +106,7 @@ class TypeInfo_Ah : TypeInfo_Ag
         return dstrcmp(s1, s2);
     }
 
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(ubyte);
     }
@@ -134,8 +125,12 @@ class TypeInfo_Av : TypeInfo_Ah
       else
         return "void[]";
     }
+    @trusted:
+    const:
+    pure:
+    nothrow:
 
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(void);
     }
@@ -154,8 +149,13 @@ class TypeInfo_Ab : TypeInfo_Ah
       else
         return "bool[]"; 
     }
+	
+    @trusted:
+    const:
+    pure:
+    nothrow:
 
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(bool);
     }
@@ -174,9 +174,14 @@ class TypeInfo_Aa : TypeInfo_Ag
       else
         return "char[]"; 
     }
+    @trusted:
+    const:
+    pure:
+    nothrow:
 
     override hash_t getHash(in void* p)
-    {   char[] s = *cast(char[]*)p;
+    {
+        char[] s = *cast(char[]*)p;
         hash_t hash = 0;
 
 version (all)
@@ -224,7 +229,7 @@ else
         return hash;
     }
 
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(char);
     }
@@ -243,8 +248,13 @@ class TypeInfo_Aya : TypeInfo_Aa
       else
         return "immutable(char)[]"; 
     }
+    @trusted:
+    const:
+    pure:
+    nothrow:
 
-    @property override TypeInfo next() nothrow pure
+
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(immutable(char));
     }

@@ -10,7 +10,7 @@
 
 /*          Copyright Sean Kelly 2005 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.mutex;
@@ -128,7 +128,7 @@ class Mutex :
      * Throws:
      *  SyncException on error.
      */
-    void lock()
+    @trusted void lock()
     {
         version( Windows )
         {
@@ -150,7 +150,7 @@ class Mutex :
      * Throws:
      *  SyncException on error.
      */
-    void unlock()
+    @trusted void unlock()
     {
         version( Windows )
         {

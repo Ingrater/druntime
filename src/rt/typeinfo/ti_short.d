@@ -8,7 +8,7 @@
 
 /*          Copyright Digital Mars 2004 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_short;
@@ -24,6 +24,10 @@ class TypeInfo_s : TypeInfo
       else
         return "short"; 
     }
+    @trusted:
+    const:
+    pure:
+    nothrow:
 
     override hash_t getHash(in void* p)
     {
@@ -40,7 +44,7 @@ class TypeInfo_s : TypeInfo
         return *cast(short *)p1 - *cast(short *)p2;
     }
 
-    @property override size_t tsize() nothrow pure
+    override @property size_t tsize() nothrow pure
     {
         return short.sizeof;
     }

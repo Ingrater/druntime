@@ -8,12 +8,21 @@
 
 /*          Copyright Digital Mars 1999 - 2010.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.deh;
 import core.sys.windows.windows;
 //import core.stdc.stdio;
+
+version (D_InlineAsm_X86)
+{
+    version = AsmX86;
+}
+else version (D_InlineAsm_X86_64)
+{
+    version = AsmX86;
+}
 
 enum EXCEPTION_DISPOSITION {
     ExceptionContinueExecution,
@@ -388,7 +397,7 @@ EXCEPTION_RECORD *skipCollateralExceptions(EXCEPTION_RECORD *n)
  * Input:
  *      EAX     the handler table for the frame
  */
-export extern(C)
+extern(C)
 EXCEPTION_DISPOSITION _d_framehandler(
             EXCEPTION_RECORD *exceptionRecord,
             DEstablisherFrame *frame,
@@ -579,7 +588,7 @@ EXCEPTION_DISPOSITION _d_framehandler(
  * surrounding call to Dmain()
  */
 
-export int _d_exception_filter(EXCEPTION_POINTERS *eptrs,
+int _d_exception_filter(EXCEPTION_POINTERS *eptrs,
                         int retval,
                         Object *exceptionObject)
 {
@@ -590,11 +599,10 @@ export int _d_exception_filter(EXCEPTION_POINTERS *eptrs,
 /***********************************
  * Throw a D object.
  */
-export extern(C)
-void _d_throwc(Object h)
+
+private void throwImpl(Object h)
 {
     // @@@ TODO @@@ Signature should change: h will always be a Throwable.
-
     //printf("_d_throw(h = %p, &h = %p)\n", h, &h);
     //printf("\tvptr = %p\n", *(void **)h);
     _d_createTrace(h);
@@ -604,11 +612,36 @@ void _d_throwc(Object h)
                    1, cast(void *)&h);
 }
 
+extern(C) void _d_throwc(Object h)
+{
+    // set up a stack frame for trace unwinding
+    version (AsmX86)
+    {
+        asm
+        {
+            naked;
+            enter 0, 0;
+        }
+        version (D_InlineAsm_X86)
+            asm { mov EAX, [EBP+8]; }
+        asm
+        {
+            call throwImpl;
+            leave;
+            ret;
+        }
+    }
+    else
+    {
+        throwImpl(h);
+    }
+}
+
 /***********************************
  * Converts a Windows Structured Exception code to a D Throwable Object.
  */
 
-export Throwable _d_translate_se_to_d_exception(EXCEPTION_RECORD *exceptionRecord)
+Throwable _d_translate_se_to_d_exception(EXCEPTION_RECORD *exceptionRecord)
 {
     Throwable pti;
    // BUG: what if _d_newclass() throws an out of memory exception?
@@ -778,7 +811,7 @@ EXCEPTION_DISPOSITION unwindCollisionExceptionHandler(
  * Call finally blocks in the current stack frame until stop_index.
  * This is roughly equivalent to _local_unwind() for C in \src\win32\ehsup.c
  */
-export extern(C)
+extern(C)
 void _d_local_unwind(DHandlerTable *handler_table,
         DEstablisherFrame *frame, int stop_index, LanguageSpecificHandler collisionHandler)
 {
@@ -838,7 +871,7 @@ Apparently Win32 doesn't use the return address anyway.
 
 This code seems to be calling RtlUnwind( pFrame, &__retlabel, eRecord, 0);
 +/
-export extern(C)
+extern(C)
 int _d_global_unwind(DEstablisherFrame *pFrame, EXCEPTION_RECORD *eRecord)
 {
     asm {
@@ -874,7 +907,7 @@ int _d_global_unwind(DEstablisherFrame *pFrame, EXCEPTION_RECORD *eRecord)
  * This is used for 'goto' or 'return', to run any finally blocks
  * which were skipped.
  */
-export extern(C)
+extern(C)
 void _d_local_unwind2()
 {
     asm
@@ -884,7 +917,7 @@ void _d_local_unwind2()
     }
 }
 
-export extern(C)
+extern(C)
 void _d_localUnwindForGoto(DHandlerTable *handler_table,
         DEstablisherFrame *frame, int stop_index)
 {
@@ -898,7 +931,7 @@ void _d_localUnwindForGoto(DHandlerTable *handler_table,
  *      EAX     the handler table for the frame
  */
 
-export extern(C)
+extern(C)
 EXCEPTION_DISPOSITION _d_monitor_handler(
             EXCEPTION_RECORD *exceptionRecord,
             DEstablisherFrame *frame,
@@ -917,7 +950,7 @@ EXCEPTION_DISPOSITION _d_monitor_handler(
 
 /***********************************
  */
-export extern(C)
+extern(C)
 void _d_monitor_prolog(void *x, void *y, Object h)
 {
     asm
@@ -934,7 +967,7 @@ void _d_monitor_prolog(void *x, void *y, Object h)
 
 /***********************************
  */
-export extern(C)
+extern(C)
 void _d_monitor_epilog(void *x, void *y, Object h)
 {
     //printf("_d_monitor_epilog(x=%p, y=%p, h=%p)\n", x, y, h);

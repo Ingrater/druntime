@@ -32,14 +32,14 @@ extern (C) int cmp(in void* p1, in void* p2)
     return tiglobal.compare(p1, p2);
 }
 
-extern (C) long _adSort(Array a, TypeInfo ti)
+extern (C) void[] _adSort(void[] a, TypeInfo ti)
 {
     synchronized
     {
         tiglobal = ti;
         qsort(a.ptr, a.length, cast(size_t)ti.tsize(), &cmp);
     }
-    return *cast(long*)(&a);
+    return a;
 }
 
 

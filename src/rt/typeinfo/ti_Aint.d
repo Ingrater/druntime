@@ -8,7 +8,7 @@
 
 /*          Copyright Digital Mars 2004 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_Aint;
@@ -18,8 +18,9 @@ private import rt.util.hash;
 
 // int[]
 
-class TypeInfo_Ai : TypeInfo
+class TypeInfo_Ai : TypeInfo_Array
 {
+    override equals_t opEquals(Object o) { return TypeInfo.opEquals(o); }
     override to_string_t toString() 
     { 
       version(NOGCSAFE)
@@ -28,8 +29,14 @@ class TypeInfo_Ai : TypeInfo
         return "int[]"; 
     }
 
+    @trusted:
+    const:
+    pure:
+    nothrow:
+
     override hash_t getHash(in void* p)
-    {   int[] s = *cast(int[]*)p;
+    {
+        int[] s = *cast(int[]*)p;
         return hashOf(s.ptr, s.length * int.sizeof);
     }
 
@@ -63,31 +70,9 @@ class TypeInfo_Ai : TypeInfo
         return 0;
     }
 
-    @property override size_t tsize() nothrow pure
-    {
-        return (int[]).sizeof;
-    }
-
-    @property override uint flags() nothrow pure
-    {
-        return 1;
-    }
-
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(int);
-    }
-
-    @property override size_t talign() nothrow pure
-    {
-        return (int[]).alignof;
-    }
-
-    version (X86_64) override int argTypes(out TypeInfo arg1, out TypeInfo arg2)
-    {
-        //arg1 = typeid(size_t);
-        //arg2 = typeid(void*);
-        return 0;
     }
 
     @property override Type type() nothrow pure { return Type.Array; }
@@ -115,6 +100,10 @@ class TypeInfo_Ak : TypeInfo_Ai
       else
         return "uint[]"; 
     }
+    @trusted:
+    const:
+    pure:
+    nothrow:
 
     override int compare(in void* p1, in void* p2)
     {
@@ -137,7 +126,7 @@ class TypeInfo_Ak : TypeInfo_Ai
         return 0;
     }
 
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(uint);
     }
@@ -156,8 +145,13 @@ class TypeInfo_Aw : TypeInfo_Ak
       else
         return "dchar[]"; 
     }
+	
+    @trusted:
+    const:
+    pure:
+    nothrow:
 
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(dchar);
     }

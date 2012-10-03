@@ -8,7 +8,7 @@
 
 /*          Copyright Digital Mars 2004 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_Acdouble;
@@ -18,18 +18,25 @@ private import rt.util.hash;
 
 // cdouble[]
 
-class TypeInfo_Ar : TypeInfo
+class TypeInfo_Ar : TypeInfo_Array
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("cdouble[]");
       else
         return "cdouble[]"; 
     }
+    override equals_t opEquals(Object o) { return TypeInfo.opEquals(o); }
+
+    @trusted:
+    const:
+    pure:
+    nothrow:
 
     override hash_t getHash(in void* p)
-    {   cdouble[] s = *cast(cdouble[]*)p;
+    {
+        cdouble[] s = *cast(cdouble[]*)p;
         return hashOf(s.ptr, s.length * cdouble.sizeof);
     }
 
@@ -70,31 +77,9 @@ class TypeInfo_Ar : TypeInfo
         return 0;
     }
 
-    @property override size_t tsize() nothrow pure
-    {
-        return (cdouble[]).sizeof;
-    }
-
-    @property override uint flags() nothrow pure
-    {
-        return 1;
-    }
-
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(cdouble);
-    }
-
-    @property override size_t talign() nothrow pure
-    {
-        return (cdouble[]).alignof;
-    }
-
-    version (X86_64) override int argTypes(out TypeInfo arg1, out TypeInfo arg2)
-    {
-        //arg1 = typeid(size_t);
-        //arg2 = typeid(void*);
-        return 0;
     }
 
     @property override Type type() nothrow pure { return Type.Array; }

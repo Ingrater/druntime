@@ -8,7 +8,7 @@
 
 /*          Copyright Digital Mars 2001 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module gc.gcx;
@@ -19,7 +19,6 @@ module gc.gcx;
 
 //debug = PRINTF;               // turn on printf's
 //debug = COLLECT_PRINTF;       // turn on printf's
-//debug = THREADINVARIANT;      // check thread integrity
 //debug = LOGGING;              // log allocations / frees
 //debug = MEMSTOMP;             // stomp on memory
 //debug = SENTINEL;             // add underrun/overrrun protection
@@ -32,7 +31,6 @@ module gc.gcx;
 version = STACKGROWSDOWN;       // growing the stack means subtracting from the stack pointer
                                 // (use for Intel X86 CPUs)
                                 // else growing the stack means adding to the stack pointer
-version = MULTI_THREADED;       // produce multithreaded version
 
 /***************************************************/
 
@@ -99,21 +97,23 @@ private
     }
 private
 {
-    extern (C) void* rt_stackBottom();
-    extern (C) void* rt_stackTop();
-
     extern (C) void rt_finalize_gc(void* p);
 
-    version (MULTI_THREADED)
-    {
-        extern (C) bool thread_needLock();
-        extern (C) void thread_suspendAll();
-        extern (C) void thread_resumeAll();
-        extern (C) void thread_processGCMarks();
+    extern (C) void thread_suspendAll();
+    extern (C) void thread_resumeAll();
 
-        alias void delegate(void*, void*) scanFn;
-        extern (C) void thread_scanAll(scope scanFn fn, void* curStackTop = null);
+    // core.thread
+    enum IsMarked : int
+    {
+        no,
+        yes,
+        unknown, // memory is not managed by GC
     }
+    alias IsMarked delegate(void*) IsMarkedDg;
+    extern (C) void thread_processGCMarks(scope IsMarkedDg isMarked);
+
+    alias void delegate(void*, void*) scanFn;
+    extern (C) void thread_scanAll(scope scanFn fn);
 
     extern (C) void onOutOfMemoryError();
     extern (C) void onInvalidMemoryOperationError();
@@ -233,7 +233,7 @@ debug (LOGGING)
 
 const uint GCVERSION = 1;       // increment every time we change interface
                                 // to GC.
-                              
+
 // This just makes Mutex final to de-virtualize member function calls.
 final class GCMutex : Mutex {}
 
@@ -246,7 +246,7 @@ class GC
     uint gcversion = GCVERSION;
 
     Gcx *gcx;                   // implementation
-    
+
     // We can't allocate a Mutex on the GC heap because we are the GC.
     // Store it in the static data segment instead.
     __gshared GCMutex gcLock;    // global lock
@@ -261,7 +261,6 @@ class GC
         if (!gcx)
             onOutOfMemoryError();
         gcx.initialize();
-        setStackBottom(rt_stackBottom());
     }
 
 
@@ -282,32 +281,15 @@ class GC
     }
 
 
-    invariant()
-    {
-        if (gcx)
-        {
-            gcx.thread_Invariant();
-        }
-    }
-
-
     /**
      *
      */
     void enable()
     {
-        if (!thread_needLock())
-        {
-            assert(gcx.disabled > 0);
-            gcx.disabled--;
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            assert(gcx.disabled > 0);
-            gcx.disabled--;
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        assert(gcx.disabled > 0);
+        gcx.disabled--;
     }
 
 
@@ -316,16 +298,9 @@ class GC
      */
     void disable()
     {
-        if (!thread_needLock())
-        {
-            gcx.disabled++;
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            gcx.disabled++;
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        gcx.disabled++;
     }
 
 
@@ -353,16 +328,9 @@ class GC
             return oldb;
         }
 
-        if (!thread_needLock())
-        {
-            return go();
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return go();
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return go();
     }
 
 
@@ -391,16 +359,9 @@ class GC
             return oldb;
         }
 
-        if (!thread_needLock())
-        {
-            return go();
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return go();
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return go();
     }
 
 
@@ -429,16 +390,9 @@ class GC
             return oldb;
         }
 
-        if (!thread_needLock())
-        {
-            return go();
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return go();
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return go();
     }
 
 
@@ -454,14 +408,25 @@ class GC
             return null;
         }
 
+        void* p = void;
+        size_t localAllocSize = void;
+        if(alloc_size is null) alloc_size = &localAllocSize;
+
         // Since a finalizer could launch a new thread, we always need to lock
         // when collecting.  The safest way to do this is to simply always lock
         // when allocating.
         {
             gcLock.lock();
             scope(exit) gcLock.unlock();
-            return mallocNoSync(size, bits, alloc_size);
+            p = mallocNoSync(size, bits, alloc_size);
         }
+
+        if (!(bits & BlkAttr.NO_SCAN))
+        {
+            memset(p + size, 0, *alloc_size - size);
+        }
+
+        return p;
     }
 
 
@@ -498,7 +463,7 @@ class GC
                 switch (state)
                 {
                 case 0:
-                    auto freedpages = gcx.fullcollectshell();
+                    auto freedpages = gcx.fullcollect();
                     collected = true;
                     if (freedpages < gcx.npools * ((POOLSIZE / PAGESIZE) / 8))
                     {   /* Didn't free much, so try allocating more anyway.
@@ -530,8 +495,6 @@ class GC
             // Return next item from free list
             gcx.bucket[bin] = (cast(List*)p).next;
             pool = (cast(List*)p).pool;
-            if (!(bits & BlkAttr.NO_SCAN))
-                memset(p + size, 0, binsize[bin] - size);
             //debug(PRINTF) printf("\tmalloc => %p\n", p);
             debug (MEMSTOMP) memset(p, 0xF0, size);
         }
@@ -566,44 +529,52 @@ class GC
             return null;
         }
 
+        size_t localAllocSize = void;
+        void* p = void;
+        if(alloc_size is null) alloc_size = &localAllocSize;
+
         // Since a finalizer could launch a new thread, we always need to lock
         // when collecting.  The safest way to do this is to simply always lock
         // when allocating.
         {
             gcLock.lock();
             scope(exit) gcLock.unlock();
-            return callocNoSync(size, bits, alloc_size);
+            p = mallocNoSync(size, bits, alloc_size);
         }
-    }
 
-
-    //
-    //
-    //
-    private void *callocNoSync(size_t size, uint bits = 0, size_t *alloc_size = null)
-    {
-        assert(size != 0);
-
-        //debug(PRINTF) printf("calloc: %p len %d\n", p, len);
-        void *p = mallocNoSync(size, bits, alloc_size);
         memset(p, 0, size);
+        if (!(bits & BlkAttr.NO_SCAN))
+        {
+            memset(p + size, 0, *alloc_size - size);
+        }
+
         return p;
     }
-
 
     /**
      *
      */
     void *realloc(void *p, size_t size, uint bits = 0, size_t *alloc_size = null)
     {
+        size_t localAllocSize = void;
+        auto oldp = p;
+        if(alloc_size is null) alloc_size = &localAllocSize;
+
         // Since a finalizer could launch a new thread, we always need to lock
         // when collecting.  The safest way to do this is to simply always lock
         // when allocating.
         {
             gcLock.lock();
             scope(exit) gcLock.unlock();
-            return reallocNoSync(p, size, bits, alloc_size);
+            p = reallocNoSync(p, size, bits, alloc_size);
         }
+
+        if (p !is oldp && !(bits & BlkAttr.NO_SCAN))
+        {
+            memset(p + size, 0, *alloc_size - size);
+        }
+
+        return p;
     }
 
 
@@ -774,16 +745,9 @@ class GC
      */
     size_t extend(void* p, size_t minsize, size_t maxsize)
     {
-        if (!thread_needLock())
-        {
-            return extendNoSync(p, minsize, maxsize);
-        }
-        else
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return extendNoSync(p, minsize, maxsize);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return extendNoSync(p, minsize, maxsize);
     }
 
 
@@ -869,16 +833,9 @@ class GC
             return 0;
         }
 
-        if (!thread_needLock())
-        {
-            return reserveNoSync(size);
-        }
-        else
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return reserveNoSync(size);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return reserveNoSync(size);
     }
 
 
@@ -907,16 +864,9 @@ class GC
             return;
         }
 
-        if (!thread_needLock())
-        {
-            return freeNoSync(p);
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return freeNoSync(p);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return freeNoSync(p);
     }
 
 
@@ -984,16 +934,9 @@ class GC
             return null;
         }
 
-        if (!thread_needLock())
-        {
-            return addrOfNoSync(p);
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return addrOfNoSync(p);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return addrOfNoSync(p);
     }
 
 
@@ -1022,16 +965,9 @@ class GC
             return 0;
         }
 
-        if (!thread_needLock())
-        {
-            return sizeOfNoSync(p);
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return sizeOfNoSync(p);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return sizeOfNoSync(p);
     }
 
 
@@ -1082,16 +1018,9 @@ class GC
             return  i;
         }
 
-        if (!thread_needLock())
-        {
-            return queryNoSync(p);
-        }
-        else
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return queryNoSync(p);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return queryNoSync(p);
     }
 
 
@@ -1119,16 +1048,9 @@ class GC
             return;
         }
 
-        if (!thread_needLock())
-        {
-            checkNoSync(p);
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            checkNoSync(p);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        checkNoSync(p);
     }
 
 
@@ -1173,32 +1095,6 @@ class GC
     }
 
 
-    //
-    //
-    //
-    private void setStackBottom(void *p)
-    {
-        version (STACKGROWSDOWN)
-        {
-            //p = (void *)((uint *)p + 4);
-            if (p > gcx.stackBottom)
-            {
-                //debug(PRINTF) printf("setStackBottom(%p)\n", p);
-                gcx.stackBottom = p;
-            }
-        }
-        else
-        {
-            //p = (void *)((uint *)p - 4);
-            if (p < gcx.stackBottom)
-            {
-                //debug(PRINTF) printf("setStackBottom(%p)\n", p);
-                gcx.stackBottom = cast(char*)p;
-            }
-        }
-    }
-
-
     /**
      * add p to list of roots
      */
@@ -1209,16 +1105,9 @@ class GC
             return;
         }
 
-        if (!thread_needLock())
-        {
-            gcx.addRoot(p);
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            gcx.addRoot(p);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        gcx.addRoot(p);
     }
 
 
@@ -1232,16 +1121,9 @@ class GC
             return;
         }
 
-        if (!thread_needLock())
-        {
-            gcx.removeRoot(p);
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            gcx.removeRoot(p);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        gcx.removeRoot(p);
     }
 
 
@@ -1250,16 +1132,9 @@ class GC
      */
     @property int delegate(int delegate(ref void*)) rootIter()
     {
-        if (!thread_needLock())
-        {
-            return &gcx.rootIter;
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return &gcx.rootIter;
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return &gcx.rootIter;
     }
 
 
@@ -1274,16 +1149,11 @@ class GC
         }
 
         //debug(PRINTF) printf("+GC.addRange(p = %p, sz = 0x%zx), p + sz = %p\n", p, sz, p + sz);
-        if (!thread_needLock())
-        {
-            gcx.addRange(p, p + sz);
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            gcx.addRange(p, p + sz);
-        }
+
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        gcx.addRange(p, p + sz);
+
         //debug(PRINTF) printf("-GC.addRange()\n");
     }
 
@@ -1298,16 +1168,9 @@ class GC
             return;
         }
 
-        if (!thread_needLock())
-        {
-            gcx.removeRange(p);
-        }
-        else
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            gcx.removeRange(p);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        gcx.removeRange(p);
     }
 
 
@@ -1316,16 +1179,9 @@ class GC
      */
     @property int delegate(int delegate(ref Range)) rangeIter()
     {
-        if (!thread_needLock())
-        {
-            return &gcx.rangeIter;
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            return &gcx.rangeIter;
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        return &gcx.rangeIter;
     }
 
 
@@ -1343,7 +1199,7 @@ class GC
         {
             gcLock.lock();
             scope(exit) gcLock.unlock();
-            result = gcx.fullcollectshell();
+            result = gcx.fullcollect();
         }
 
         version (none)
@@ -1359,18 +1215,6 @@ class GC
         return result;
     }
 
-    /**
-     * Returns true if the pointer is being collected.  Should only be called
-     * with the base pointer of the block.
-     *
-     * Warning! This should only be called while the world is stopped inside
-     * the fullcollect function.
-     */
-    bool isCollecting(void *p)
-    {
-        return gcx.isCollecting(p);
-    }
-
 
     /**
      * do full garbage collection ignoring roots
@@ -1383,7 +1227,7 @@ class GC
             gcLock.lock();
             scope(exit) gcLock.unlock();
             gcx.noStack++;
-            gcx.fullcollectshell();
+            gcx.fullcollect();
             gcx.noStack--;
         }
     }
@@ -1394,16 +1238,9 @@ class GC
      */
     void minimize()
     {
-        if (!thread_needLock())
-        {
-            gcx.minimize();
-        }
-        else
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            gcx.minimize();
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        gcx.minimize();
     }
 
 
@@ -1413,16 +1250,9 @@ class GC
      */
     void getStats(out GCStats stats)
     {
-        if (!thread_needLock())
-        {
-            getStatsNoSync(stats);
-        }
-        else 
-        {
-            gcLock.lock();
-            scope(exit) gcLock.unlock();
-            getStatsNoSync(stats);
-        }
+        gcLock.lock();
+        scope(exit) gcLock.unlock();
+        getStatsNoSync(stats);
     }
 
 
@@ -1528,21 +1358,6 @@ immutable size_t notbinsize[B_MAX] = [ ~(16-1),~(32-1),~(64-1),~(128-1),~(256-1)
 
 struct Gcx
 {
-    debug (THREADINVARIANT)
-    {
-        pthread_t self;
-        void thread_Invariant() const
-        {
-            if (self != pthread_self())
-                printf("thread_Invariant(): gcx = %p, self = %x, pthread_self() = %x\n", &this, self, pthread_self());
-            assert(self == pthread_self());
-        }
-    }
-    else
-    {
-        void thread_Invariant() const { }
-    }
-
     void *cached_size_key;
     size_t cached_size_val;
 
@@ -1560,7 +1375,6 @@ struct Gcx
     uint noStack;       // !=0 means don't scan stack
     uint log;           // turn on logging
     uint anychanges;
-    void *stackBottom;
     uint inited;
     uint running;
     int disabled;       // turn off collections if >0
@@ -1578,10 +1392,7 @@ struct Gcx
     {   int dummy;
 
         (cast(byte*)&this)[0 .. Gcx.sizeof] = 0;
-        stackBottom = cast(char*)&dummy;
         log_init();
-        debug (THREADINVARIANT)
-            self = pthread_self();
         //printf("gcx = %p, self = %x\n", &this, self);
         inited = 1;
     }
@@ -1631,9 +1442,6 @@ struct Gcx
         if (inited)
         {
             //printf("Gcx.invariant(): this = %p\n", &this);
-
-            // Assure we're called on the right thread
-            debug (THREADINVARIANT) assert(self == pthread_self());
 
             for (size_t i = 0; i < npools; i++)
             {   auto pool = pooltable[i];
@@ -2288,7 +2096,7 @@ struct Gcx
             case 0:
                 // Try collecting
                 collected = true;
-                freedpages = fullcollectshell();
+                freedpages = fullcollect();
                 if (freedpages >= npools * ((POOLSIZE / PAGESIZE) / 4))
                 {   state = 1;
                     continue;
@@ -2338,7 +2146,6 @@ struct Gcx
 
         p = pool.baseAddr + pn * PAGESIZE;
         debug(PRINTF) printf("Got large alloc:  %p, pt = %d, np = %d\n", p, pool.pagetable[pn], npages);
-        memset(cast(char *)p + size, 0, npages * PAGESIZE - size);
         debug (MEMSTOMP) memset(p, 0xF1, size);
         if(alloc_size)
             *alloc_size = npages * PAGESIZE;
@@ -2599,100 +2406,7 @@ struct Gcx
     /**
      * Return number of full pages free'd.
      */
-    size_t fullcollectshell()
-    {
-        // The purpose of the 'shell' is to ensure all the registers
-        // get put on the stack so they'll be scanned
-        void *sp;
-        size_t result;
-        version (GNU)
-        {
-            __builtin_unwind_init();
-            sp = & sp;
-        }
-        else version (D_InlineAsm_X86)
-        {
-            asm
-            {
-                pushad              ;
-                mov sp[EBP],ESP     ;
-            }
-        }
-        else version (D_InlineAsm_X86_64)
-        {
-            asm
-            {
-                push RAX ;
-                push RBX ;
-                push RCX ;
-                push RDX ;
-                push RSI ;
-                push RDI ;
-                push RBP ;
-                push R8  ;
-                push R9  ;
-                push R10  ;
-                push R11  ;
-                push R12  ;
-                push R13  ;
-                push R14  ;
-                push R15  ;
-                push RAX ;   // 16 byte align the stack
-                mov sp[RBP],RSP     ;
-            }
-        }
-        else
-        {
-            static assert(false, "Architecture not supported.");
-        }
-
-        result = fullcollect(sp);
-
-        version (GNU)
-        {
-            // registers will be popped automatically
-        }
-        else version (D_InlineAsm_X86)
-        {
-            asm
-            {
-                popad;
-            }
-        }
-        else version (D_InlineAsm_X86_64)
-        {
-            asm
-            {
-                pop RAX ;   // 16 byte align the stack
-                pop R15  ;
-                pop R14  ;
-                pop R13  ;
-                pop R12  ;
-                pop R11  ;
-                pop R10  ;
-                pop R9  ;
-                pop R8  ;
-                pop RBP ;
-                pop RDI ;
-                pop RSI ;
-                pop RDX ;
-                pop RCX ;
-                pop RBX ;
-                pop RAX ;
-            }
-        }
-        else
-        {
-            static assert(false, "Architecture not supported.");
-        }
-        return result;
-    }
-
-
-    /**
-     *
-     */
-    size_t fullcollect(void *stackTop)
+    size_t fullcollect()
     {
         size_t n;
         Pool*  pool;
@@ -2758,26 +2472,11 @@ struct Gcx
             start = stop;
         }
 
-        version (MULTI_THREADED)
+        if (!noStack)
         {
-            if (!noStack)
-            {
-                debug(COLLECT_PRINTF) printf("scanning multithreaded stack.\n");
-                // Scan stacks and registers for each paused thread
-                thread_scanAll(&mark, stackTop);
-            }
-        }
-        else
-        {
-            if (!noStack)
-            {
-                // Scan stack for main thread
-                debug(PRINTF) printf(" scan stack bot = %p, top = %p\n", stackTop, stackBottom);
-                version (STACKGROWSDOWN)
-                    mark(stackTop, stackBottom);
-                else
-                    mark(stackBottom, stackTop);
-            }
+            debug(COLLECT_PRINTF) printf("\tscan stacks.\n");
+            // Scan stacks and registers for each paused thread
+            thread_scanAll(&mark);
         }
 
         // Scan roots[]
@@ -2855,7 +2554,7 @@ struct Gcx
             }
         }
 
-        thread_processGCMarks();
+        thread_processGCMarks(&isMarked);
         thread_resumeAll();
 
         debug(PROFILING)
@@ -3060,30 +2759,34 @@ struct Gcx
     }
 
     /**
-     * Returns true if the pointer is being collected.  Should only be called
-     * with the base pointer of the block.
+     * Returns true if the addr lies within a marked block.
      *
      * Warning! This should only be called while the world is stopped inside
      * the fullcollect function.
      */
-    bool isCollecting(void *p)
+    IsMarked isMarked(void *addr)
     {
         // first, we find the Pool this block is in, then check to see if the
         // mark bit is clear.
-        auto pool = findPool(p);
+        auto pool = findPool(addr);
         if(pool)
         {
-            auto offset = cast(size_t)(p - pool.baseAddr);
+            auto offset = cast(size_t)(addr - pool.baseAddr);
             auto pn = offset / PAGESIZE;
             auto bins = cast(Bins)pool.pagetable[pn];
+            size_t biti = void;
             if(bins <= B_PAGE)
             {
-                assert(p == cast(void*)((cast(size_t)p) & notbinsize[bins]));
-                // return true if the block is not marked.
-                return !(pool.mark.test(offset >> pool.shiftBy));
+                biti = (offset & notbinsize[bins]) >> pool.shiftBy;
             }
+            else
+            {
+                pn -= pool.bPageOffsets[pn];
+                biti = pn * (PAGESIZE >> pool.shiftBy);
+            }
+            return pool.mark.test(biti) ? IsMarked.yes : IsMarked.no;
         }
-        return false; // not collecting or pointer is a valid argument.
+        return IsMarked.unknown;
     }
 
 

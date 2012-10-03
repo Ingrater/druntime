@@ -7,7 +7,7 @@
  *
  *          Copyright Digital Mars 2000 - 2011.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module object;
@@ -52,7 +52,7 @@ else
 class Object
 {
     to_string_t   toString();
-    hash_t   toHash();
+    hash_t   toHash() @trusted nothrow;
     int      opCmp(Object o);
     equals_t opEquals(Object o);
     equals_t opEquals(Object lhs, Object rhs);
@@ -130,23 +130,23 @@ class TypeInfo
       Void,
       Bool
 	  }
-
-    string GetName() nothrow pure; //name, only implemented for structs, interfaces, classes, typedef, enum
-    hash_t   getHash(in void* p);
-    equals_t equals(in void* p1, in void* p2);
-    int      compare(in void* p1, in void* p2);
-    @property size_t   tsize() nothrow pure;
-    void     swap(void* p1, void* p2);
-    @property TypeInfo next() nothrow pure;
-    void[]   init() nothrow pure; // TODO: make this a property, but may need to be renamed to diambiguate with T.init...
-    @property uint     flags() nothrow pure;
+    hash_t   getHash(in void* p) @trusted nothrow const;
+    equals_t equals(in void* p1, in void* p2) const;
+    int      compare(in void* p1, in void* p2) const;
+    @property size_t   tsize() nothrow pure const @safe;
+    void     swap(void* p1, void* p2) const;
+    @property const(TypeInfo) next() nothrow pure const;
+    const(void)[]   init() nothrow pure const @safe; // TODO: make this a property, but may need to be renamed to diambiguate with T.init...
+    @property uint     flags() nothrow pure const @safe;
     // 1:    // has possible pointers into GC memory
-    OffsetTypeInfo[] offTi();
-    void destroy(void* p);
-    void postblit(void* p);
-    @property size_t talign() nothrow pure;
-    version (X86_64) int argTypes(out TypeInfo arg1, out TypeInfo arg2);
-	  @property Type type() nothrow pure;
+    const(OffsetTypeInfo)[] offTi() const;
+    void destroy(void* p) const;
+    void postblit(void* p) const;
+    @property size_t talign() nothrow pure const @safe;
+    version (X86_64) int argTypes(out TypeInfo arg1, out TypeInfo arg2) @safe nothrow;
+    @property immutable(void)* rtInfo() nothrow pure const @safe;
+	@property Type type() nothrow pure const;
+	string GetName() nothrow pure const;
 }
 
 class TypeInfo_Typedef : TypeInfo
@@ -168,6 +168,18 @@ class TypeInfo_Pointer : TypeInfo
 
 class TypeInfo_Array : TypeInfo
 {
+    override to_string_t toString() const;
+    override equals_t opEquals(Object o);
+    override hash_t getHash(in void* p) @trusted const;
+    override equals_t equals(in void* p1, in void* p2) const;
+    override int compare(in void* p1, in void* p2) const;
+    override @property size_t tsize() nothrow pure const;
+    override void swap(void* p1, void* p2) const;
+    override @property const(TypeInfo) next() nothrow pure const;
+    override @property uint flags() nothrow pure const;
+    override @property size_t talign() nothrow pure const;
+    version (X86_64) override int argTypes(out TypeInfo arg1, out TypeInfo arg2);
+
     TypeInfo value;
 }
 
@@ -201,8 +213,8 @@ class TypeInfo_Delegate : TypeInfo
 
 class TypeInfo_Class : TypeInfo
 {
-    @property TypeInfo_Class info() nothrow pure { return this; }
-    @property TypeInfo typeinfo() nothrow pure { return this; }
+    @property auto info() @safe nothrow pure const { return this; }
+    @property auto typeinfo() @safe nothrow pure const { return this; }
 
     byte[]      init;   // class static initializer
     string      name;   // class name
@@ -221,11 +233,10 @@ class TypeInfo_Class : TypeInfo
     void*       deallocator;
     OffsetTypeInfo[] m_offTi;
     void*       defaultConstructor;
-    const(MemberInfo[]) function(string) xgetMembers;
+    immutable(void)*    m_rtInfo;     // data for precise GC
 
-    static TypeInfo_Class find(in char[] classname);
-    Object create();
-    const(MemberInfo[]) getMembers(in char[] classname);
+    static const(TypeInfo_Class) find(in char[] classname);
+    Object create() const;
 }
 
 alias TypeInfo_Class ClassInfo;
@@ -240,14 +251,15 @@ class TypeInfo_Struct : TypeInfo
     string name;
     void[] m_init;
 
+  @safe pure nothrow
+  {
     uint function(in void*)               xtoHash;
     equals_t function(in void*, in void*) xopEquals;
     int function(in void*, in void*)      xopCmp;
     string function(in void*)             xtoString;
 
     uint m_flags;
-
-    const(MemberInfo[]) function(in char[]) xgetMembers;
+  }
     void function(void*)                    xdtor;
     void function(void*)                    xpostblit;
 
@@ -258,6 +270,7 @@ class TypeInfo_Struct : TypeInfo
         TypeInfo m_arg1;
         TypeInfo m_arg2;
     }
+    immutable(void)* m_rtInfo;
 }
 
 class TypeInfo_Tuple : TypeInfo
@@ -292,7 +305,7 @@ class MemberInfo_field : MemberInfo
 {
     this(string name, TypeInfo ti, size_t offset);
 
-    @property override string name() nothrow pure;
+    override @property string name() nothrow pure;
     @property TypeInfo typeInfo() nothrow pure;
     @property size_t offset() nothrow pure;
 }
@@ -308,7 +321,7 @@ class MemberInfo_function : MemberInfo
 
     this(string name, TypeInfo ti, void* fp, uint flags);
 
-    @property override string name() nothrow pure;
+    override @property string name() nothrow pure;
     @property TypeInfo typeInfo() nothrow pure;
     @property void* fp() nothrow pure;
     @property uint flags() nothrow pure;
@@ -610,12 +623,16 @@ unittest
     assert(b == [ 1:"one", 2:"two", 3:"three" ]);
 }
 
-void clear(T)(T obj) if (is(T == class))
+// Scheduled for deprecation in December 2012.
+// Please use destroy instead of clear.
+alias destroy clear;
+
+void destroy(T)(T obj) if (is(T == class))
 {
     rt_finalize(cast(void*)obj);
 }
 
-void clear(T)(ref T obj) if (is(T == struct))
+void destroy(T)(ref T obj) if (is(T == struct))
 {
     typeid(T).destroy(&obj);
     auto buf = (cast(ubyte*) &obj)[0 .. T.sizeof];
@@ -626,12 +643,12 @@ void clear(T)(ref T obj) if (is(T == struct))
         buf[] = init[];
 }
 
-void clear(T : U[n], U, size_t n)(ref T obj)
+void destroy(T : U[n], U, size_t n)(ref T obj)
 {
     obj = T.init;
 }
 
-void clear(T)(ref T obj)
+void destroy(T)(ref T obj)
 if (!is(T == struct) && !is(T == class) && !_isStaticArray!T)
 {
     obj = T.init;
@@ -650,15 +667,15 @@ template _isStaticArray(T)
 private
 {
     extern (C) void _d_arrayshrinkfit(TypeInfo ti, void[] arr);
-    extern (C) size_t _d_arraysetcapacity(TypeInfo ti, size_t newcapacity, void *arrptr);
+    extern (C) size_t _d_arraysetcapacity(TypeInfo ti, size_t newcapacity, void *arrptr) pure nothrow;
 }
 
-@property size_t capacity(T)(T[] arr)
+@property size_t capacity(T)(T[] arr) pure nothrow
 {
     return _d_arraysetcapacity(typeid(T[]), 0, cast(void *)&arr);
 }
 
-size_t reserve(T)(ref T[] arr, size_t newcapacity)
+size_t reserve(T)(ref T[] arr, size_t newcapacity) pure nothrow
 {
     return _d_arraysetcapacity(typeid(T[]), newcapacity, cast(void *)&arr);
 }
@@ -681,5 +698,60 @@ bool _ArrayEq(T1, T2)(T1[] a1, T2[] a2)
 
 bool _xopEquals(in void* ptr, in void* ptr);
 
-void __ctfeWriteln(T...)(auto ref T) {}
+void __ctfeWrite(T...)(auto ref T) {}
+void __ctfeWriteln(T...)(auto ref T values) { __ctfeWrite(values, "\n"); }
+
+template RTInfo(T)
+{
+    enum RTInfo = cast(void*)0x12345678;
+}
+
+version (unittest)
+{
+    string __unittest_toString(T)(ref T value) pure nothrow @trusted
+    {
+        static if (is(T == string))
+            return `"` ~ value ~ `"`;   // TODO: Escape internal double-quotes.
+        else
+        {
+            version (druntime_unittest)
+            {
+                return T.stringof;
+            }
+            else
+            {
+                enum phobos_impl = q{
+                    import std.traits;
+                    alias Unqual!T U;
+                    static if (isFloatingPoint!U)
+                    {
+                        import std.string;
+                        enum format_string = is(U == float) ? "%.7g" :
+                                             is(U == double) ? "%.16g" : "%.20g";
+                        return (cast(string function(...) pure nothrow @safe)&format)(format_string, value);
+                    }
+                    else
+                    {
+                        import std.conv;
+                        alias to!string toString;
+                        alias toString!T f;
+                        return (cast(string function(T) pure nothrow @safe)&f)(value);
+                    }
+                };
+                enum tango_impl = q{
+                    import tango.util.Convert;
+                    alias to!(string, T) f;
+                    return (cast(string function(T) pure nothrow @safe)&f)(value);
+                };
+
+                static if (__traits(compiles, { mixin(phobos_impl); }))
+                    mixin(phobos_impl);
+                else static if (__traits(compiles, { mixin(tango_impl); }))
+                    mixin(tango_impl);
+                else
+                    return T.stringof;
+            }
+        }
+    }
+}
 

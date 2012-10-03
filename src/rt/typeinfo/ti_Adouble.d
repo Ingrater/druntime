@@ -8,7 +8,7 @@
 
 /*          Copyright Digital Mars 2004 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_Adouble;
@@ -18,8 +18,10 @@ private import rt.util.hash;
 
 // double[]
 
-class TypeInfo_Ad : TypeInfo
+class TypeInfo_Ad : TypeInfo_Array
 {
+    override equals_t opEquals(Object o) { return TypeInfo.opEquals(o); }
+	
     override to_string_t toString() 
     { 
       version(NOGCSAFE)
@@ -27,9 +29,15 @@ class TypeInfo_Ad : TypeInfo
       else
         return "double[]"; 
     }
-
+	
+	@trusted:
+    const:
+    pure:
+    nothrow:
+	
     override hash_t getHash(in void* p)
-    {   double[] s = *cast(double[]*)p;
+    {
+        double[] s = *cast(double[]*)p;
         return hashOf(s.ptr, s.length * double.sizeof);
     }
 
@@ -70,31 +78,9 @@ class TypeInfo_Ad : TypeInfo
         return 0;
     }
 
-    @property override size_t tsize() nothrow pure
-    {
-        return (double[]).sizeof;
-    }
-
-    @property override uint flags() nothrow pure
-    {
-        return 1;
-    }
-
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(double);
-    }
-
-    @property override size_t talign() nothrow pure
-    {
-        return (double[]).alignof;
-    }
-
-    version (X86_64) override int argTypes(out TypeInfo arg1, out TypeInfo arg2)
-    {
-        //arg1 = typeid(size_t);
-        //arg2 = typeid(void*);
-        return 0;
     }
 
     @property override Type type() nothrow pure { return Type.Array; }
@@ -104,7 +90,8 @@ class TypeInfo_Ad : TypeInfo
 
 class TypeInfo_Ap : TypeInfo_Ad
 {
-    override to_string_t toString() 
+
+    override to_string_t toString() const
     { 
       version(NOGCSAFE)
         return to_string_t("idouble[]");
@@ -112,7 +99,7 @@ class TypeInfo_Ap : TypeInfo_Ad
         return "idouble[]"; 
     }
 
-    @property override TypeInfo next() nothrow pure
+    override @property const(TypeInfo) next() nothrow pure
     {
         return typeid(idouble);
     }

@@ -8,7 +8,7 @@
 
 /*          Copyright Digital Mars 2000 - 2010.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.dmain2;
@@ -35,7 +35,8 @@ version (Windows)
     extern (Windows) void*      LocalFree(void*);
     extern (Windows) wchar_t*   GetCommandLineW();
     extern (Windows) wchar_t**  CommandLineToArgvW(wchar_t*, int*);
-    extern (Windows) export int WideCharToMultiByte(uint, uint, wchar_t*, int, char*, int, char*, int);
+    extern (Windows) export int WideCharToMultiByte(uint, uint, wchar_t*, int, char*, int, char*, int*);
+    extern (Windows) int        IsDebuggerPresent();
     pragma(lib, "shell32.lib"); // needed for CommandLineToArgvW
 }
 
@@ -71,7 +72,6 @@ extern (C) void rt_moduleTlsCtor();
 extern (C) void rt_moduleDtor();
 extern (C) void rt_moduleTlsDtor();
 extern (C) void thread_joinAll();
-extern (C) void rt_lifetimeInit();
 
 extern(C) void _initStdAllocator();
 extern(C) void _initMemoryTracking();
@@ -101,6 +101,8 @@ version (OSX)
 {
     // The bottom of the stack
     extern (C) __gshared void* __osx_stack_end = cast(void*)0xC0000000;
+
+    extern (C) extern (C) void _d_osx_image_init2();
 }
 
 /***********************************
@@ -242,13 +244,6 @@ export extern (C) void _d_hidden_func()
     onHiddenFuncError(o);
 }
 
-shared bool _d_isHalting = false;
-
-export extern (C) bool rt_isHalting()
-{
-    return _d_isHalting;
-}
-
 export __gshared string[] _d_args = null;
 
 export extern (C) string[] rt_args()
@@ -273,6 +268,8 @@ alias void delegate(Throwable) ExceptionHandler;
 
 extern (C) bool rt_init(ExceptionHandler dg = null)
 {
+    version (OSX)
+        _d_osx_image_init2();
     _d_criticalInit();
 
     try
@@ -280,7 +277,6 @@ extern (C) bool rt_init(ExceptionHandler dg = null)
         gc_init();
         initStaticDataGC();
         _initMemoryTracking();
-        rt_lifetimeInit();
         rt_moduleCtor();
         rt_moduleTlsCtor();
         runModuleUnitTests();
@@ -312,7 +308,6 @@ extern (C) bool rt_term(ExceptionHandler dg = null)
     {
         rt_moduleTlsDtor();
         thread_joinAll();
-        _d_isHalting = true;
         rt_moduleDtor();
         _deinitMemoryTracking();
         gc_term();
@@ -576,6 +571,8 @@ extern (C) int main(int argc, char** argv)
          * of the main thread's stack, so save the address of that.
          */
         __osx_stack_end = cast(void*)&argv;
+
+        _d_osx_image_init2();
     }
 
     version (FreeBSD) version (D_InlineAsm_X86)
@@ -603,7 +600,7 @@ extern (C) int main(int argc, char** argv)
     version (Windows)
     {
         wchar_t*  wcbuf = GetCommandLineW();
-        size_t 	  wclen = wcslen(wcbuf);
+        size_t    wclen = wcslen(wcbuf);
         int       wargc = 0;
         wchar_t** wargs = CommandLineToArgvW(wcbuf, &wargc);
         assert(wargc == argc);
@@ -612,7 +609,7 @@ extern (C) int main(int argc, char** argv)
         assert(wclen <= int.max, "wclen must not exceed int.max");
 
         char*     cargp = null;
-        size_t    cargl = WideCharToMultiByte(65001, 0, wcbuf, cast(int)wclen, null, 0, null, 0);
+        size_t    cargl = WideCharToMultiByte(65001, 0, wcbuf, cast(int)wclen, null, 0, null, null);
 
         cargp = cast(char*) alloca(cargl);
         args  = ((cast(char[]*) alloca(wargc * (char[]).sizeof)))[0 .. wargc];
@@ -621,10 +618,11 @@ extern (C) int main(int argc, char** argv)
         {
             size_t wlen = wcslen(wargs[i]);
             assert(wlen <= int.max, "wlen cannot exceed int.max");
-            int clen = WideCharToMultiByte(65001, 0, &wargs[i][0], cast(int)wlen, null, 0, null, 0);
+            int clen = WideCharToMultiByte(65001, 0, &wargs[i][0], cast(int)wlen, null, 0, null, null);
             args[i]  = cargp[p .. p+clen];
+            if (clen==0) continue;
             p += clen; assert(p <= cargl);
-            WideCharToMultiByte(65001, 0, &wargs[i][0], cast(int)wlen, &args[i][0], clen, null, 0);
+            WideCharToMultiByte(65001, 0, &wargs[i][0], cast(int)wlen, &args[i][0], clen, null, null);
         }
         LocalFree(wargs);
         wargs = null;
@@ -645,6 +643,12 @@ extern (C) int main(int argc, char** argv)
     _d_args = cast(string[]) args;
 
     bool trapExceptions = rt_trapExceptions;
+
+    version (Windows)
+    {
+        if (IsDebuggerPresent())
+            trapExceptions = false;
+    }
 
     void tryExec(scope void delegate() dg)
     {
@@ -755,7 +759,6 @@ extern (C) int main(int argc, char** argv)
         gc_init();
         initStaticDataGC();
         _initMemoryTracking();
-        rt_lifetimeInit();
         rt_moduleCtor();
         rt_moduleTlsCtor();
         if (runModuleUnitTests())
@@ -764,7 +767,6 @@ extern (C) int main(int argc, char** argv)
             result = EXIT_FAILURE;
         rt_moduleTlsDtor();
         thread_joinAll();
-        _d_isHalting = true;
         rt_moduleDtor();
         _deinitMemoryTracking();
         gc_term();

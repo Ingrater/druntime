@@ -70,7 +70,8 @@ ulong mach_absolute_time();
     In std.datetime, it is also used as the result of various arithmetic
     operations on time points.
 
-    Use the $(D dur) function to create $(D Duration)s.
+    Use the $(LREF dur) function or on of its non-generic aliases to create
+    $(D Duration)s.
 
     You cannot create a duration of months or years because the variable number
     of days in a month or a year makes it so that you cannot convert between
@@ -89,10 +90,10 @@ assert(dur!"hnsecs"(27) == Duration(27));
 assert(std.datetime.Date(2010, 9, 7) + dur!"days"(5) ==
        std.datetime.Date(2010, 9, 12));
 
-assert(dur!"days"(-12) == Duration(-10_368_000_000_000L));
-assert(dur!"hnsecs"(-27) == Duration(-27));
+assert(days(-12) == Duration(-10_368_000_000_000L));
+assert(hnsecs(-27) == Duration(-27));
 assert(std.datetime.Date(2010, 9, 7) - std.datetime.Date(2010, 10, 3) ==
-       dur!"days"(-26));
+       days(-26));
 --------------------
  +/
 struct Duration
@@ -130,6 +131,24 @@ public:
 
     unittest
     {
+        //To verify that an lvalue isn't required.
+        T copy(T)(T duration)
+        {
+            return duration;
+        }
+
+        foreach(T; _TypeTuple!(Duration, const Duration, immutable Duration))
+        {
+            foreach(U; _TypeTuple!(Duration, const Duration, immutable Duration))
+            {
+                T t = 42;
+                U u = t;
+                assert(t == u);
+                assert(copy(t) == u);
+                assert(t == copy(u));
+            }
+        }
+
         foreach(D; _TypeTuple!(Duration, const Duration, immutable Duration))
         {
             foreach(E; _TypeTuple!(Duration, const Duration, immutable Duration))
@@ -142,6 +161,24 @@ public:
 
                 assert((cast(D)Duration(12)).opCmp(cast(E)Duration(10)) > 0);
                 assert((cast(D)Duration(12)).opCmp(cast(E)Duration(-12)) > 0);
+
+                assert(copy(cast(D)Duration(12)).opCmp(cast(E)Duration(12)) == 0);
+                assert(copy(cast(D)Duration(-12)).opCmp(cast(E)Duration(-12)) == 0);
+
+                assert(copy(cast(D)Duration(10)).opCmp(cast(E)Duration(12)) < 0);
+                assert(copy(cast(D)Duration(-12)).opCmp(cast(E)Duration(12)) < 0);
+
+                assert(copy(cast(D)Duration(12)).opCmp(cast(E)Duration(10)) > 0);
+                assert(copy(cast(D)Duration(12)).opCmp(cast(E)Duration(-12)) > 0);
+
+                assert((cast(D)Duration(12)).opCmp(copy(cast(E)Duration(12))) == 0);
+                assert((cast(D)Duration(-12)).opCmp(copy(cast(E)Duration(-12))) == 0);
+
+                assert((cast(D)Duration(10)).opCmp(copy(cast(E)Duration(12))) < 0);
+                assert((cast(D)Duration(-12)).opCmp(copy(cast(E)Duration(12))) < 0);
+
+                assert((cast(D)Duration(12)).opCmp(copy(cast(E)Duration(10))) > 0);
+                assert((cast(D)Duration(12)).opCmp(copy(cast(E)Duration(-12))) > 0);
             }
         }
     }
@@ -1270,13 +1307,41 @@ private:
 
 
 /++
-    This allows you to construct a $(D Duration) from the given time units
+    These allow you to construct a $(D Duration) from the given time units
     with the given length.
+
+    You can either use the generic function $(D dur) and give it the units as
+    a $(D string) or use the named aliases.
 
     The possible values for units are $(D "weeks"), $(D "days"), $(D "hours"),
     $(D "minutes"), $(D "seconds"), $(D "msecs") (milliseconds), $(D "usecs"),
     (microseconds), $(D "hnsecs") (hecto-nanoseconds, i.e. 100 ns), and
     $(D "nsecs").
+
+    Examples:
+--------------------
+// Generic
+assert(dur!"weeks"(142).total!"weeks"() == 142);
+assert(dur!"days"(142).total!"days"() == 142);
+assert(dur!"hours"(142).total!"hours"() == 142);
+assert(dur!"minutes"(142).total!"minutes"() == 142);
+assert(dur!"seconds"(142).total!"seconds"() == 142);
+assert(dur!"msecs"(142).total!"msecs"() == 142);
+assert(dur!"usecs"(142).total!"usecs"() == 142);
+assert(dur!"hnsecs"(142).total!"hnsecs"() == 142);
+assert(dur!"nsecs"(142).total!"nsecs"() == 100);
+
+// Non-generic
+assert(weeks(142).total!"weeks"() == 142);
+assert(days(142).total!"days"() == 142);
+assert(hours(142).total!"hours"() == 142);
+assert(minutes(142).total!"minutes"() == 142);
+assert(seconds(142).total!"seconds"() == 142);
+assert(msecs(142).total!"msecs"() == 142);
+assert(usecs(142).total!"usecs"() == 142);
+assert(hnsecs(142).total!"hnsecs"() == 142);
+assert(nsecs(142).total!"nsecs"() == 100);
+--------------------
 
     Params:
         units  = The time units of the $(D Duration) (e.g. $(D "days")).
@@ -1296,6 +1361,42 @@ Duration dur(string units)(long length) @safe pure nothrow
     return Duration(convert!(units, "hnsecs")(length));
 }
 
+alias dur!"weeks"   weeks;   /// Ditto
+alias dur!"days"    days;    /// Ditto
+alias dur!"hours"   hours;   /// Ditto
+alias dur!"minutes" minutes; /// Ditto
+alias dur!"seconds" seconds; /// Ditto
+alias dur!"msecs"   msecs;   /// Ditto
+alias dur!"usecs"   usecs;   /// Ditto
+alias dur!"hnsecs"  hnsecs;  /// Ditto
+alias dur!"nsecs"   nsecs;   /// Ditto
+
+//Verify Examples.
+unittest
+{
+    // Generic
+    assert(dur!"weeks"(142).total!"weeks"() == 142);
+    assert(dur!"days"(142).total!"days"() == 142);
+    assert(dur!"hours"(142).total!"hours"() == 142);
+    assert(dur!"minutes"(142).total!"minutes"() == 142);
+    assert(dur!"seconds"(142).total!"seconds"() == 142);
+    assert(dur!"msecs"(142).total!"msecs"() == 142);
+    assert(dur!"usecs"(142).total!"usecs"() == 142);
+    assert(dur!"hnsecs"(142).total!"hnsecs"() == 142);
+    assert(dur!"nsecs"(142).total!"nsecs"() == 100);
+
+    // Non-generic
+    assert(weeks(142).total!"weeks"() == 142);
+    assert(days(142).total!"days"() == 142);
+    assert(hours(142).total!"hours"() == 142);
+    assert(minutes(142).total!"minutes"() == 142);
+    assert(seconds(142).total!"seconds"() == 142);
+    assert(msecs(142).total!"msecs"() == 142);
+    assert(usecs(142).total!"usecs"() == 142);
+    assert(hnsecs(142).total!"hnsecs"() == 142);
+    assert(nsecs(142).total!"nsecs"() == 100);
+}
+
 unittest
 {
     foreach(D; _TypeTuple!(Duration, const Duration, immutable Duration))
@@ -1309,6 +1410,16 @@ unittest
         assert(dur!"usecs"(7).total!"usecs"() == 7);
         assert(dur!"hnsecs"(7).total!"hnsecs"() == 7);
         assert(dur!"nsecs"(7).total!"nsecs"() == 0);
+
+        assert(dur!"weeks"(1007) == weeks(1007));
+        assert(dur!"days"(1007) == days(1007));
+        assert(dur!"hours"(1007) == hours(1007));
+        assert(dur!"minutes"(1007) == minutes(1007));
+        assert(dur!"seconds"(1007) == seconds(1007));
+        assert(dur!"msecs"(1007) == msecs(1007));
+        assert(dur!"usecs"(1007) == usecs(1007));
+        assert(dur!"hnsecs"(1007) == hnsecs(1007));
+        assert(dur!"nsecs"(10) == nsecs(10));
     }
 }
 
@@ -1635,7 +1746,7 @@ struct TickDuration
         )
 
         Params:
-            rhs = The $(D TickDuration to add to or subtract from this
+            rhs = The $(D TickDuration) to add to or subtract from this
                   $(D TickDuration).
       +/
     TickDuration opBinary(string op)(TickDuration rhs) @safe const pure nothrow
@@ -1679,15 +1790,21 @@ struct TickDuration
 
 
     /++
-       operator overloading "=="
+       operator overloading "<, >, <=, >="
       +/
-    bool opEquals(ref const TickDuration rhs) @safe const pure nothrow
+    int opCmp(TickDuration rhs) @safe const pure nothrow
     {
-        return length == rhs.length;
+        return length < rhs.length ? -1 : (length == rhs.length ? 0 : 1);
     }
 
     unittest
     {
+        //To verify that an lvalue isn't required.
+        T copy(T)(T duration)
+        {
+            return duration;
+        }
+
         foreach(T; _TypeTuple!(TickDuration, const TickDuration, immutable TickDuration))
         {
             foreach(U; _TypeTuple!(TickDuration, const TickDuration, immutable TickDuration))
@@ -1695,21 +1812,11 @@ struct TickDuration
                 T t = TickDuration.currSystemTick;
                 U u = t;
                 assert(t == u);
+                assert(copy(t) == u);
+                assert(t == copy(u));
             }
         }
-    }
 
-
-    /++
-       operator overloading "<, >, <=, >="
-      +/
-    int opCmp(ref const TickDuration rhs) @safe const pure nothrow
-    {
-        return length < rhs.length ? -1 : (length == rhs.length ? 0 : 1);
-    }
-
-    unittest
-    {
         foreach(T; _TypeTuple!(TickDuration, const TickDuration, immutable TickDuration))
         {
             foreach(U; _TypeTuple!(TickDuration, const TickDuration, immutable TickDuration))
@@ -1720,6 +1827,16 @@ struct TickDuration
                 assert(t <= t);
                 assert(u > t);
                 assert(u >= u);
+
+                assert(copy(t) < u);
+                assert(copy(t) <= t);
+                assert(copy(u) > t);
+                assert(copy(u) >= u);
+
+                assert(t < copy(u));
+                assert(t <= copy(t));
+                assert(u > copy(t));
+                assert(u >= copy(u));
             }
         }
     }
@@ -1925,7 +2042,7 @@ struct TickDuration
         $(D clock_gettime) is unavailable, then Posix systems use
         $(D gettimeofday) (the decision is made when $(D TickDuration) is
         compiled), which unfortunately, is not monotonic, but if
-        $(D mach_absolute_time) and $(D clock_gettime() aren't available, then
+        $(D mach_absolute_time) and $(D clock_gettime) aren't available, then
         $(D gettimeofday) is the the best that there is.
 
         $(RED Warning):

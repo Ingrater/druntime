@@ -3,19 +3,24 @@
  *
  * Copyright: Copyright Don Clugston 2005 - 2009.
  * License:   $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
- * Authors:   Don Clugston, Sean Kelly, Walter Bright
+ * Authors:   Don Clugston, Sean Kelly, Walter Bright, Alex Rønne Petersen
  * Source:    $(DRUNTIMESRC core/_bitop.d)
  */
 
 /*          Copyright Don Clugston 2005 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.bitop;
 
 nothrow:
+@safe:
 
+version( D_InlineAsm_X86_64 )
+    version = AsmX86;
+else version( D_InlineAsm_X86 )
+    version = AsmX86;
 
 /**
  * Scans the bits in v starting with bit 0, looking
@@ -34,7 +39,7 @@ nothrow:
  * }
  * ---
  */
-pure int bsf(size_t v);
+int bsf(size_t v) pure;
 
 unittest
 {
@@ -59,7 +64,7 @@ unittest
  * }
  * ---
  */
-pure int bsr(size_t v);
+int bsr(size_t v) pure;
 
 unittest
 {
@@ -69,19 +74,19 @@ unittest
 /**
  * Tests the bit.
  */
-pure int bt(in size_t* p, size_t bitnum);
+int bt(in size_t* p, size_t bitnum) pure;
 
 
 /**
  * Tests and complements the bit.
  */
-int btc(size_t* p, size_t bitnum);
+int btc(size_t* p, size_t bitnum) pure;
 
 
 /**
  * Tests and resets (sets to 0) the bit.
  */
-int btr(size_t* p, size_t bitnum);
+int btr(size_t* p, size_t bitnum) pure;
 
 
 /**
@@ -133,7 +138,7 @@ int main()
 }
  * ---
  */
-int bts(size_t* p, size_t bitnum);
+int bts(size_t* p, size_t bitnum) pure;
 
 unittest
 {
@@ -142,7 +147,7 @@ unittest
     array[0] = 2;
     array[1] = 0x100;
 
-    assert(btc(array, 35) == 0);
+    assert(btc(array.ptr, 35) == 0);
     if (size_t.sizeof == 8)
     {
         assert(array[0] == 0x8_0000_0002);
@@ -154,11 +159,11 @@ unittest
         assert(array[1] == 0x108);
     }
 
-    assert(btc(array, 35) == -1);
+    assert(btc(array.ptr, 35) == -1);
     assert(array[0] == 2);
     assert(array[1] == 0x100);
 
-    assert(bts(array, 35) == 0);
+    assert(bts(array.ptr, 35) == 0);
     if (size_t.sizeof == 8)
     {
         assert(array[0] == 0x8_0000_0002);
@@ -170,11 +175,11 @@ unittest
         assert(array[1] == 0x108);
     }
 
-    assert(btr(array, 35) == -1);
+    assert(btr(array.ptr, 35) == -1);
     assert(array[0] == 2);
     assert(array[1] == 0x100);
 
-    assert(bt(array, 1) == -1);
+    assert(bt(array.ptr, 1) == -1);
     assert(array[0] == 2);
     assert(array[1] == 0x100);
 }
@@ -184,49 +189,51 @@ unittest
  * byte 3, byte 1 becomes byte 2, byte 2 becomes byte 1, byte 3
  * becomes byte 0.
  */
-pure uint bswap(uint v);
+uint bswap(uint v) pure;
+
+@system // not pure
+{
+    /**
+     * Reads I/O port at port_address.
+     */
+    ubyte inp(uint port_address);
 
 
-/**
- * Reads I/O port at port_address.
- */
-ubyte inp(uint port_address);
+    /**
+     * ditto
+     */
+    ushort inpw(uint port_address);
 
 
-/**
- * ditto
- */
-ushort inpw(uint port_address);
+    /**
+     * ditto
+     */
+    uint inpl(uint port_address);
 
 
-/**
- * ditto
- */
-uint inpl(uint port_address);
+    /**
+     * Writes and returns value to I/O port at port_address.
+     */
+    ubyte outp(uint port_address, ubyte value);
 
 
-/**
- * Writes and returns value to I/O port at port_address.
- */
-ubyte outp(uint port_address, ubyte value);
+    /**
+     * ditto
+     */
+    ushort outpw(uint port_address, ushort value);
 
 
-/**
- * ditto
- */
-ushort outpw(uint port_address, ushort value);
-
-
-/**
- * ditto
- */
-uint outpl(uint port_address, uint value);
+    /**
+     * ditto
+     */
+    uint outpl(uint port_address, uint value);
+}
 
 
 /**
  *  Calculates the number of set bits in a 32-bit integer.
  */
-int popcnt( uint x )
+int popcnt( uint x ) pure
 {
     // Avoid branches, and the potential for cache misses which
     // could be incurred with a table lookup.
@@ -258,32 +265,32 @@ int popcnt( uint x )
 }
 
 
-debug( UnitTest )
+unittest
 {
-    unittest
-    {
-      assert( popcnt( 0 ) == 0 );
-      assert( popcnt( 7 ) == 3 );
-      assert( popcnt( 0xAA )== 4 );
-      assert( popcnt( 0x8421_1248 ) == 8 );
-      assert( popcnt( 0xFFFF_FFFF ) == 32 );
-      assert( popcnt( 0xCCCC_CCCC ) == 16 );
-      assert( popcnt( 0x7777_7777 ) == 24 );
-    }
+    assert( popcnt( 0 ) == 0 );
+    assert( popcnt( 7 ) == 3 );
+    assert( popcnt( 0xAA )== 4 );
+    assert( popcnt( 0x8421_1248 ) == 8 );
+    assert( popcnt( 0xFFFF_FFFF ) == 32 );
+    assert( popcnt( 0xCCCC_CCCC ) == 16 );
+    assert( popcnt( 0x7777_7777 ) == 24 );
 }
 
 
 /**
  * Reverses the order of bits in a 32-bit integer.
  */
-uint bitswap( uint x )
+@trusted uint bitswap( uint x ) pure
 {
-
-    version( D_InlineAsm_X86 )
+    version (AsmX86)
     {
+        version (D_InlineAsm_X86_64)
+        asm { naked; mov EAX, EDI; }
+
         asm
         {
             // Author: Tiago Gasiba.
+            naked;
             mov EDX, EAX;
             shr EAX, 1;
             and EDX, 0x5555_5555;
@@ -303,6 +310,7 @@ uint bitswap( uint x )
             shl EDX, 4;
             or  EAX, EDX;
             bswap EAX;
+            ret;
         }
     }
     else
@@ -323,10 +331,9 @@ uint bitswap( uint x )
 }
 
 
-debug( UnitTest )
+unittest
 {
-    unittest
-    {
-        assert( bitswap( 0x8000_0100 ) == 0x0080_0001 );
-    }
+    assert( bitswap( 0x8000_0100 ) == 0x0080_0001 );
+    foreach(i; 0 .. 32)
+        assert(bitswap(1 << i) == 1 << 32 - i - 1);
 }

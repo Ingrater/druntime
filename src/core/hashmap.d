@@ -183,7 +183,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       {
         index = (index + 1) % m_Data.length;
       }
-      void[] initMem = typeid(Pair).init();
+      const(void[]) initMem = typeid(Pair).init();
       if(initMem.ptr !is null)
         (cast(void*)&m_Data[index])[0..Pair.sizeof] = initMem[];
       else

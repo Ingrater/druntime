@@ -8,7 +8,7 @@
 
 /*          Copyright Digital Mars 2004 - 2009.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_real;
@@ -26,11 +26,9 @@ class TypeInfo_e : TypeInfo
       else
         return "real"; 
     }
-
-    override hash_t getHash(in void* p)
-    {
-        return hashOf(p, real.sizeof);
-    }
+    @trusted:
+    pure:
+    nothrow:
 
     static equals_t _equals(real f1, real f2)
     {
@@ -43,13 +41,21 @@ class TypeInfo_e : TypeInfo
         if (d1 !<>= d2)         // if either are NaN
         {
             if (d1 !<>= d1)
-            {   if (d2 !<>= d2)
+            {
+                if (d2 !<>= d2)
                     return 0;
                 return -1;
             }
             return 1;
         }
         return (d1 == d2) ? 0 : ((d1 < d2) ? -1 : 1);
+    }
+
+    const:
+
+    override hash_t getHash(in void* p)
+    {
+        return hashOf(p, real.sizeof);
     }
 
     override equals_t equals(in void* p1, in void* p2)
@@ -62,7 +68,7 @@ class TypeInfo_e : TypeInfo
         return _compare(*cast(real *)p1, *cast(real *)p2);
     }
 
-    @property override size_t tsize() nothrow pure
+    override @property size_t tsize() nothrow pure
     {
         return real.sizeof;
     }
@@ -76,13 +82,14 @@ class TypeInfo_e : TypeInfo
         *cast(real *)p2 = t;
     }
 
-    override void[] init() nothrow pure
-    {   static immutable real r;
+    override const(void)[] init() nothrow pure
+    {
+        static immutable real r;
 
         return (cast(real *)&r)[0 .. 1];
     }
 
-    @property override size_t talign() nothrow pure
+    override @property size_t talign() nothrow pure
     {
         return real.alignof;
     }

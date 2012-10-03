@@ -4,7 +4,7 @@
  * Copyright: Copyright Digital Mars 1995 - 2011.
  * License: Distributed under the
  *      $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost Software License 1.0).
- *    (See accompanying file LICENSE_1_0.txt)
+ *    (See accompanying file LICENSE)
  * Authors:   Walter Bright, Sean Kelly
  * Source: $(DRUNTIMESRC src/rt/_trace.d)
  */
@@ -224,12 +224,7 @@ static void trace_place(Symbol *s, uint count)
 }
 
 /////////////////////////////////////
-// Initialize and terminate.
-
-shared static this()
-{
-    trace_init();
-}
+// Terminate.
 
 shared static ~this()
 {
@@ -774,7 +769,14 @@ void _trace_pro_n()
             {
                 naked                           ;
                 pushad                          ;
-                mov     ECX,8*4[ESP]            ;
+
+                sub     ESP, 4*16               ;
+                movdqu  0*16[ESP], XMM0         ;
+                movdqu  1*16[ESP], XMM1         ;
+                movdqu  2*16[ESP], XMM2         ;
+                movdqu  3*16[ESP], XMM3         ;
+
+                mov     ECX,8*4+4*16[ESP]       ;
                 xor     EAX,EAX                 ;
                 mov     AL,[ECX]                ;
                 cmp     AL,0xFF                 ;
@@ -782,17 +784,24 @@ void _trace_pro_n()
                 cmp     byte ptr 1[ECX],0       ;
                 jne     L1                      ;
                 mov     AX,2[ECX]               ;
-                add     8*4[ESP],3              ;
+                add     8*4+4*16[ESP],3         ;
                 add     ECX,3                   ;
             L1: inc     EAX                     ;
                 inc     ECX                     ;
-                add     8*4[ESP],EAX            ;
+                add     8*4+4*16[ESP],EAX       ;
                 dec     EAX                     ;
                 sub     ESP,4                   ;
                 push    ECX                     ;
                 push    EAX                     ;
                 call    trace_pro               ;
                 add     ESP,12                  ;
+
+                movdqu  XMM0, 0*16[ESP]         ;
+                movdqu  XMM1, 1*16[ESP]         ;
+                movdqu  XMM2, 2*16[ESP]         ;
+                movdqu  XMM3, 3*16[ESP]         ;
+                add     ESP, 4*16               ;
+
                 popad                           ;
                 ret                             ;
             }
@@ -810,7 +819,18 @@ void _trace_pro_n()
                 push    R9                      ;
                 push    R10                     ;
                 push    R11                     ;
-                mov     RCX,9*8[RSP]            ;
+
+                sub     RSP, 8*16               ;
+                movdqu  0*16[RSP], XMM0         ;
+                movdqu  1*16[RSP], XMM1         ;
+                movdqu  2*16[RSP], XMM2         ;
+                movdqu  3*16[RSP], XMM3         ;
+                movdqu  4*16[RSP], XMM4         ;
+                movdqu  5*16[RSP], XMM5         ;
+                movdqu  6*16[RSP], XMM6         ;
+                movdqu  7*16[RSP], XMM7         ;
+
+                mov     RCX,9*8+8*16[RSP]       ;
                 xor     RAX,RAX                 ;
                 mov     AL,[RCX]                ;
                 cmp     AL,0xFF                 ;
@@ -818,16 +838,29 @@ void _trace_pro_n()
                 cmp     byte ptr 1[RCX],0       ;
                 jne     L1                      ;
                 mov     AX,2[RCX]               ;
-                add     9*8[RSP],3              ;
+                add     9*8+8*16[RSP],3         ;
                 add     RCX,3                   ;
             L1: inc     RAX                     ;
                 inc     RCX                     ;
-                add     9*8[RSP],RAX            ;
+                add     9*8+8*16[RSP],RAX       ;
                 dec     RAX                     ;
-                push    RCX                     ;
-                push    RAX                     ;
+//                push    RCX                     ;
+//                push    RAX                     ;
+                mov     RDI,RAX                 ;
+                mov     RSI,RCX                 ;
                 call    trace_pro               ;
-                add     RSP,16                  ;
+//                add     RSP,16                  ;
+
+                movdqu  XMM0, 0*16[RSP]         ;
+                movdqu  XMM1, 1*16[RSP]         ;
+                movdqu  XMM2, 2*16[RSP]         ;
+                movdqu  XMM3, 3*16[RSP]         ;
+                movdqu  XMM4, 4*16[RSP]         ;
+                movdqu  XMM5, 5*16[RSP]         ;
+                movdqu  XMM6, 6*16[RSP]         ;
+                movdqu  XMM7, 7*16[RSP]         ;
+                add     RSP, 8*16               ;
+
                 pop     R11                     ;
                 pop     R10                     ;
                 pop     R9                      ;
@@ -887,7 +920,18 @@ void _trace_pro_n()
                 push    R9                      ;
                 push    R10                     ;
                 push    R11                     ;
-                mov     RCX,9*8[RSP]            ;
+
+                sub     RSP, 8*16               ;
+                movdqu  0*16[RSP], XMM0         ;
+                movdqu  1*16[RSP], XMM1         ;
+                movdqu  2*16[RSP], XMM2         ;
+                movdqu  3*16[RSP], XMM3         ;
+                movdqu  4*16[RSP], XMM4         ;
+                movdqu  5*16[RSP], XMM5         ;
+                movdqu  6*16[RSP], XMM6         ;
+                movdqu  7*16[RSP], XMM7         ;
+
+                mov     RCX,9*8+8*16[RSP]       ;
                 xor     RAX,RAX                 ;
                 mov     AL,[RCX]                ;
                 cmp     AL,0xFF                 ;
@@ -895,16 +939,29 @@ void _trace_pro_n()
                 cmp     byte ptr 1[RCX],0       ;
                 jne     L1                      ;
                 mov     AX,2[RCX]               ;
-                add     9*8[RSP],3              ;
+                add     9*8+8*16[RSP],3         ;
                 add     RCX,3                   ;
             L1: inc     RAX                     ;
                 inc     RCX                     ;
-                add     9*8[RSP],RAX            ;
+                add     9*8+8*16[RSP],RAX       ;
                 dec     RAX                     ;
-                push    RCX                     ;
-                push    RAX                     ;
+//                push    RCX                     ;
+//                push    RAX                     ;
+                mov     RDI,RAX                 ;
+                mov     RSI,RCX                 ;
                 call    trace_pro               ;
-                add     RSP,16                  ;
+//                add     RSP,16                  ;
+
+                movdqu  XMM0, 0*16[RSP]         ;
+                movdqu  XMM1, 1*16[RSP]         ;
+                movdqu  XMM2, 2*16[RSP]         ;
+                movdqu  XMM3, 3*16[RSP]         ;
+                movdqu  XMM4, 4*16[RSP]         ;
+                movdqu  XMM5, 5*16[RSP]         ;
+                movdqu  XMM6, 6*16[RSP]         ;
+                movdqu  XMM7, 7*16[RSP]         ;
+                add     RSP, 8*16               ;
+
                 pop     R11                     ;
                 pop     R10                     ;
                 pop     R9                      ;
@@ -959,13 +1016,19 @@ void _trace_epi_n()
                 push    R9      ;
                 push    R10     ;
                 push    R11     ;
-                /* Don't worry about saving XMM0/1 or ST0/1
+                sub     RSP, 2*16 ;
+                movdqu  0*16[RSP], XMM0;
+                movdqu  1*16[RSP], XMM1;
+                /* Don't worry about saving ST0/1
                  * Hope trace_epi() doesn't change them
                  */
             }
             trace_epi();
             asm
             {
+                movdqu  XMM0, 0*16[RSP];
+                movdqu  XMM1, 1*16[RSP];
+                add     RSP, 2*16 ;
                 pop     R11     ;
                 pop     R10     ;
                 pop     R9      ;
@@ -1011,13 +1074,19 @@ void _trace_epi_n()
                 push    R9      ;
                 push    R10     ;
                 push    R11     ;
-                /* Don't worry about saving XMM0/1 or ST0/1
+                sub     RSP, 2*16 ;
+                movdqu  0*16[RSP], XMM0;
+                movdqu  1*16[RSP], XMM1;
+                /* Don't worry about saving ST0/1
                  * Hope trace_epi() doesn't change them
                  */
             }
             trace_epi();
             asm
             {
+                movdqu  XMM0, 0*16[RSP];
+                movdqu  XMM1, 1*16[RSP];
+                add     RSP, 2*16 ;
                 pop     R11     ;
                 pop     R10     ;
                 pop     R9      ;
