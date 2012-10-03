@@ -626,6 +626,11 @@ struct RCArray(T,AT = StdAllocator)
   {
     return m_Data;
   }
+
+  immutable(T[]) opSlice() immutable
+  {
+    return m_Data;
+  }
   
   this_t opSlice(size_t start, size_t end)
   {
@@ -859,8 +864,18 @@ struct RCArray(T,AT = StdAllocator)
   {
     return m_Data.ptr;
   }
+
+  @property auto ptr() const
+  {
+    return m_Data.ptr;
+  }
+
+  @property auto ptr() immutable
+  {
+    return m_Data.ptr;
+  }
   
-  @property size_t length()
+  @property size_t length() const
   {
     return m_Data.length;
   }
@@ -891,11 +906,6 @@ struct RCArray(T,AT = StdAllocator)
   }
 
   uint Hash() const
-  {
-    return hashOf(m_Data.ptr, m_Data.length);
-  }
-
-  uint Hash() immutable
   {
     return hashOf(m_Data.ptr, m_Data.length);
   }
