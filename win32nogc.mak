@@ -585,14 +585,13 @@ $(IMPDIR)\core\sync\semaphore.di : src\core\sync\semaphore.d
 ######################## Header .di file copy ##############################
 
 copydir: $(IMPDIR)
-	mkdir $(IMPDIR)\core\sys\windows
-	mkdir $(IMPDIR)\core\sys\posix\arpa
-	mkdir $(IMPDIR)\core\sys\posix\sys
-	mkdir $(IMPDIR)\core\sys\posix\net
-	mkdir $(IMPDIR)\core\sys\posix\netinet
-	mkdir $(IMPDIR)\core\sys\osx\mach
-	mkdir $(IMPDIR)\core\sys\freebsd\sys
-	mkdir $(IMPDIR)\core\stdc
+	@mkdir $(IMPDIR)\core\sys\posix\arpa 2> NUL
+	@mkdir $(IMPDIR)\core\sys\posix\sys 2> NUL
+	@mkdir $(IMPDIR)\core\sys\posix\net 2> NUL 
+	@mkdir $(IMPDIR)\core\sys\posix\netinet 2> NUL
+	@mkdir $(IMPDIR)\core\sys\osx\mach 2> NUL
+	@mkdir $(IMPDIR)\core\sys\freebsd\sys 2> NUL
+	@mkdir $(IMPDIR)\core\stdc 2> NUL
 
 copy: $(COPY)
 

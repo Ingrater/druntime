@@ -815,7 +815,7 @@ auto AllocatorNewArray(T,AT)(AT allocator, size_t size, InitializeMemoryWith ini
     case InitializeMemoryWith.INIT:
       static if(is(T == struct))
       {
-        void initMem[] = typeid(T).init();
+        const(void[]) initMem = typeid(T).init();
         if(initMem.ptr is null)
         {
           memset(data.ptr, 0, data.length * T.sizeof);
