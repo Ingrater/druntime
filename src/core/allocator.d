@@ -804,6 +804,8 @@ auto NewArray(T)(size_t size, InitializeMemoryWith init = InitializeMemoryWith.I
 
 auto AllocatorNewArray(T,AT)(AT allocator, size_t size, InitializeMemoryWith init = InitializeMemoryWith.INIT)
 {
+  if(size == 0)
+    return cast(T[])[];
   size_t memSize = T.sizeof * size;
   void* mem = allocator.AllocateMemory(memSize).ptr;
   
