@@ -1,5 +1,5 @@
 
-DMD=dmd
+DMD=C:\digital-mars\dmd2\windows\bin-nostd\dmd
 
 CC=dmc
 
