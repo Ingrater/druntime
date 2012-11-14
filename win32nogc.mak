@@ -17,7 +17,6 @@ CFLAGS=
 DRUNTIME_BASE=druntimenogc
 DRUNTIME_DEBUG=lib\$(DRUNTIME_BASE)d.lib
 DRUNTIME_RELEASE=lib\$(DRUNTIME_BASE).lib
-GCSTUB=lib\gcstub.obj
 
 DOCFMT=-version=CoreDdoc
 
@@ -27,7 +26,7 @@ MANIFEST= \
 	LICENSE \
 	README \
 	posix.mak \
-	win32.mak \
+	win32nogc.mak \
 	\
 	src\object_.d \
 	src\object.di \
@@ -136,12 +135,6 @@ MANIFEST= \
 	src\core\sys\windows\stacktrace.d \
 	src\core\sys\windows\threadaux.d \
 	src\core\sys\windows\windows.d \
-	\
-	src\gc\gc.d \
-	src\gc\gcalloc.d \
-	src\gc\gcbits.d \
-	src\gc\gcstats.d \
-	src\gc\gcx.d \
 	\
 	src\gcstub\gc.d \
 	\
@@ -279,11 +272,7 @@ SRCS= \
 	src\core\sync\rwmutex.d \
 	src\core\sync\semaphore.d \
 	\
-	src\gc\gc.d \
-	src\gc\gcalloc.d \
-	src\gc\gcbits.d \
-	src\gc\gcstats.d \
-	src\gc\gcx.d \
+	src\gcstub\gc.d \
 	\
 	src\rt\aaA.d \
 	src\rt\aApply.d \
@@ -592,6 +581,7 @@ copydir: $(IMPDIR)
 	@mkdir $(IMPDIR)\core\sys\osx\mach 2> NUL
 	@mkdir $(IMPDIR)\core\sys\freebsd\sys 2> NUL
 	@mkdir $(IMPDIR)\core\stdc 2> NUL
+	@mkdir $(IMPDIR)\core\sys\windows 2> NUL
 
 copy: $(COPY)
 
@@ -864,17 +854,12 @@ critical.obj : src\rt\critical.c
 monitor.obj : src\rt\monitor.c
 	$(CC) -c $(CFLAGS) src\rt\monitor.c
 
-################### gcstub generation #########################
-
-$(GCSTUB) : src\gcstub\gc.d win32.mak
-	$(DMD) -c -of$(GCSTUB) src\gcstub\gc.d $(DFLAGS)
-
 ################### Library generation #########################
 
-$(DRUNTIME_RELEASE): $(OBJS) $(SRCS) win32.mak
+$(DRUNTIME_RELEASE): $(OBJS) $(SRCS) win32nogc.mak
 	$(DMD) -lib -of$(DRUNTIME_RELEASE) -Xfdruntime.json $(DFLAGS_RELEASE) $(DFLAGS) $(SRCS) $(OBJS)
 
-$(DRUNTIME_DEBUG): $(OBJS) $(SRCS) win32.mak
+$(DRUNTIME_DEBUG): $(OBJS) $(SRCS) win32nogc.mak
 	$(DMD) -lib -of$(DRUNTIME_DEBUG) -Xfdruntimed.json $(DFLAGS_DEBUG) $(DFLAGS) $(SRCS) $(OBJS)
 	
 unittest : $(SRCS) $(DRUNTIME) src\unittest.d
