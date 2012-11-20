@@ -830,7 +830,7 @@ auto AllocatorNewArray(T,AT)(AT allocator, size_t size, InitializeMemoryWith ini
           }
         }
       }
-      else 
+      else static if(!is(T == void))
       {
         foreach(ref e; data)
         {
