@@ -6,7 +6,7 @@ CC=dmc
 DOCDIR=doc
 IMPDIR=import
 
-DFLAGS=-nofloat -w -d -Isrc -Iimport -property -version=NOGCSAFE
+DFLAGS=-nofloat -w -d -Isrc -Iimport -property -version=NOGCSAFE -version=RTTI
 UDFLAGS=-debug -g -nofloat -w -d -Isrc -Iimport -property
 DFLAGS_RELEASE=-release -g -O -noboundscheck -version=NO_INVARIANTS
 DFLAGS_DEBUG=-debug -g -version=MEMORY_TRACKING
@@ -30,6 +30,7 @@ MANIFEST= \
 	\
 	src\object_.d \
 	src\object.di \
+	src\rtti.d \
 	\
 	src\core\atomic.d \
 	src\core\bitop.d \
@@ -226,6 +227,7 @@ MANIFEST= \
 
 SRCS= \
 	src\object_.d \
+	src\rtti.d \
 	\
 	src\core\atomic.d \
 	src\core\bitop.d \
@@ -390,6 +392,7 @@ IMPORTS=\
 
 COPY=\
 	$(IMPDIR)\object.di \
+	$(IMPDIR)\rtti.d \
 	$(IMPDIR)\core\atomic.d \
 	$(IMPDIR)\core\bitop.d \
 	$(IMPDIR)\core\cpuid.d \
@@ -586,6 +589,9 @@ copydir: $(IMPDIR)
 copy: $(COPY)
 
 $(IMPDIR)\object.di : src\object.di
+	copy $** $@
+	
+$(IMPDIR)\rtti.d : src\rtti.d
 	copy $** $@
 
 $(IMPDIR)\core\atomic.d : src\core\atomic.d

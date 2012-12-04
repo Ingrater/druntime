@@ -17,6 +17,11 @@ private
     extern(C) void rt_finalize(void *ptr, bool det=true);
 }
 
+version(RTTI)
+{
+	private import rtti;
+}
+
 version(NOGCSAFE)
 {
   public import core.refcounted;
@@ -703,7 +708,17 @@ void __ctfeWriteln(T...)(auto ref T values) { __ctfeWrite(values, "\n"); }
 
 template RTInfo(T)
 {
-    enum RTInfo = cast(void*)0x12345678;
+	version(RTTI)
+	{
+		static if(is(T : TypeInfo))
+			enum RTInfo = cast(void*)null;
+		else
+			enum RTInfo = &RttiInfo!T;
+	}
+	else
+	{
+		enum RTInfo = null;
+	}
 }
 
 version (unittest)

@@ -35,6 +35,10 @@ private
       import core.memory;
       import core.refcounted;
     }
+	version(RTTI)
+	{
+	  import rtti;
+	}
 
     extern (C) void onOutOfMemoryError();
     extern (C) Object _d_newclass(const TypeInfo_Class ci);
@@ -2790,5 +2794,15 @@ bool _xopEquals(in void*, in void*)
 
 template RTInfo(T)
 {
-    enum RTInfo = null;
+	version(RTTI)
+	{
+		static if(is(T : TypeInfo))
+			enum RTInfo = cast(void*)null;
+		else
+			enum RTInfo = &RttiInfo!T;
+	}
+	else
+	{
+		enum RTInfo = null;
+	}
 }
