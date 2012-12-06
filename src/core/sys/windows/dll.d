@@ -356,6 +356,28 @@ public:
                                // since XP does not keep track of used TLS entries
         return true;
     }
+	
+	bool dll_fixTLS( HINSTANCE hInstance )
+	{
+	  return dll_fixTLS( hInstance, &_tlsstart, &_tlsend, &_tls_callbacks_a, &_tls_index );
+	}
+	
+	bool dll_attachAllThreads()
+	{
+		return enumProcessThreads(
+		function (uint id, void* context) {
+			if( !thread_findByAddr( id ) )
+			{
+				// if the OS has not prepared TLS for us, don't attach to the thread
+				if( GetTlsDataAddress( id ) )
+				{
+					thread_attachByAddr( id );
+					thread_moduleTlsCtor( id );
+		}
+			}
+			return true;
+		}, null );
+	}
 
     // fixup TLS storage, initialize runtime and attach to threads
     // to be called from DllMain with reason DLL_PROCESS_ATTACH
@@ -371,19 +393,7 @@ public:
             return true;
 
         // attach to all other threads
-        return enumProcessThreads(
-            function (uint id, void* context) {
-                if( !thread_findByAddr( id ) )
-                {
-                    // if the OS has not prepared TLS for us, don't attach to the thread
-                    if( GetTlsDataAddress( id ) )
-                    {
-                        thread_attachByAddr( id );
-                        thread_moduleTlsCtor( id );
-		    }
-                }
-                return true;
-            }, null );
+		return dll_attachAllThreads();
     }
 
     // same as above, but only usable if druntime is linked statically

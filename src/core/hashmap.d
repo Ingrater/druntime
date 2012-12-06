@@ -268,6 +268,13 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
         doIfFalse();
     }
 
+    void ifExists(K key, scope void delegate(ref V) doIfTrue)
+    {
+      auto index = getIndex(key);
+      if(index != size_t.max)
+        doIfTrue(m_Data[index].value);
+    }   
+
     size_t getIndex(K key)
     {
       size_t index = HP.Hash(key) % m_Data.length;
