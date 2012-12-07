@@ -55,21 +55,29 @@ struct PointerHashPolicy
 
 private {
 
-  extern(C) void _initStdAllocator()
+  __gshared bool g_isStdAlloactorInit = false;
+  __gshared bool g_allowMemoryTracking = true;
+
+  extern(C) void _initStdAllocator(bool allowMemoryTracking)
   {
+    if(g_isStdAlloactorInit)
+      return;
     g_stdAllocatorMem[] = typeid(StdAllocator).init[];
     g_stdAllocator = cast(StdAllocator)g_stdAllocatorMem.ptr;
     static if(is(typeof(g_stdAllocator.__ctor())))
     {
       g_stdAllocator.__ctor();
     }
+    g_isStdAlloactorInit = true;
+    g_allowMemoryTracking = allowMemoryTracking;
   }
 
   extern(C) void _initMemoryTracking()
   {
     version(MEMORY_TRACKING)
     {
-    StdAllocator.globalInstance.InitMemoryTracking();
+      if(g_allowMemoryTracking)
+        StdAllocator.globalInstance.InitMemoryTracking();
     }
   }
 
@@ -77,7 +85,8 @@ private {
   {
     version(MEMORY_TRACKING)
     {
-    StdAllocator.globalInstance.DeinitMemoryTracking();
+      if(g_allowMemoryTracking)
+        StdAllocator.globalInstance.DeinitMemoryTracking();
     }
     Destruct(g_stdAllocator);
   }
