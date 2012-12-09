@@ -74,6 +74,7 @@ class Object
 bool opEquals(const Object lhs, const Object rhs);
 bool opEquals(Object lhs, Object rhs);
 //bool opEquals(TypeInfo lhs, TypeInfo rhs);
+//bool opEquals(TypeInfo_Class lhs, TypeInfo_Class rhs);
 
 void setSameMutex(shared Object ownee, shared Object owner);
 
@@ -196,7 +197,7 @@ class TypeInfo_Vector : TypeInfo
 class TypeInfo_StaticArray : TypeInfo
 {
     TypeInfo value;
-    size_t   len;
+    public size_t   len;
 }
 
 class TypeInfo_AssociativeArray : TypeInfo
@@ -711,7 +712,10 @@ template RTInfo(T)
 	version(RTTI)
 	{
 		static if(is(T : TypeInfo))
-			enum RTInfo = cast(void*)null;
+		{
+			pragma(msg, "ignoring " ~ T.stringof);
+			//enum RTInfo = cast(void*)null;
+		}
 		else
 			enum RTInfo = &RttiInfo!T;
 	}

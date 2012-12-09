@@ -363,8 +363,13 @@ class StdAllocator : IAdvancedAllocator
               TypeInfo t = obj.classinfo;
               if(t is null)
               {
-                printf("Already destroyed object");
-                if(log !is null) fprintf(log, "Already destroyed object");
+                printf("Already destroyed object\n");
+                if(log !is null) fprintf(log, "Already destroyed object\n");
+              }
+              else if(t.classinfo is null)
+              {
+                printf("Invalid classinfo\n");
+                if(log !is null) fprintf(log, "Invalid classinfo\n");
               }
               else
               {
@@ -415,6 +420,10 @@ class StdAllocator : IAdvancedAllocator
     if(m_memoryMap !is null && m_memoryMap.exists(mem))
     {
       m_memoryMap[mem].flags |= BlockFlags.IsClass;
+      Object obj = cast(Object)mem;
+      TypeInfo t = obj.classinfo;
+      if(t is null || t.classinfo is null)
+        asm { int 3; }
     }
   }
   

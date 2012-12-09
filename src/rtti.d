@@ -1,5 +1,7 @@
 module rtti;
 
+import core.stdc.stdio;
+
 struct thMemberInfo 
 {
   string name;
@@ -13,7 +15,7 @@ struct RttiAnchor
 
 template RttiInfo(T)
 {
-  //pragma(msg, makeRttiInfo2!T());
+  //pragma(msg, makeRttiInfo!T());
   __gshared RttiInfo = mixin(makeRttiInfo!T());
 }
 
@@ -53,7 +55,9 @@ string formatOffset(size_t offset)
 
 string makeRttiInfo(T)()
 {
-  string result = "[thMemberInfo(T.mangleof, typeid(RttiAnchor), instanceSize!T)";
+  static if(is(T == struct))
+    pragma(msg, "struct " ~ T.stringof);
+  string result = "[thMemberInfo(\"" ~ T.mangleof ~ "\", typeid(T), instanceSize!T)";
   size_t i=0;
   foreach(m; __traits(allMembers, T))
   {
@@ -77,10 +81,10 @@ string makeRttiInfo(T)()
   return result ~ "]";
 }
 
-  thMemberInfo[] getRttiInfo(TypeInfo ti)
-  {
-    auto temp = cast(thMemberInfo[]*)ti.rtInfo;
-    if(temp is null)
-	  return [];
-    return *temp;
-  }
+const(thMemberInfo)[] getRttiInfo(const TypeInfo ti)
+{
+  auto temp = cast(const(thMemberInfo)[]*)ti.rtInfo;
+  if(temp is null)
+	return [];
+  return *temp;
+}

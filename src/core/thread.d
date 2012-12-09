@@ -19,6 +19,8 @@ module core.thread;
 public import core.time; // for Duration
 static import rt.tlsgc;
 
+import core.stdc.stdio;
+
 // this should be true for most architectures
 version = StackGrowsDown;
 
@@ -622,6 +624,7 @@ class Thread : ThreadBase
      */
     ~this()
     {
+        printf("Thread %x deleted\n", cast(void*)this);
         if( m_addr == m_addr.init )
         {
             return;
@@ -1717,7 +1720,7 @@ private:
                 t.prev.next = t.next;
             if( t.next )
                 t.next.prev = t.prev;
-            if( sm_tbeg == t )
+            if( sm_tbeg is t )
                 sm_tbeg = t.next;
             --sm_tlen;
         }

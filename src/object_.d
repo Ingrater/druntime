@@ -231,6 +231,18 @@ bool opEquals(TypeInfo lhs, TypeInfo rhs)
     return lhs.opEquals(rhs) && rhs.opEquals(lhs);
 }
 
+bool opEquals(TypeInfo_Class lhs, TypeInfo_Class rhs)
+{
+  if (lhs is rhs)
+    return true;
+
+  // If either is null => non-equal
+  if (lhs is null || rhs is null) 
+    return false;
+
+  return lhs.info.name == rhs.info.name;
+}
+
 /**
  * Information about an interface.
  * When an object is accessed via an interface, an Interface* appears as the
@@ -2797,7 +2809,10 @@ template RTInfo(T)
 	version(RTTI)
 	{
 		static if(is(T : TypeInfo))
+		{
 			enum RTInfo = cast(void*)null;
+			//pragma(msg, "ignoring " ~ T.stringof);
+		}
 		else
 			enum RTInfo = &RttiInfo!T;
 	}

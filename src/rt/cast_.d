@@ -89,16 +89,16 @@ export Object _d_dynamic_cast(Object o, ClassInfo c)
 
 export int _d_isbaseof2(ClassInfo oc, ClassInfo c, ref size_t offset)
 {
-    if (oc is c)
+    if (oc is c || opEquals(oc, c))
         return 1;
     do
     {
-        if (oc.base is c)
+        if (oc.base is c || opEquals(oc.base, c))
             return 1;
         foreach (i; 0..oc.interfaces.length)
         {
             auto ic = oc.interfaces[i].classinfo;
-            if (ic is c)
+            if (ic is c || opEquals(ic, c))
             {   offset = oc.interfaces[i].offset;
                 return 1;
             }
