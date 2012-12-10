@@ -7,6 +7,7 @@ struct thMemberInfo
   string name;
   TypeInfo type;
   size_t offset;
+  thMemberInfo[]* next;
 }
 
 struct RttiAnchor
@@ -55,9 +56,9 @@ string formatOffset(size_t offset)
 
 string makeRttiInfo(T)()
 {
-  static if(is(T == struct))
-    pragma(msg, "struct " ~ T.stringof);
-  string result = "[thMemberInfo(\"" ~ T.mangleof ~ "\", typeid(T), instanceSize!T)";
+  /*static if(is(T == struct))
+    pragma(msg, "struct " ~ T.stringof);*/
+  string result = "[thMemberInfo(\"" ~ T.mangleof ~ "\", typeid(T), instanceSize!T, null)";
   size_t i=0;
   foreach(m; __traits(allMembers, T))
   {
@@ -66,7 +67,7 @@ string makeRttiInfo(T)()
       static if(is(typeof(__traits(getMember, T, m).offsetof)))
       {
         size_t offset = __traits(getMember, T, m).offsetof;
-        result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ")";
+        result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", null)";
       }
     }
     else
@@ -74,7 +75,13 @@ string makeRttiInfo(T)()
       static if(__traits(compiles, mixin("(T." ~ m ~ ").offsetof")))
       {
         size_t offset = mixin("(T." ~ m ~ ").offsetof");
-        result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ")";
+        static if(is(typeof(__traits(getMember, T, m)) == T) || !is(typeof(__traits(getMember, T, m)) == struct))
+          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", null)";
+        else
+        {
+          pragma(msg, "Reference for " ~ T.stringof);
+          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", &RttiInfo!(typeof(T." ~ m ~ ")))";
+        }
       }
     }
   }

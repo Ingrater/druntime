@@ -2808,9 +2808,9 @@ template RTInfo(T)
 {
 	version(RTTI)
 	{
-		static if(is(T : TypeInfo))
+		static if(is(T : TypeInfo) || !(is(T == struct) || is(T == class)))
 		{
-			enum RTInfo = cast(void*)null;
+			enum RTInfo = null;
 			//pragma(msg, "ignoring " ~ T.stringof);
 		}
 		else
