@@ -67,7 +67,10 @@ string makeRttiInfo(T)()
       static if(is(typeof(__traits(getMember, T, m).offsetof)))
       {
         size_t offset = __traits(getMember, T, m).offsetof;
-        result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", null)";
+        static if(is(typeof(__traits(getMember, T, m)) == struct))
+          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", &RttiInfo!(typeof(T." ~ m ~ ")))";
+        else
+          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", null)";
       }
     }
     else
@@ -79,7 +82,7 @@ string makeRttiInfo(T)()
           result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", null)";
         else
         {
-          pragma(msg, "Reference for " ~ T.stringof);
+          //pragma(msg, "Reference for " ~ T.stringof);
           result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", &RttiInfo!(typeof(T." ~ m ~ ")))";
         }
       }
