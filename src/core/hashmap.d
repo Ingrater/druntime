@@ -207,7 +207,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       if(index == size_t.max) //not in the hashmap yet
       {
         m_FullCount++;
-        if(m_FullCount > m_Data.length / 2 || m_FullCount >= m_Data.length)
+        if(m_FullCount > ((m_Data.length * 3) / 4) || m_FullCount >= m_Data.length)
         {
           Pair[] oldData = m_Data;
           m_Data = (cast(Pair*)m_allocator.AllocateMemory(oldData.length * 2 * Pair.sizeof))[0..oldData.length*2];
