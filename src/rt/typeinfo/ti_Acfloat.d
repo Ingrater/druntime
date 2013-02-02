@@ -27,20 +27,20 @@ class TypeInfo_Aq : TypeInfo_Array
       else
         return "cfloat[]"; 
     }
-    override equals_t opEquals(Object o) { return TypeInfo.opEquals(o); }
+    override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 	
 	@trusted:
     const:
     pure:
     nothrow:
 	
-    override hash_t getHash(in void* p)
+    override size_t getHash(in void* p)
     {
         cfloat[] s = *cast(cfloat[]*)p;
         return hashOf(s.ptr, s.length * cfloat.sizeof);
     }
 
-    override equals_t equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2)
     {
         cfloat[] s1 = *cast(cfloat[]*)p1;
         cfloat[] s2 = *cast(cfloat[]*)p2;

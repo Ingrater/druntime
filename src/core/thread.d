@@ -1,18 +1,14 @@
 /**
  * The thread module provides support for thread creation and management.
  *
- * Copyright: Copyright Sean Kelly 2005 - 2009.
- * License:   $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
+ * Copyright: Copyright Sean Kelly 2005 - 2012.
+ * License: Distributed under the
+ *      $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost Software License 1.0).
+ *    (See accompanying file LICENSE)
  * Authors:   Sean Kelly, Walter Bright, Alex Ronne Petersen
  * Source:    $(DRUNTIMESRC core/_thread.d)
  */
 
-/*          Copyright Sean Kelly 2005 - 2009.
- * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE or copy at
- *          http://www.boost.org/LICENSE_1_0.txt)
- * Source: $(LINK http://www.dsource.org/projects/druntime/browser/trunk/src/core/thread.d)
- */
 module core.thread;
 
 
@@ -133,13 +129,29 @@ version( Windows )
 
         version( DigitalMars )
         {
-            // NOTE: The memory between the addresses of _tlsstart and _tlsend
-            //       is the storage for thread-local data in D 2.0.  Both of
-            //       these are defined in dm\src\win32\tlsseg.asm by DMC.
-            extern (C)
+            version (Win32)
             {
-                extern int _tlsstart;
-                extern int _tlsend;
+                // NOTE: The memory between the addresses of _tlsstart and _tlsend
+                //       is the storage for thread-local data in D 2.0.  Both of
+                //       these are defined in dm\src\win32\tlsseg.asm by DMC.
+                extern (C)
+                {
+                    extern int _tlsstart;
+                    extern int _tlsend;
+                }
+            }
+            version (Win64)
+            {
+                // NOTE: The memory between the addresses of _tls_start and _tls_end
+                //       is the storage for thread-local data in D 2.0.  Both of
+                //       these are defined in LIBCMT:tlssub.obj
+                extern (C)
+                {
+                    extern int _tls_start;
+                    extern int _tls_end;
+                }
+                alias _tls_start _tlsstart;
+                alias _tls_end   _tlsend;
             }
         }
         else
@@ -695,7 +707,7 @@ class Thread : ThreadBase
 
         version( Windows )
         {
-            // NOTE: If a thread is just executing DllMain() 
+            // NOTE: If a thread is just executing DllMain()
             //       while another thread is started here, it holds an OS internal
             //       lock that serializes DllMain with CreateThread. As the code
             //       might request a synchronization on slock (e.g. in thread_findByAddr()),
@@ -705,7 +717,7 @@ class Thread : ThreadBase
             // Solution: Create the thread in suspended state and then
             //       add and resume it with slock acquired
             assert(m_sz <= uint.max, "m_sz must be less than or equal to uint.max");
-            m_hndl = cast(HANDLE) _beginthreadex( null, m_sz, &thread_entryPoint, cast(void*) this, CREATE_SUSPENDED, &m_addr );
+            m_hndl = cast(HANDLE) _beginthreadex( null, cast(uint) m_sz, &thread_entryPoint, cast(void*) this, CREATE_SUSPENDED, &m_addr );
             if( cast(size_t) m_hndl == 0 )
                 throw new ThreadException( "Error creating thread" );
         }
@@ -781,7 +793,7 @@ class Thread : ThreadBase
             // NOTE: m_addr must be cleared before m_hndl is closed to avoid
             //       a race condition with isRunning. The operation is done
             //       with atomicStore to prevent compiler reordering.
-            atomicStore!(msync.raw)(*cast(shared)&m_addr, m_addr.init);
+            atomicStore!(MemoryOrder.raw)(*cast(shared)&m_addr, m_addr.init);
             CloseHandle( m_hndl );
             m_hndl = m_hndl.init;
         }
@@ -1031,24 +1043,24 @@ class Thread : ThreadBase
             while( val > maxSleepMillis )
             {
                 Sleep( cast(uint)
-                       maxSleepMillis.total!("msecs")() );
+                       maxSleepMillis.total!"msecs" );
                 val -= maxSleepMillis;
             }
-            Sleep( cast(uint) val.total!("msecs")() );
+            Sleep( cast(uint) val.total!"msecs" );
         }
         else version( Posix )
         {
             timespec tin  = void;
             timespec tout = void;
 
-            if( val.total!("seconds")() > tin.tv_sec.max )
+            if( val.total!"seconds" > tin.tv_sec.max )
             {
                 tin.tv_sec  = tin.tv_sec.max;
                 tin.tv_nsec = cast(typeof(tin.tv_nsec)) val.fracSec.nsecs;
             }
             else
             {
-                tin.tv_sec  = cast(typeof(tin.tv_sec)) val.total!("seconds")();
+                tin.tv_sec  = cast(typeof(tin.tv_sec)) val.total!"seconds";
                 tin.tv_nsec = cast(typeof(tin.tv_nsec)) val.fracSec.nsecs;
             }
             while( true )
@@ -1740,6 +1752,8 @@ version (D_LP64)
         static assert(__traits(classInstanceSize, Thread) == 312);
     else version (OSX)
         static assert(__traits(classInstanceSize, Thread) == 320);
+    else version (Solaris)
+        static assert(__traits(classInstanceSize, Thread) == 176);
     else version (Posix)
         static assert(__traits(classInstanceSize, Thread) == 184);
     else
@@ -2304,7 +2318,7 @@ private void suspend( Thread t )
         else version( X86_64 )
         {
             if( !t.m_lock )
-                t.m_curr.tstack = cast(void*) context.Rsp;            
+                t.m_curr.tstack = cast(void*) context.Rsp;
             // rax,rbx,rcx,rdx,rdi,rsi,rbp,rsp
             t.m_reg[0] = context.Rax;
             t.m_reg[1] = context.Rbx;
@@ -2322,7 +2336,7 @@ private void suspend( Thread t )
             t.m_reg[12] = context.R12;
             t.m_reg[13] = context.R13;
             t.m_reg[14] = context.R14;
-            t.m_reg[15] = context.R15;                    
+            t.m_reg[15] = context.R15;
         }
         else
         {
@@ -2857,6 +2871,7 @@ extern (C)
 {
     version (linux) int pthread_getattr_np(pthread_t thread, pthread_attr_t* attr);
     version (FreeBSD) int pthread_attr_get_np(pthread_t thread, pthread_attr_t* attr);
+    version (Solaris) int thr_stksegment(stack_t* stk);
 }
 
 
@@ -2880,7 +2895,12 @@ private void* getStackBottom()
         version (D_InlineAsm_X86)
             asm { naked; mov EAX, FS:4; ret; }
         else version(D_InlineAsm_X86_64)
-            asm { naked; mov RAX, GS:4; ret; }
+            asm
+            {    naked;
+                 mov RAX, 8;
+                 mov RAX, GS:[RAX];
+                 ret;
+            }
         else
             static assert(false, "Architecture not supported.");
     }
@@ -2909,6 +2929,13 @@ private void* getStackBottom()
         pthread_attr_getstack(&attr, &addr, &size);
         pthread_attr_destroy(&attr);
         return addr + size;
+    }
+    else version (Solaris)
+    {
+        stack_t stk;
+
+        thr_stksegment(&stk);
+        return stk.ss_sp;
     }
     else
         static assert(false, "Platform not supported.");
@@ -3204,7 +3231,7 @@ private
         assert( obj );
 
         assert( Thread.getThis().m_curr is obj.m_ctxt );
-        atomicStore!(msync.raw)(*cast(shared)&Thread.getThis().m_lock, false);
+        atomicStore!(MemoryOrder.raw)(*cast(shared)&Thread.getThis().m_lock, false);
         obj.m_ctxt.tstack = obj.m_ctxt.bstack;
         obj.m_state = Fiber.State.EXEC;
 
@@ -3287,9 +3314,10 @@ private
                 push R13;
                 push R14;
                 push R15;
-                push qword ptr GS:[0];
-                push qword ptr GS:[8];
-                push qword ptr GS:[16];
+                xor  RCX,RCX;
+                push qword ptr GS:[RCX];
+                push qword ptr GS:8[RCX];
+                push qword ptr GS:16[RCX];
 
                 // store oldp
                 mov [RDI], RSP;
@@ -3297,9 +3325,9 @@ private
                 mov RSP, RSI;
 
                 // load saved state from new stack
-                pop qword ptr GS:[16];
-                pop qword ptr GS:[8];
-                pop qword ptr GS:[0];
+                pop qword ptr GS:16[RCX];
+                pop qword ptr GS:8[RCX];
+                pop qword ptr GS:[RCX];
                 pop R15;
                 pop R14;
                 pop R13;
@@ -3891,12 +3919,7 @@ private:
         }
         else
         {
-			version(Windows)
-			{
-				static assert(0, "trying to compile posix on windows");
-			}
-
-            import core.sys.posix.sys.mman; // mmap
+            version (Posix) import core.sys.posix.sys.mman; // mmap
 
             static if( __traits( compiles, mmap ) )
             {
@@ -3958,23 +3981,26 @@ private:
         //       global context list.
         Thread.remove( m_ctxt );
 
-        version(Posix) import core.sys.posix.sys.mman; // munmap
-
         static if( __traits( compiles, VirtualAlloc ) )
         {
             VirtualFree( m_pmem, 0, MEM_RELEASE );
         }
-        else static if( __traits( compiles, mmap ) )
+        else
         {
-            munmap( m_pmem, m_size );
-        }
-        else static if( __traits( compiles, valloc ) )
-        {
-            free( m_pmem );
-        }
-        else static if( __traits( compiles, malloc ) )
-        {
-            free( m_pmem );
+            import core.sys.posix.sys.mman; // munmap
+
+            static if( __traits( compiles, mmap ) )
+            {
+                munmap( m_pmem, m_size );
+            }
+            else static if( __traits( compiles, valloc ) )
+            {
+                free( m_pmem );
+            }
+            else static if( __traits( compiles, malloc ) )
+            {
+                free( m_pmem );
+            }
         }
         m_pmem = null;
         m_ctxt = null;
@@ -4234,7 +4260,7 @@ private:
         //       that it points to exactly the correct stack location so the
         //       successive pop operations will succeed.
         *oldp = getStackTop();
-        atomicStore!(msync.raw)(*cast(shared)&tobj.m_lock, true);
+        atomicStore!(MemoryOrder.raw)(*cast(shared)&tobj.m_lock, true);
         tobj.pushContext( m_ctxt );
 
         fiber_switchContext( oldp, newp );
@@ -4242,7 +4268,7 @@ private:
         // NOTE: As above, these operations must be performed in a strict order
         //       to prevent Bad Things from happening.
         tobj.popContext();
-        atomicStore!(msync.raw)(*cast(shared)&tobj.m_lock, false);
+        atomicStore!(MemoryOrder.raw)(*cast(shared)&tobj.m_lock, false);
         tobj.m_curr.tstack = tobj.m_curr.bstack;
     }
 
@@ -4268,7 +4294,7 @@ private:
         //       that it points to exactly the correct stack location so the
         //       successive pop operations will succeed.
         *oldp = getStackTop();
-        atomicStore!(msync.raw)(*cast(shared)&tobj.m_lock, true);
+        atomicStore!(MemoryOrder.raw)(*cast(shared)&tobj.m_lock, true);
 
         fiber_switchContext( oldp, newp );
 
@@ -4278,7 +4304,7 @@ private:
         //       executing here may be different from the one above, so get the
         //       current thread handle before unlocking, etc.
         tobj = Thread.getThis();
-        atomicStore!(msync.raw)(*cast(shared)&tobj.m_lock, false);
+        atomicStore!(MemoryOrder.raw)(*cast(shared)&tobj.m_lock, false);
         tobj.m_curr.tstack = tobj.m_curr.bstack;
     }
 }
@@ -4309,6 +4335,9 @@ else
         static assert(0, "Platform not supported.");
 }
 
+
+version(Win64) {}
+else {
 
 version( unittest )
 {
@@ -4515,6 +4544,7 @@ unittest
     expect(fib, "delegate");
 }
 
+}
 
 version( AsmX86_64_Posix )
 {

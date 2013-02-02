@@ -102,18 +102,6 @@ private:
     ModuleInfo*[] _tlsctors;
 }
 
-version (Windows)
-{
-    // Windows: this gets initialized by minit.asm
-    // Posix: this gets initialized in _moduleCtor()
-    extern(C) __gshared ModuleInfo*[] _moduleinfo_array;
-    extern(C) void _minit();
-}
-version (OSX)
-{
-    extern (C) __gshared ModuleInfo*[] _moduleinfo_array;
-}
-
 __gshared ModuleGroup _moduleGroup;
 
 /********************************************
@@ -170,7 +158,28 @@ extern (C) void rt_moduleDtor()
  * Access compiler generated list of modules.
  */
 
-version (OSX) {}
+version (Win32)
+{
+    // Windows: this gets initialized by minit.asm
+    // Posix: this gets initialized in _moduleCtor()
+    extern(C) __gshared ModuleInfo*[] _moduleinfo_array;
+    extern(C) void _minit();
+}
+else version (Win64)
+{
+    extern (C)
+    {
+        extern __gshared void* _minfo_beg;
+        extern __gshared void* _minfo_end;
+
+        // Dummy so Win32 code can still call it
+        extern(C) void _minit() { }
+    }
+}
+else version (OSX)
+{
+    extern (C) __gshared ModuleInfo*[] _moduleinfo_array;
+}
 else version (Posix)
 {
     // This linked list is created by a compiler generated function inserted
@@ -182,6 +191,10 @@ else version (Posix)
     }
 
     extern (C) __gshared ModuleReference* _Dmodule_ref;   // start of linked list
+}
+else
+{
+    static assert(0);
 }
 
 ModuleInfo*[] getModuleInfos()
@@ -228,11 +241,38 @@ body
             len++;
         }
     }
-    else version (Windows)
+    else version (Win32)
     {
         // _minit directly alters the global _moduleinfo_array
         _minit();
         result = _moduleinfo_array;
+    }
+    else version (Win64)
+    {
+        auto m = (cast(ModuleInfo**)&_minfo_beg)[1 .. &_minfo_end - &_minfo_beg];
+        /* Because of alignment inserted by the linker, various null pointers
+         * are there. We need to filter them out.
+         */
+        auto p = m.ptr;
+        auto pend = m.ptr + m.length;
+
+        // count non-null pointers
+        size_t cnt;
+        for (; p < pend; ++p)
+        {
+            if (*p !is null) ++cnt;
+        }
+
+        result = (cast(ModuleInfo**).malloc(cnt * size_t.sizeof))[0 .. cnt];
+
+        p = m.ptr;
+        cnt = 0;
+        for (; p < pend; ++p)
+            if (*p !is null) result[cnt++] = *p;
+    }
+    else
+    {
+        static assert(0);
     }
     return result;
 }
@@ -326,21 +366,22 @@ struct StackRec
 
 void onCycleError(StackRec[] stack)
 {
+    string msg = "Aborting";
     version (unittest)
     {
         if (_inUnitTest)
             goto Lerror;
     }
 
-    println("Cycle detected between modules with ctors/dtors:");
+    msg ~= ": Cycle detected between modules with ctors/dtors:\n";
     foreach (e; stack)
     {
-        print(e.mod.name);
-        print(" -> ");
+        msg ~= e.mod.name;
+        msg ~= " -> ";
     }
-    println(stack[0].mod.name);
+    msg ~= stack[0].mod.name;
  Lerror:
-    throw new Exception("Aborting!");
+    throw new Exception(msg);
 }
 
 private void sortCtorsImpl(ref ModuleGroup mgroup, StackRec[] stack)

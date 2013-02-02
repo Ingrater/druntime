@@ -30,11 +30,12 @@ version(NOGCSAFE)
 
 alias typeof(int.sizeof)                    size_t;
 alias typeof(cast(void*)0 - cast(void*)0)   ptrdiff_t;
-alias ptrdiff_t                             sizediff_t;
 alias typeof(null)                          null_t;
 
-alias size_t hash_t;
-alias bool equals_t;
+alias ptrdiff_t sizediff_t; //For backwards compatibility only.
+
+alias size_t hash_t; //For backwards compatibility only.
+alias bool equals_t; //For backwards compatibility only.
 
 alias immutable(char)[]  string;
 alias immutable(wchar)[] wstring;
@@ -57,10 +58,10 @@ else
 class Object
 {
     to_string_t   toString();
-    hash_t   toHash() @trusted nothrow;
+    size_t   toHash() @trusted nothrow;
     int      opCmp(Object o);
-    equals_t opEquals(Object o);
-    equals_t opEquals(Object lhs, Object rhs);
+    bool     opEquals(Object o);
+    bool     opEquals(Object lhs, Object rhs);
 
     interface Monitor
     {
@@ -175,9 +176,9 @@ class TypeInfo_Pointer : TypeInfo
 class TypeInfo_Array : TypeInfo
 {
     override to_string_t toString() const;
-    override equals_t opEquals(Object o);
-    override hash_t getHash(in void* p) @trusted const;
-    override equals_t equals(in void* p1, in void* p2) const;
+    override bool opEquals(Object o);
+    override size_t getHash(in void* p) @trusted const;
+    override bool equals(in void* p1, in void* p2) const;
     override int compare(in void* p1, in void* p2) const;
     override @property size_t tsize() nothrow pure const;
     override void swap(void* p1, void* p2) const;
@@ -210,11 +211,13 @@ class TypeInfo_AssociativeArray : TypeInfo
 class TypeInfo_Function : TypeInfo
 {
     TypeInfo next;
+    string deco;
 }
 
 class TypeInfo_Delegate : TypeInfo
 {
     TypeInfo next;
+    string deco;
 }
 
 class TypeInfo_Class : TypeInfo
@@ -261,7 +264,7 @@ class TypeInfo_Struct : TypeInfo
   @safe pure nothrow
   {
     uint function(in void*)               xtoHash;
-    equals_t function(in void*, in void*) xopEquals;
+    bool function(in void*, in void*) xopEquals;
     int function(in void*, in void*)      xopCmp;
     string function(in void*)             xtoString;
 
@@ -400,20 +403,20 @@ class Throwable : Object
     TraceInfo   info;
     Throwable   next;
 
-    this(string msg, Throwable next = null);
-    this(string msg, string file, size_t line, Throwable next = null);
+    @safe pure nothrow this(string msg, Throwable next = null);
+    @safe pure nothrow this(string msg, string file, size_t line, Throwable next = null);
     override to_string_t toString();
 }
 
 
 class Exception : Throwable
 {
-    this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+    @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
     {
         super(msg, file, line, next);
     }
 
-    this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, next);
     }
@@ -422,13 +425,13 @@ class Exception : Throwable
 
 class Error : Throwable
 {
-    this(string msg, Throwable next = null)
+    @safe pure nothrow this(string msg, Throwable next = null)
     {
         super(msg, next);
         bypassedException = null;
     }
 
-    this(string msg, string file, size_t line, Throwable next = null)
+    @safe pure nothrow this(string msg, string file, size_t line, Throwable next = null)
     {
         super(msg, file, line, next);
         bypassedException = null;
@@ -465,9 +468,12 @@ private:
     struct Slot
     {
         Slot *next;
-        hash_t hash;
+        size_t hash;
         Key key;
         Value value;
+
+        // Stop creating built-in opAssign
+        @disable void opAssign(Slot);
     }
 
     struct Hashtable
@@ -639,6 +645,11 @@ void destroy(T)(T obj) if (is(T == class))
     rt_finalize(cast(void*)obj);
 }
 
+void destroy(T)(T obj) if (is(T == interface))
+{
+    destroy(cast(Object)obj);
+}
+
 void destroy(T)(ref T obj) if (is(T == struct))
 {
     typeid(T).destroy(&obj);
@@ -656,7 +667,7 @@ void destroy(T : U[n], U, size_t n)(ref T obj)
 }
 
 void destroy(T)(ref T obj)
-if (!is(T == struct) && !is(T == class) && !_isStaticArray!T)
+if (!is(T == struct) && !is(T == interface) && !is(T == class) && !_isStaticArray!T)
 {
     obj = T.init;
 }

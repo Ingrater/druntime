@@ -27,20 +27,20 @@ class TypeInfo_Ar : TypeInfo_Array
       else
         return "cdouble[]"; 
     }
-    override equals_t opEquals(Object o) { return TypeInfo.opEquals(o); }
+    override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 
     @trusted:
     const:
     pure:
     nothrow:
 
-    override hash_t getHash(in void* p)
+    override size_t getHash(in void* p)
     {
         cdouble[] s = *cast(cdouble[]*)p;
         return hashOf(s.ptr, s.length * cdouble.sizeof);
     }
 
-    override equals_t equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2)
     {
         cdouble[] s1 = *cast(cdouble[]*)p1;
         cdouble[] s2 = *cast(cdouble[]*)p2;

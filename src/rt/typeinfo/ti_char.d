@@ -30,12 +30,12 @@ class TypeInfo_a : TypeInfo
     nothrow:
 
 
-    override hash_t getHash(in void* p)
+    override size_t getHash(in void* p)
     {
         return *cast(char *)p;
     }
 
-    override equals_t equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2)
     {
         return *cast(char *)p1 == *cast(char *)p2;
     }

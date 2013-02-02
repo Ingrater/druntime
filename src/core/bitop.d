@@ -22,6 +22,11 @@ version( D_InlineAsm_X86_64 )
 else version( D_InlineAsm_X86 )
     version = AsmX86;
 
+version (X86_64)
+    version = AnyX86;
+else version (X86)
+    version = AnyX86;
+
 /**
  * Scans the bits in v starting with bit 0, looking
  * for the first set bit.
@@ -191,7 +196,7 @@ unittest
  */
 uint bswap(uint v) pure;
 
-@system // not pure
+version (DigitalMars) version (AnyX86) @system // not pure
 {
     /**
      * Reads I/O port at port_address.
@@ -284,13 +289,19 @@ unittest
 {
     version (AsmX86)
     {
+        asm { naked; }
+
         version (D_InlineAsm_X86_64)
-        asm { naked; mov EAX, EDI; }
+        {
+            version (Win64)
+                asm { mov EAX, ECX; }
+            else
+                asm { mov EAX, EDI; }
+        }
 
         asm
         {
             // Author: Tiago Gasiba.
-            naked;
             mov EDX, EAX;
             shr EAX, 1;
             and EDX, 0x5555_5555;

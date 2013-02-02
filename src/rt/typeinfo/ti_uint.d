@@ -29,12 +29,12 @@ class TypeInfo_k : TypeInfo
     pure:
     nothrow:
 
-    override hash_t getHash(in void* p)
+    override size_t getHash(in void* p)
     {
         return *cast(uint *)p;
     }
 
-    override equals_t equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2)
     {
         return *cast(uint *)p1 == *cast(uint *)p2;
     }

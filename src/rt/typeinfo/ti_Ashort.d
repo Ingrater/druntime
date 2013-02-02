@@ -20,7 +20,7 @@ private import rt.util.hash;
 
 class TypeInfo_As : TypeInfo_Array
 {
-    override equals_t opEquals(Object o) { return TypeInfo.opEquals(o); }
+    override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
     override to_string_t toString() 
     { 
       version(NOGCSAFE)
@@ -34,13 +34,13 @@ class TypeInfo_As : TypeInfo_Array
     pure:
     nothrow:
 
-    override hash_t getHash(in void* p)
+    override size_t getHash(in void* p)
     {
         short[] s = *cast(short[]*)p;
         return hashOf(s.ptr, s.length * short.sizeof);
     }
 
-    override equals_t equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2)
     {
         short[] s1 = *cast(short[]*)p1;
         short[] s2 = *cast(short[]*)p2;
