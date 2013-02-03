@@ -16,7 +16,7 @@ struct RttiAnchor
 
 template RttiInfo(T)
 {
-  //pragma(msg, makeRttiInfo!T());
+  pragma(msg, makeRttiInfo!T());
   __gshared RttiInfo = mixin(makeRttiInfo!T());
 }
 

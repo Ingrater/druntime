@@ -626,5 +626,3 @@ extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
 
     return result;
 }
-
-}

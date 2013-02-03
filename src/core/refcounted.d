@@ -464,7 +464,7 @@ struct RCArray(T,AT = StdAllocator)
   }
   
   // TODO replace this bullshit with a template once it is supported by dmd
-  void opAssign(T)(auto ref T rh) if(!is(T == this_t) && isRCArray!T && is(RCArrayType!T == RCArrayType!this_t) 
+  @trusted void opAssign(T)(auto ref T rh) if(!is(T == this_t) && isRCArray!T && is(RCArrayType!T == RCArrayType!this_t) 
                                      && is(typeof( true ? RCAllocatorType!T : AT) == AT))
   {
     static assert(__traits(classInstanceSize, typeof(m_DataObject)) == __traits(classInstanceSize, typeof(rh.m_DataObject)), "can not cast because sizes don't match");
@@ -479,7 +479,7 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.AddReference();
   }
 
-  void opAssign(T)(auto ref T rh) if(is(T == this_t))
+  @trusted void opAssign(T)(auto ref T rh) if(is(T == this_t))
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -538,7 +538,7 @@ struct RCArray(T,AT = StdAllocator)
   
   static if(is(typeof(AT.globalInstance)))
   {
-    void opAssign(U)(U rh) if(is(U == T[]) || 
+    @trusted void opAssign(U)(U rh) if(is(U == T[]) || 
                               (IsPOD!(BT) && (is(U == BT[]) || is(U == const(BT)[]) || is(U == immutable(BT)[])))
                              )
     {

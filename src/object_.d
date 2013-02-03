@@ -1593,14 +1593,20 @@ class Throwable : Object
      */
     Throwable   next;
 
-    @safe pure nothrow this(string msg, Throwable next = null)
+    @safe nothrow this(string msg, Throwable next = null)
     {
+      try {
         this.msg = msg;
+      }
+      catch(Exception e)
+      {
+
+      }
         this.next = next;
         //this.info = _d_traceContext();
     }
 
-    @safe pure nothrow this(string msg, string file, size_t line, Throwable next = null)
+    @safe nothrow this(string msg, string file, size_t line, Throwable next = null)
     {
         this(msg, next);
         this.file = file;
@@ -1720,12 +1726,12 @@ class Exception : Throwable
      * This constructor does not automatically throw the newly-created
      * Exception; the $(D throw) statement should be used for that purpose.
      */
-    @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+    @safe nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
     {
         super(msg, file, line, next);
     }
 
-    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+    @safe nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, next);
     }
@@ -1761,18 +1767,16 @@ unittest
 
 class Error : Throwable
 {
-    @safe pure nothrow this(string msg, Throwable next = null)
+    @safe nothrow this(string msg, Throwable next = null)
     {
         super(msg, next);
         bypassedException = null;
-        debug { asm { int 3; } }
     }
 
-    @safe pure nothrow this(string msg, string file, size_t line, Throwable next = null)
+    @safe nothrow this(string msg, string file, size_t line, Throwable next = null)
     {
         super(msg, file, line, next);
         bypassedException = null;
-        debug { asm {int 3; } }
     }
 
     /// The first Exception which was bypassed when this Error was thrown,
