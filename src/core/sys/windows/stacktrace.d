@@ -374,13 +374,28 @@ private:
         //RtlCaptureContext( &c );
 
         //x86
-        imageType                   = IMAGE_FILE_MACHINE_I386;
-        stackframe.AddrPC.Offset    = cast(DWORD64) c.Eip;
-        stackframe.AddrPC.Mode      = ADDRESS_MODE.AddrModeFlat;
-        stackframe.AddrFrame.Offset = cast(DWORD64) c.Ebp;
-        stackframe.AddrFrame.Mode   = ADDRESS_MODE.AddrModeFlat;
-        stackframe.AddrStack.Offset = cast(DWORD64) c.Esp;
-        stackframe.AddrStack.Mode   = ADDRESS_MODE.AddrModeFlat; 
+        version(X86)
+        {
+          imageType                   = IMAGE_FILE_MACHINE_I386;
+          stackframe.AddrPC.Offset    = cast(DWORD64) c.Eip;
+          stackframe.AddrPC.Mode      = ADDRESS_MODE.AddrModeFlat;
+          stackframe.AddrFrame.Offset = cast(DWORD64) c.Ebp;
+          stackframe.AddrFrame.Mode   = ADDRESS_MODE.AddrModeFlat;
+          stackframe.AddrStack.Offset = cast(DWORD64) c.Esp;
+          stackframe.AddrStack.Mode   = ADDRESS_MODE.AddrModeFlat; 
+        }
+        else version(X86_64)
+        {
+          imageType                   = IMAGE_FILE_MACHINE_AMD64;
+          stackframe.AddrPC.Offset    = cast(DWORD64) c.Rip;
+          stackframe.AddrPC.Mode      = ADDRESS_MODE.AddrModeFlat;
+          stackframe.AddrFrame.Offset = cast(DWORD64) c.Rbp;
+          stackframe.AddrFrame.Mode   = ADDRESS_MODE.AddrModeFlat;
+          stackframe.AddrStack.Offset = cast(DWORD64) c.Rsp;
+          stackframe.AddrStack.Mode   = ADDRESS_MODE.AddrModeFlat; 
+        }
+        else
+          static assert(0, "plattform not supported");
 
         //printf( "Callstack:\n" );
         size_t frameNum = 0;

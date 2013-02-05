@@ -341,27 +341,22 @@ public:
         }
     }
 	
-	bool dll_fixTLS( HINSTANCE hInstance )
-	{
-	  return dll_fixTLS( hInstance, &_tlsstart, &_tlsend, &_tls_callbacks_a, &_tls_index );
-	}
-	
-	bool dll_attachAllThreads()
-	{
-		return enumProcessThreads(
-		function (uint id, void* context) {
-			if( !thread_findByAddr( id ) )
-			{
-				// if the OS has not prepared TLS for us, don't attach to the thread
-				if( GetTlsDataAddress( id ) )
-				{
-					thread_attachByAddr( id );
-					thread_moduleTlsCtor( id );
-		}
-			}
-			return true;
-		}, null );
-	}
+	  bool dll_attachAllThreads()
+	  {
+		  return enumProcessThreads(
+		  function (uint id, void* context) {
+			  if( !thread_findByAddr( id ) )
+			  {
+				  // if the OS has not prepared TLS for us, don't attach to the thread
+				  if( GetTlsDataAddress( id ) )
+				  {
+					  thread_attachByAddr( id );
+					  thread_moduleTlsCtor( id );
+		  }
+			  }
+			  return true;
+		  }, null );
+	  }
 
     // fixup TLS storage, initialize runtime and attach to threads
     // to be called from DllMain with reason DLL_PROCESS_ATTACH

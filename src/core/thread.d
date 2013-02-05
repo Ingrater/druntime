@@ -1748,6 +1748,21 @@ private:
 // These must be kept in sync with core/thread.di
 version (D_LP64)
 {
+  version(NOGCSAFE)
+	{
+    version (Windows)
+      static assert(__traits(classInstanceSize, Thread) == 328);
+    else version (OSX)
+      static assert(__traits(classInstanceSize, Thread) == 336);
+    else version (Solaris)
+      static assert(__traits(classInstanceSize, Thread) == 192);
+    else version (Posix)
+      static assert(__traits(classInstanceSize, Thread) == 200);
+    else
+      static assert(0, "Platform not supported.");
+  }
+  else
+  {
     version (Windows)
         static assert(__traits(classInstanceSize, Thread) == 312);
     else version (OSX)
@@ -1757,7 +1772,8 @@ version (D_LP64)
     else version (Posix)
         static assert(__traits(classInstanceSize, Thread) == 184);
     else
-            static assert(0, "Platform not supported.");
+        static assert(0, "Platform not supported.");
+  }
 }
 else
 {

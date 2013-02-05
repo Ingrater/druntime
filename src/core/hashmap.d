@@ -12,7 +12,7 @@ version( AnyX86 )
   version = HasUnalignedOps;
 
 /* taken from rt.utils.hash */
-hash_t hashOf( const (void)* buf, size_t len, hash_t seed = 0 )
+uint hashOf( const (void)* buf, size_t len, uint seed = 0 )
 {
   /*
   * This is Paul Hsieh's SuperFastHash algorithm, described here:

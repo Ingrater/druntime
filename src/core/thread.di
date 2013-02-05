@@ -425,11 +425,22 @@ private:
     // These must be kept in sync with core/thread.d
     version (D_LP64)
     {
+      version(NOGCSAFE)
+      {
+        version (Windows)      enum ThreadSize = 328;
+        else version (OSX)     enum ThreadSize = 336;
+        else version (Solaris) enum ThreadSize = 192;
+        else version (Posix)   enum ThreadSize = 200;
+        else static assert(0, "Platform not supported.");
+      }
+      else
+      {
         version (Windows)      enum ThreadSize = 312;
         else version (OSX)     enum ThreadSize = 320;
         else version (Solaris) enum ThreadSize = 176;
         else version (Posix)   enum ThreadSize = 184;
         else static assert(0, "Platform not supported.");
+      }
     }
     else
     {
