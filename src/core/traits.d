@@ -292,3 +292,40 @@ template arrayType(T : U[n], U, size_t n)
 {
   alias U arrayType;
 }
+
+template typeOfField(T, string name)
+{
+  alias typeOfFieldImpl!(T, name, 0) typeOfField;
+}
+
+template typeOfFieldImpl(T, string name, size_t i)
+{
+  static assert(!is(T == Object), "member " ~ name ~ " could not be found ");
+  static if(i >= T.tupleof.length)
+  {
+	static if(is(T == class))
+	{
+		alias typeOfFieldImpl!(BaseClass!T, name, 0) typeOfFieldImpl;
+	}
+	else
+		static assert(is(T == Object), "member " ~ name ~ " could not be found");
+  }
+  else
+  {
+ 	static if (T.tupleof[i].stringof[1 + T.stringof.length + 2 .. $] == name)
+	{
+	  alias typeof(T.tupleof[i]) typeOfFieldImpl;
+	}
+	else
+	  alias typeOfFieldImpl!(T, name, i + 1) typeOfFieldImpl;
+  }
+}
+
+template BaseClass(A)
+{
+	static assert(!is(A == Object), "Object does not have a base class");
+    static if (is(A P == super))
+        alias P[0] BaseClass;
+    else
+            static assert(0, "argument is not a class or interface");
+}

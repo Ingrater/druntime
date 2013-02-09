@@ -9,8 +9,7 @@ CC=dmc
 DOCDIR=doc
 IMPDIR=import
 
-#-version=RTTI
-DFLAGS=-nofloat -w -d -Isrc -Iimport -property -version=NOGCSAFE 
+DFLAGS=-nofloat -w -d -Isrc -Iimport -property -version=NOGCSAFE -version=RTTI
 UDFLAGS=-debug -g -nofloat -w -d -Isrc -Iimport -property
 DFLAGS_RELEASE=-release -g -O -noboundscheck -version=NO_INVARIANTS
 DFLAGS_DEBUG=-debug -g -version=MEMORY_TRACKING

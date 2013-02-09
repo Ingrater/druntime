@@ -1,6 +1,6 @@
 module rtti;
 
-import core.stdc.stdio;
+public import core.traits;
 
 struct thMemberInfo 
 {
@@ -16,7 +16,7 @@ struct RttiAnchor
 
 template RttiInfo(T)
 {
-  pragma(msg, makeRttiInfo!T());
+  //pragma(msg, makeRttiInfo!T());
   __gshared RttiInfo = mixin(makeRttiInfo!T());
 }
 
@@ -68,9 +68,10 @@ string makeRttiInfo(T)()
       {
         size_t offset = __traits(getMember, T, m).offsetof;
         static if(is(typeof(__traits(getMember, T, m)) == struct))
-          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", &RttiInfo!(typeof(T." ~ m ~ ")))";
+          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeOfField!(T, \"" ~ m ~ "\")), " ~ formatOffset(offset) ~ ", &RttiInfo!(typeOfField!(T, \"" ~ m ~ "\")))";
         else
-          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", null)";
+          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeOfField!(T, \"" ~ m ~ "\")), " ~ formatOffset(offset) ~ ", null)";
+		i++;
       }
     }
     else
@@ -79,12 +80,13 @@ string makeRttiInfo(T)()
       {
         size_t offset = mixin("(T." ~ m ~ ").offsetof");
         static if(is(typeof(__traits(getMember, T, m)) == T) || !is(typeof(__traits(getMember, T, m)) == struct))
-          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", null)";
+          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeOfField!(T, \"" ~ m ~ "\")), " ~ formatOffset(offset) ~ ", null)";
         else
         {
           //pragma(msg, "Reference for " ~ T.stringof);
-          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeof(T." ~ m ~ ")), " ~ formatOffset(offset) ~ ", &RttiInfo!(typeof(T." ~ m ~ ")))";
+          result ~= ",\nthMemberInfo(" ~ m.stringof ~ ", typeid(typeOfField!(T, \"" ~ m ~ "\")), " ~ formatOffset(offset) ~ ", &RttiInfo!(typeOfField!(T, \"" ~ m ~ "\")))";
         }
+		i++;
       }
     }
   }
