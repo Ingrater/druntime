@@ -607,7 +607,7 @@ $(IMPDIR)\core\sync\semaphore.di : src\core\sync\semaphore.d
 copydir: $(IMPDIR)
 	@mkdir $(IMPDIR)\core\stdc 2> NUL
 	@mkdir $(IMPDIR)\core\sys\freebsd\sys 2> NUL
-	@mkdir $(IMPDIR)\core\sys\linux\sys 2>
+	@mkdir $(IMPDIR)\core\sys\linux\sys 2> NUL
 	@mkdir $(IMPDIR)\core\sys\osx\mach 2> NUL
 	@mkdir $(IMPDIR)\core\sys\posix\arpa 2> NUL
 	@mkdir $(IMPDIR)\core\sys\posix\net 2> NUL

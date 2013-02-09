@@ -17,8 +17,9 @@ IMPDIR=import
 #-version=RTTI
 DFLAGS=-m$(MODEL) -w -d -Isrc -Iimport -property -version=NOGCSAFE 
 UDFLAGS=-m$(MODEL) -debug -g -nofloat -w -d -Isrc -Iimport -property
-DFLAGS_RELEASE=-release -g -O -noboundscheck -version=NO_INVARIANTS
-DFLAGS_DEBUG=-debug -g -version=MEMORY_TRACKING
+#add -g as soon as the compiler supports it
+DFLAGS_RELEASE=-release -O -noboundscheck -version=NO_INVARIANTS
+DFLAGS_DEBUG=-debug -version=MEMORY_TRACKING
 DDOCFLAGS=-c -w -o- -Isrc -Iimport
 
 #CFLAGS=/O2 /I$(VCDIR)\INCLUDE /I$(SDKDIR)\Include
@@ -615,7 +616,7 @@ $(IMPDIR)\core\sync\semaphore.di : src\core\sync\semaphore.d
 copydir: $(IMPDIR)
 	@mkdir $(IMPDIR)\core\stdc 2> NUL
 	@mkdir $(IMPDIR)\core\sys\freebsd\sys 2> NUL
-	@mkdir $(IMPDIR)\core\sys\linux\sys 2>
+	@mkdir $(IMPDIR)\core\sys\linux\sys 2> NUL
 	@mkdir $(IMPDIR)\core\sys\osx\mach 2> NUL
 	@mkdir $(IMPDIR)\core\sys\posix\arpa 2> NUL
 	@mkdir $(IMPDIR)\core\sys\posix\net 2> NUL

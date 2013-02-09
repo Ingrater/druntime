@@ -403,20 +403,20 @@ class Throwable : Object
     TraceInfo   info;
     Throwable   next;
 
-    @safe pure nothrow this(string msg, Throwable next = null);
-    @safe pure nothrow this(string msg, string file, size_t line, Throwable next = null);
+    @safe nothrow this(string msg, Throwable next = null);
+    @safe nothrow this(string msg, string file, size_t line, Throwable next = null);
     override to_string_t toString();
 }
 
 
 class Exception : Throwable
 {
-    @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+    @safe nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
     {
         super(msg, file, line, next);
     }
 
-    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+    @safe nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, next);
     }
@@ -425,13 +425,13 @@ class Exception : Throwable
 
 class Error : Throwable
 {
-    @safe pure nothrow this(string msg, Throwable next = null)
+    @safe nothrow this(string msg, Throwable next = null)
     {
         super(msg, next);
         bypassedException = null;
     }
 
-    @safe pure nothrow this(string msg, string file, size_t line, Throwable next = null)
+    @safe nothrow this(string msg, string file, size_t line, Throwable next = null)
     {
         super(msg, file, line, next);
         bypassedException = null;
