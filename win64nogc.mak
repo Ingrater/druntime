@@ -14,12 +14,10 @@ LIB=$(VCDIR)\bin\amd64\lib
 DOCDIR=doc
 IMPDIR=import
 
-#-version=RTTI
-DFLAGS=-m$(MODEL) -w -d -Isrc -Iimport -property -version=NOGCSAFE 
+DFLAGS=-m$(MODEL) -w -d -Isrc -Iimport -property -version=NOGCSAFE -version=RTTI
 UDFLAGS=-m$(MODEL) -debug -g -nofloat -w -d -Isrc -Iimport -property
-#add -g as soon as the compiler supports it
 DFLAGS_RELEASE=-release -O -noboundscheck -version=NO_INVARIANTS
-DFLAGS_DEBUG=-debug -version=MEMORY_TRACKING
+DFLAGS_DEBUG=-debug -version=MEMORY_TRACKING -g -op
 DDOCFLAGS=-c -w -o- -Isrc -Iimport
 
 #CFLAGS=/O2 /I$(VCDIR)\INCLUDE /I$(SDKDIR)\Include
