@@ -244,6 +244,16 @@ extern (C)
     }
 }
 
+
+version(GNU)
+{
+    extern (C) void _d_hidden_func(Object o)
+    {
+        onHiddenFuncError(o);
+    }
+}
+else
+{
 export extern (C) void _d_hidden_func()
 {
     Object o;
@@ -261,6 +271,7 @@ export extern (C) void _d_hidden_func()
         static assert(0, "unknown os");
 
     onHiddenFuncError(o);
+}
 }
 
 export __gshared string[] _d_args = null;
