@@ -46,10 +46,13 @@ enum InitializeMemoryWith
 
 struct PointerHashPolicy
 {
-  static size_t Hash(void* ptr)
+  static uint Hash(void* ptr)
   {
     //Usually pointers are at least 4 byte aligned if they come out of a allocator
-    return (cast(size_t)ptr) / 4;
+    static if(size_t.sizeof <= uint.sizeof)
+      return (cast(size_t)ptr) / 4;
+    else
+      return cast(uint)((cast(size_t)ptr / 8) % uint.max);
   }
 }
 
