@@ -18,7 +18,11 @@ module core.sync.mutex;
 
 public import core.sync.exception;
 
-version( Windows )
+version ( MinGW )
+{
+    private import core.sys.windows.windows;
+}
+else version( Windows )
 {
     private import core.sys.windows.windows;
 }

@@ -1075,6 +1075,208 @@ else version( AsmX86_64 )
         }
     }
 }
+else version( GNU )
+{
+    import gcc.atomics;
+    import gcc.builtins;
+
+    HeadUnshared!(T) atomicOp(string op, T, V1)( ref shared T val, V1 mod )
+        if( __traits( compiles, mixin( "val" ~ op ~ "mod" ) ) )
+    {
+        // binary operators
+        //
+        // +    -   *   /   %   ^^  &
+        // |    ^   <<  >>  >>> ~   in
+        // ==   !=  <   <=  >   >=
+        static if( op == "+"  || op == "-"  || op == "*"  || op == "/"   ||
+                   op == "%"  || op == "^^" || op == "&"  || op == "|"   ||
+                   op == "^"  || op == "<<" || op == ">>" || op == ">>>" ||
+                   op == "~"  || // skip "in"
+                   op == "==" || op == "!=" || op == "<"  || op == "<="  ||
+                   op == ">"  || op == ">=" )
+        {
+            HeadUnshared!(T) get = atomicLoad!(MemoryOrder.raw)( val );
+            mixin( "return get " ~ op ~ " mod;" );
+        }
+        else
+        // assignment operators
+        //
+        // +=   -=  *=  /=  %=  ^^= &=
+        // |=   ^=  <<= >>= >>>=    ~=
+        static if( op == "+=" || op == "-="  || op == "*="  || op == "/=" ||
+                   op == "%=" || op == "^^=" || op == "&="  || op == "|=" ||
+                   op == "^=" || op == "<<=" || op == ">>=" || op == ">>>=" ) // skip "~="
+        {
+            HeadUnshared!(T) get, set;
+
+            do
+            {
+                get = set = atomicLoad!(MemoryOrder.raw)( val );
+                mixin( "set " ~ op ~ " mod;" );
+            } while( !cas( &val, get, set ) );
+            return set;
+        }
+        else
+        {
+            static assert( false, "Operation not supported." );
+        }
+    }
+
+
+    bool cas(T,V1,V2)( shared(T)* here, const V1 ifThis, const V2 writeThis )
+        if( !is(T == class) && !is(T U : U*) &&  __traits( compiles, { *here = writeThis; } ) )
+    {
+        return casImpl(here, ifThis, writeThis);
+    }
+
+    bool cas(T,V1,V2)( shared(T)* here, const shared(V1) ifThis, shared(V2) writeThis )
+        if( is(T == class) && __traits( compiles, { *here = writeThis; } ) )
+    {
+        return casImpl(here, ifThis, writeThis);
+    }
+
+    bool cas(T,V1,V2)( shared(T)* here, const shared(V1)* ifThis, shared(V2)* writeThis )
+        if( is(T U : U*) && __traits( compiles, { *here = writeThis; } ) )
+    {
+        return casImpl(here, ifThis, writeThis);
+    }
+
+    private bool casImpl(T,V1,V2)( shared(T)* here, V1 ifThis, V2 writeThis )
+    {
+        bool res = void;
+
+        static if (__traits(isFloating, T))
+        {
+            static if (T.sizeof == int.sizeof)
+            {
+                static assert(is(T : float));
+
+                res = __sync_bool_compare_and_swap!int(cast(shared int*) here, *cast(int*) &ifThis, *cast(int*) &writeThis);
+            }
+            else static if(T.sizeof == long.sizeof)
+            {
+                static assert(is(T : double));
+
+                res = __sync_bool_compare_and_swap!long(cast(shared long*) here, *cast(long*) &ifThis, *cast(long*) &writeThis);
+            }
+            else
+            {
+                static assert(false, "Cannot atomically store 80-bit reals.");
+            }
+        }
+        else static if (is(T P == U*, U) || _passAsSizeT!T)
+        {
+            res = __sync_bool_compare_and_swap!size_t(cast(shared size_t*) here, cast(size_t) ifThis, cast(size_t) writeThis);
+        }
+        else static if (T.sizeof == bool.sizeof)
+        {
+            res = __sync_bool_compare_and_swap!ubyte(cast(shared ubyte*) here, ifThis ? 1 : 0, writeThis ? 1 : 0) ? 1 : 0;
+        }
+        else
+        {
+            res = __sync_bool_compare_and_swap!T(here, cast(T)ifThis, cast(T)writeThis);
+        }
+
+        return res;
+    }
+
+
+    enum MemoryOrder
+    {
+        raw,    /// not sequenced
+        acq,    /// hoist-load + hoist-store barrier
+        rel,    /// sink-load + sink-store barrier
+        seq,    /// fully sequenced (acq + rel)
+    }
+
+
+    private
+    {
+        template isHoistOp(MemoryOrder ms)
+        {
+            enum bool isHoistOp = ms == MemoryOrder.acq ||
+                                  ms == MemoryOrder.seq;
+        }
+
+
+        template isSinkOp(MemoryOrder ms)
+        {
+            enum bool isSinkOp = ms == MemoryOrder.rel ||
+                                 ms == MemoryOrder.seq;
+        }
+
+
+        // NOTE: While x86 loads have acquire semantics for stores, it appears
+        //       that independent loads may be reordered by some processors
+        //       (notably the AMD64).  This implies that the hoist-load barrier
+        //       op requires an ordering instruction, which also extends this
+        //       requirement to acquire ops (though hoist-store should not need
+        //       one if support is added for this later).  However, since no
+        //       modern architectures will reorder dependent loads to occur
+        //       before the load they depend on (except the Alpha), raw loads
+        //       are actually a possible means of ordering specific sequences
+        //       of loads in some instances.
+        //
+        //       For reference, the old behavior (acquire semantics for loads)
+        //       required a memory barrier if: ms == MemoryOrder.seq || isSinkOp!(ms)
+        template needsLoadBarrier( MemoryOrder ms )
+        {
+            const bool needsLoadBarrier = ms != MemoryOrder.raw;
+        }
+
+
+        // NOTE: x86 stores implicitly have release semantics so a memory
+        //       barrier is only necessary on acquires.
+        template needsStoreBarrier( MemoryOrder ms )
+        {
+            const bool needsStoreBarrier = ms == MemoryOrder.seq ||
+                                                 isHoistOp!(ms);
+        }
+
+        template _passAsSizeT( T )
+        {
+            // GCC currently does not support atomic load/store for pointers, thus
+            // we have to manually cast them to size_t.
+            static if (is(T P == U*, U)) // pointer
+            {
+                enum _passAsSizeT = true;
+            }
+            else static if (is(T == interface) || is (T == class))
+            {
+                enum _passAsSizeT = true;
+            }
+            else
+            {
+                enum _passAsSizeT = false;
+            }
+        }
+    }
+
+
+    HeadUnshared!(T) atomicLoad(MemoryOrder ms = MemoryOrder.seq, T)( ref const shared T val )
+    if(!__traits(isFloating, T)) {
+        static if (needsLoadBarrier!ms)
+            __sync_synchronize();
+
+        return cast(HeadUnshared!T) val;
+    }
+
+
+    void atomicStore(MemoryOrder ms = MemoryOrder.seq, T, V1)( ref shared T val, V1 newval )
+        if( __traits( compiles, { val = newval; } ) )
+    {
+        static if (needsLoadBarrier!ms)
+            __sync_synchronize();
+
+        val = newval;
+    }
+
+
+    void atomicFence() nothrow
+    {
+        __sync_synchronize();
+    }
+}
 
 // This is an ABI adapter that works on all architectures.  It type puns
 // floats and doubles to ints and longs, atomically loads them, then puns

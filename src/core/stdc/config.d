@@ -18,7 +18,13 @@ extern (C):
 @trusted: // Types only.
 nothrow:
 
-version( Windows )
+version( GNU )
+{
+    import gcc.builtins;
+    alias __builtin_clong c_long;
+    alias __builtin_culong c_ulong;
+}
+else version( Windows )
 {
     alias int   c_long;
     alias uint  c_ulong;
