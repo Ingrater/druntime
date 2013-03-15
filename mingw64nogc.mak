@@ -7,25 +7,34 @@ SDKDIR="\Program Files (x86)\Microsoft SDKs\Windows\v7.0A"
 
 GDC=gdc
 CC=gcc
+AR=ar
+RANLIB=ranlib
 
 DOCDIR=doc
 IMPDIR=import
 
 #DFLAGS=-m$(MODEL) -w -d -Isrc -Iimport -property -version=NOGCSAFE -version=RTTI
-DFLAGS=-m$(MODEL) -Wall -g -fdeprecated -fproperty -fversion=NOGCSAFE -fversion=RTTI -nostdinc -I src
+DFLAGS=-m$(MODEL) -Wall -g -fdeprecated -fproperty -fversion=NOGCSAFE -I src -nophoboslib
+#-nostdinc -fversion=RTTI
 #UDFLAGS=-m$(MODEL) -debug -g -nofloat -w -d -Isrc -Iimport -property
-UDFLAGS=-m$(MODEL) -fdebug -Wall -g -fproperty -fversion=NOGCSAFE -fversion=RTTI -nostdinc -I import -I src
+UDFLAGS=-m$(MODEL) -fdebug -Wall -g -fproperty -fversion=NOGCSAFE -I import -I src -nophoboslib
+#-nostdinc -fversion=RTTI
 #DFLAGS_RELEASE=-release -O -noboundscheck -version=NO_INVARIANTS
 DFLAGS_RELEASE=-frelease -O2
 #DFLAGS_DEBUG=-debug -version=MEMORY_TRACKING -g -op
-DFLAGS_DEBUG=-fdebug -fbounds-check -fin -fout -fassert -v
+DFLAGS_DEBUG=-fdebug -fbounds-check -fin -fout -fassert -fversion=MEMORY_TRACKING
 
 #CFLAGS=/O2 /I$(VCDIR)\INCLUDE /I$(SDKDIR)\Include
-CFLAGS=/Zi /I$(VCDIR)\INCLUDE /I$(SDKDIR)\Include
+#CFLAGS=/Zi /I$(VCDIR)\INCLUDE /I$(SDKDIR)\Include
+CFLAGS=
 
 DRUNTIME_BASE=druntimenogc$(MODEL)
-DRUNTIME_DEBUG=lib\$(DRUNTIME_BASE)d_mingw.lib
-DRUNTIME_RELEASE=lib\$(DRUNTIME_BASE)_mingw.lib
+DRUNTIME_DEBUG=lib\lib$(DRUNTIME_BASE)d_mingw.a
+DRUNTIME_DEBUG_OBJ=lib$(DRUNTIME_BASE)d_mingw.o
+DRUNTIME_RELEASE=lib\lib$(DRUNTIME_BASE)_mingw.a
+DRUNTIME_RELEASE_OBJ=lib$(DRUNTIME_BASE)_mingw.o
+
+
 
 target : $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE)
 
@@ -156,6 +165,7 @@ MANIFEST= \
 	src\core\sys\windows\stacktrace.d \
 	src\core\sys\windows\threadaux.d \
 	src\core\sys\windows\windows.d \
+	src\core\sys\windows\mingwex.d \
 	\
 	src\gcstub\gc.d \
 	\
@@ -163,7 +173,7 @@ MANIFEST= \
 	src\rt\aApplyR.d \
 	src\rt\aaA.d \
 	src\rt\adi.d \
-	src\rt\alloca.d \
+#	src\rt\alloca.d \
 	src\rt\arrayassign.d \
 	src\rt\arraybyte.d \
 	src\rt\arraycast.d \
@@ -174,33 +184,34 @@ MANIFEST= \
 	src\rt\arrayreal.d \
 	src\rt\arrayshort.d \
 	src\rt\cast_.d \
-	src\rt\cmath2.d \
+#	src\rt\cmath2.d \
 	src\rt\complex.c \
-	src\rt\cover.d \
+#	src\rt\cover.d \
 	src\rt\critical_.d \
-	src\rt\deh.d \
-	src\rt\deh2.d \
+#	src\rt\deh.d \
+#	src\rt\deh2.d \
+    src\rt\dmain.d \
 	src\rt\dmain2.d \
 	src\rt\dylib_fixes.c \
 	src\rt\image.d \
 	src\rt\invariant.d \
 	src\rt\invariant_.d \
 	src\rt\lifetime.d \
-	src\rt\llmath.d \
+#	src\rt\llmath.d \
 	src\rt\mars.h \
 	src\rt\memory.d \
 	src\rt\memory_osx.d \
-	src\rt\memset.d \
+#	src\rt\memset.d \
 	src\rt\minfo.d \
 	src\rt\minit.asm \
 	src\rt\monitor_.d \
 	src\rt\obj.d \
 	src\rt\qsort.d \
-	src\rt\qsort2.d \
+#	src\rt\qsort2.d \
 	src\rt\switch_.d \
 	src\rt\tls.S \
 	src\rt\tlsgc.d \
-	src\rt\trace.d \
+#	src\rt\trace.d \
 	\
 	src\rt\typeinfo\ti_AC.d \
 	src\rt\typeinfo\ti_Acdouble.d \
@@ -249,7 +260,8 @@ MANIFEST= \
 	src\gcc\builtins.d \
 	src\gcc\deh.d \
 	src\gcc\unwind.d \
-	src\gcc\unwind_generic.d
+	src\gcc\unwind_generic.d \ 
+	src\gcc\unwind_pe.d 
 
 SRCS= \
 	src\object_.d \
@@ -291,6 +303,7 @@ SRCS= \
 	src\core\sys\windows\stacktrace.d \
 	src\core\sys\windows\threadaux.d \
 	src\core\sys\windows\windows.d \
+	src\core\sys\windows\mingwex.d \
 	\
 	src\core\sync\barrier.d \
 	src\core\sync\condition.d \
@@ -306,7 +319,7 @@ SRCS= \
 	src\rt\aApply.d \
 	src\rt\aApplyR.d \
 	src\rt\adi.d \
-	src\rt\alloca.d \
+#	src\rt\alloca.d \
 	src\rt\arrayassign.d \
 	src\rt\arraybyte.d \
 	src\rt\arraycast.d \
@@ -317,24 +330,25 @@ SRCS= \
 	src\rt\arrayreal.d \
 	src\rt\arrayshort.d \
 	src\rt\cast_.d \
-	src\rt\cmath2.d \
-	src\rt\cover.d \
+#	src\rt\cmath2.d \
+#	src\rt\cover.d \
 	src\rt\critical_.d \
-	src\rt\deh2.d \
+#	src\rt\deh2.d \
+    src\rt\dmain.d \
 	src\rt\dmain2.d \
 	src\rt\invariant.d \
 	src\rt\invariant_.d \
 	src\rt\lifetime.d \
-	src\rt\llmath.d \
+#	src\rt\llmath.d \
 	src\rt\memory.d \
-	src\rt\memset.d \
+#	src\rt\memset.d \
 	src\rt\minfo.d \
 	src\rt\monitor_.d \
 	src\rt\obj.d \
 	src\rt\qsort.d \
 	src\rt\switch_.d \
 	src\rt\tlsgc.d \
-	src\rt\trace.d \
+#	src\rt\trace.d \
 	\
 	src\rt\util\console.d \
 	src\rt\util\hash.d \
@@ -381,11 +395,12 @@ SRCS= \
 	src\gcc\builtins.d \
 	src\gcc\deh.d \
 	src\gcc\unwind.d \
-	src\gcc\unwind_generic.d
+	src\gcc\unwind_generic.d \
+	src\gcc\unwind_pe.d
 
-OBJS=
+OBJS=errno_c_mingw64.o
 
-OBJS_TO_DELETE=
+OBJS_TO_DELETE=errno_c_mingw64.o $(DRUNTIME_RELEASE_OBJ) $(DRUNTIME_DEBUG_OBJ)
 
 IMPORTS=\
 	$(IMPDIR)\core\sync\barrier.di \
@@ -713,13 +728,23 @@ $(IMPDIR)\etc\linux\memoryerror.d : src\etc\linux\memoryerror.d
 
 ################### C Targets ############################
 
+errno_c_mingw64.o : src\core\stdc\errno.c
+	$(CC) -c $(CFLAGS) src\core\stdc\errno.c -o errno_c_mingw64.o
+	
+cbridge_stdio_mingw64.o : src\gcc\cbridge_stdio.c
+	$(CC) -c $(CFLAGS) src\gcc\cbridge_stdio.c -o cbridge_stdio_mingw64.o
+
 ################### Library generation #########################
 
 $(DRUNTIME_RELEASE): $(OBJS) $(SRCS) mingw64nogc.mak
-	$(GDC) -o $(DRUNTIME_RELEASE) $(DFLAGS_RELEASE) $(DFLAGS) $(SRCS) $(OBJS)
+	$(GDC) -c -o $(DRUNTIME_RELEASE_OBJ) $(DFLAGS_RELEASE) $(DFLAGS) $(SRCS)
+	$(AR) -r $(DRUNTIME_RELEASE) $(DRUNTIME_RELEASE_OBJ) $(OBJS)
+	$(RANLIB) $(DRUNTIME_RELEASE)
 
 $(DRUNTIME_DEBUG): $(OBJS) $(SRCS) mingw64nogc.mak
-	$(GDC) -o $(DRUNTIME_DEBUG) $(DFLAGS_DEBUG) $(DFLAGS) $(SRCS) $(OBJS)
+	$(GDC) -c -o $(DRUNTIME_DEBUG_OBJ) $(DFLAGS_DEBUG) $(DFLAGS) $(SRCS)
+	$(AR) -r $(DRUNTIME_DEBUG) $(DRUNTIME_DEBUG_OBJ) $(OBJS)
+	$(RANLIB) $(DRUNTIME_DEBUG)
 	
 unittest : $(SRCS) $(DRUNTIME) src\unittest.d
 	$(GDC) $(UDFLAGS) -fversion=druntime_unittest -funittest src\unittest.d $(SRCS) $(DRUNTIME_DEBUG) -debuglib=$(DRUNTIME_DEBUG) -defaultlib=$(DRUNTIME_DEBUG)

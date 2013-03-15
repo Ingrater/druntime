@@ -12,7 +12,14 @@
  *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
+
+/* NOTE: This file has been patched from the original DMD distribution to
+   work with the GDC compiler.
+*/
+
 module core.stdc.stdint;
+
+version(GNU) import gcc.builtins;
 
 private import core.stdc.stddef; // for ptrdiff_t, size_t, wchar_t
 private import core.stdc.signal; // for sig_atomic_t
@@ -62,7 +69,12 @@ alias uint      uint_fast16_t;
 alias uint      uint_fast32_t;
 alias ulong     uint_fast64_t;
 
-version( D_LP64 )
+version( GNU )
+{
+    alias __builtin_pointer_int  intptr_t;
+    alias __builtin_pointer_uint uintptr_t;
+}
+else version( D_LP64 )
 {
     alias long  intptr_t;
     alias ulong uintptr_t;

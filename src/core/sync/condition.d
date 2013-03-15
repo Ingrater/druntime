@@ -93,6 +93,10 @@ class Condition
             if( rc )
                 throw new SyncException( "Unable to initialize condition" );
         }
+        else
+        {
+            static assert(false, "Platform not supported");
+        }
     }
 
 
@@ -110,6 +114,10 @@ class Condition
         {
             int rc = pthread_cond_destroy( &m_hndl );
             assert( !rc, "Unable to destroy condition" );
+        }
+        else 
+        {
+            static assert(false, "Platform not supported");
         }
     }
 
@@ -153,6 +161,10 @@ class Condition
             int rc = pthread_cond_wait( &m_hndl, m_assocMutex.handleAddr() );
             if( rc )
                 throw new SyncException( "Unable to wait for condition" );
+        }
+        else 
+        {
+            static assert(false, "Platform not supported");
         }
     }
 
@@ -207,6 +219,10 @@ class Condition
                 return false;
             throw new SyncException( "Unable to wait for condition" );
         }
+        else
+        {
+            static assert(false, "Platform not supported");
+        }
     }
 
 
@@ -259,6 +275,10 @@ class Condition
             int rc = pthread_cond_signal( &m_hndl );
             if( rc )
                 throw new SyncException( "Unable to notify condition" );
+        }
+        else 
+        {
+            static assert(false, "Platform not supported");
         }
     }
 
@@ -453,6 +473,11 @@ private:
         Mutex               m_assocMutex;
         pthread_cond_t      m_hndl;
     }
+    else 
+    {
+        static assert(false, "Platform not supported");
+    }
+    
 }
 
 

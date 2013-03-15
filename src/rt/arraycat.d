@@ -20,7 +20,7 @@ private
     debug import core.stdc.stdio;
 }
 
-extern (C) @trusted nothrow:
+extern (C) @trusted:
 
 export byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
 {

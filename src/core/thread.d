@@ -2958,6 +2958,24 @@ private void* getStackBottom()
                  mov RAX, GS:[RAX];
                  ret;
             }
+
+        else version( GNU_InlineAsm )
+        {
+            void *bottom;
+            version( X86 )
+            {
+                asm{ "movl %%fs:4, %0;" : "=r" bottom; }                
+            }
+            else version( X86_64 )
+            {
+                asm{ "movq %%gs:8, %0;" : "=r" bottom; }            
+            }
+            else
+            {
+                static assert( false, "Platform not supported.");
+            }
+            return bottom;
+        }    
         else
             static assert(false, "Architecture not supported.");
     }
@@ -3577,6 +3595,10 @@ private
             *oldp = &ucur;
             swapcontext( **(cast(ucontext_t***) oldp),
                           *(cast(ucontext_t**)  newp) );
+        }
+		else
+        {
+            static assert(0, "Fibers unsupported by platform");
         }
     }
 }

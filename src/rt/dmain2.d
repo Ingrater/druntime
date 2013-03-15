@@ -9,6 +9,17 @@
  * Source: $(DRUNTIMESRC src/rt/_dmain2.d)
  */
 
+/*          Copyright Digital Mars 2000 - 2010.
+ * Distributed under the Boost Software License, Version 1.0.
+ *    (See accompanying file LICENSE or copy at
+ *          http://www.boost.org/LICENSE_1_0.txt)
+ */
+
+/* NOTE: This file has been patched from the original DMD distribution to
+   work with the GDC compiler.
+
+   Modified by Iain Buclaw, September 2010.
+*/
 module rt.dmain2;
 
 private
@@ -370,8 +381,20 @@ extern (C) CArgs rt_cArgs()
  * As we need to deal with actual calling convention we have to mark it
  * as `extern(C)` and use its symbol name.
  */
+version( DigitalMars )
+{
 extern(C) int _Dmain(char[][] args);
 alias extern(C) int function(char[][] args) MainFunc;
+}
+else version( GNU )
+{
+  //int main(char[][] args);
+  alias int function(char[][]) MainFunc;
+}
+else
+{
+  static assert(0, "compiler not supported");
+}
 
 /***********************************
  * Substitutes for the C main() function.
@@ -380,6 +403,8 @@ alias extern(C) int function(char[][] args) MainFunc;
  * main function and call the _d_run_main function
  * themselves with any main function.
  */
+version( DigitalMars )
+{
 extern (C) int main(int argc, char **argv)
 {
     return _d_run_main(argc, argv, &_Dmain);
@@ -391,6 +416,14 @@ version (Solaris) extern (C) int _main(int argc, char** argv)
     // C tool chain seems to expect the main function
     // to be called _main. It needs both not just one!
     return main(argc, argv);
+}
+}
+else version( GNU )
+{
+}
+else
+{
+  static assert(0, "compiler not supported");
 }
 
 /***********************************
@@ -431,7 +464,7 @@ extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
         }
     }
 
-    version (Win64)
+    version( DigitalMars ) version (Win64)
     {
         auto fp = __iob_func();
         stdin = &fp[0];
@@ -507,7 +540,8 @@ extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
         if (IsDebuggerPresent())
             trapExceptions = false;
     }
-
+    version (MinGW) trapExceptions = rt_trapExceptions;
+    
     void tryExec(scope void delegate() dg)
     {
         void printLocLine(Throwable t)

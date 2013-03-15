@@ -407,7 +407,10 @@ class StdAllocator : IAdvancedAllocator
         if(log !is null) fclose(log);
         debug
         {
-          asm { int 3; } //if you ended up here, you have memory leaks, see memoryleaks.log for details
+		  version(GNU)
+		    asm { "int $0x3"; }
+		  else
+            asm { int 3; } //if you ended up here, you have memory leaks, see memoryleaks.log for details
         }
       }
 
@@ -426,7 +429,12 @@ class StdAllocator : IAdvancedAllocator
       Object obj = cast(Object)mem;
       TypeInfo t = obj.classinfo;
       if(t is null || t.classinfo is null)
-        asm { int 3; }
+	  {
+	    version(D_InlineAsm_X86)
+		  asm { int 3; }
+		else version(GNU)
+		  asm { "int $0x3"; }
+	  }
     }
   }
   

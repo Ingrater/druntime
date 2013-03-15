@@ -158,7 +158,19 @@ extern (C) void rt_moduleDtor()
  * Access compiler generated list of modules.
  */
 
-version (Win32)
+version (GNU)
+{
+    // This linked list is created by a compiler generated function inserted
+    // into the .ctor list by the compiler.
+    struct ModuleReference
+    {
+        ModuleReference* next;
+        ModuleInfo*      mod;
+    }
+
+    extern (C) __gshared ModuleReference* _Dmodule_ref;   // start of linked list
+}
+else version (Win32)
 {
     // Windows: this gets initialized by minit.asm
     // Posix: this gets initialized in _moduleCtor()
@@ -207,7 +219,21 @@ body
 {
     typeof(return) result = void;
 
-    version (OSX)
+    version (GNU)
+    {
+        size_t len;
+        ModuleReference *mr;
+
+        for (mr = _Dmodule_ref; mr; mr = mr.next)
+            len++;
+        result = (cast(ModuleInfo**).malloc(len * size_t.sizeof))[0 .. len];
+        len = 0;
+        for (mr = _Dmodule_ref; mr; mr = mr.next)
+        {   result[len] = mr.mod;
+            len++;
+        }
+    }
+    else version (OSX)
     {
         // _moduleinfo_array is set by src.rt.memory_osx.onAddImage()
         // but we need to throw out any null pointers

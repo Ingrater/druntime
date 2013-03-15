@@ -319,7 +319,41 @@ enum
     _F_TERM = 0x0200, // non-standard
 }
 
-version( Win32 )
+version( MinGW )
+{
+    enum
+    {
+        _IOFBF   = 0,
+        _IOLBF   = 0x40,
+        _IONBF   = 4,
+        _IOREAD  = 1,     // non-standard
+        _IOWRT   = 2,     // non-standard
+        _IOMYBUF = 8,     // non-standard
+        _IOEOF   = 0x10,  // non-standard
+        _IOERR   = 0x20,  // non-standard
+        _IOSTRG  = 0x40,  // non-standard
+        _IORW    = 0x80,  // non-standard
+        _IOTRAN  = 0x100, // non-standard
+        _IOAPP   = 0x200, // non-standard
+    }
+
+    private extern
+    {
+        __gshared export FILE[5] _iob;
+    }
+
+    __gshared FILE* stdin;
+    __gshared FILE* stdout;
+    __gshared FILE* stderr;
+
+    shared static this()
+    {
+        stdin  = &_iob[0];
+        stdout = &_iob[1];
+        stderr = &_iob[2];
+    }
+}
+else version( Win32 )
 {
     enum
     {
@@ -421,6 +455,23 @@ else version( FreeBSD )
     alias __stdinp  stdin;
     alias __stdoutp stdout;
     alias __stderrp stderr;
+}
+else version( GNU_CBridge_Stdio )
+{
+    extern FILE * _d_gnu_cbridge_stdin;
+    extern FILE * _d_gnu_cbridge_stdout;
+    extern FILE * _d_gnu_cbridge_stderr;
+    
+    extern void _d_gnu_cbridge_init_stdio();
+
+    shared static this()
+    {
+        _d_gnu_cbridge_init_stdio();
+    }
+
+    alias _d_gnu_cbridge_stdin stdin;
+    alias _d_gnu_cbridge_stdout stdout;
+    alias _d_gnu_cbridge_stderr stderr;
 }
 else version (Solaris)
 {
@@ -605,6 +656,21 @@ else version( OSX )
     int  vsnprintf(char* s, size_t n, in char* format, va_list arg);
 }
 else version( FreeBSD )
+{
+  // No unsafe pointer manipulation.
+  @trusted
+  {
+    void rewind(FILE*);
+    pure void clearerr(FILE*);
+    pure int  feof(FILE*);
+    pure int  ferror(FILE*);
+    int  fileno(FILE*);
+  }
+
+    int  snprintf(char* s, size_t n, in char* format, ...);
+    int  vsnprintf(char* s, size_t n, in char* format, va_list arg);
+}
+else version( GNU )
 {
   // No unsafe pointer manipulation.
   @trusted

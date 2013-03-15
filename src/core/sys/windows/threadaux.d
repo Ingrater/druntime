@@ -116,11 +116,18 @@ private:
         // get linear address of TEB of current thread
         static void** getTEB() nothrow
         {
-            asm
+            version( MinGW )
             {
-                naked;
-                mov EAX,FS:[0x18];
-                ret;
+                assert(false, "not implemented");
+            }
+            else 
+            {
+                asm
+                {
+                    naked;
+                    mov EAX,FS:[0x18];
+                    ret;
+                }
             }
         }
 
