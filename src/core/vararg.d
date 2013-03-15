@@ -16,7 +16,11 @@
  */
 module core.vararg;
 
-version( X86 )
+version( GNU )
+{
+    public import core.stdc.stdarg;
+}
+else version( X86 )
 {
     /**
      * The base vararg list type.
