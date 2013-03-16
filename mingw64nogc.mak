@@ -14,7 +14,7 @@ DOCDIR=doc
 IMPDIR=import
 
 #DFLAGS=-m$(MODEL) -w -d -Isrc -Iimport -property -version=NOGCSAFE -version=RTTI
-DFLAGS=-m$(MODEL) -Wall -g -fdeprecated -fproperty -fversion=NOGCSAFE -I src -nophoboslib
+DFLAGS=-m$(MODEL) -Wall -g -fdeprecated -fproperty -fversion=NOGCSAFE -I src -nophoboslib -nostdinc
 #-nostdinc -fversion=RTTI
 #UDFLAGS=-m$(MODEL) -debug -g -nofloat -w -d -Isrc -Iimport -property
 UDFLAGS=-m$(MODEL) -fdebug -Wall -g -fproperty -fversion=NOGCSAFE -I import -I src -nophoboslib
@@ -36,7 +36,7 @@ DRUNTIME_RELEASE_OBJ=lib$(DRUNTIME_BASE)_mingw.o
 
 
 
-target : $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE)
+target : copy $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE)
 
 MANIFEST= \
 	LICENSE \
@@ -416,7 +416,8 @@ COPY=\
 	src\gcc\builtins.d \
 	src\gcc\deh.d \
 	src\gcc\unwind.d \
-	src\gcc\unwind_generic.d
+	src\gcc\unwind_generic.d \
+	src\phobos-ver-syms
 
 ######################## Header .di file generation ##############################
 
@@ -724,6 +725,15 @@ $(IMPDIR)\core\sys\windows\windows.d : src\core\sys\windows\windows.d
 	copy $** $@
 
 $(IMPDIR)\etc\linux\memoryerror.d : src\etc\linux\memoryerror.d
+	copy $** $@
+	
+$(IMPDIR)\gcc\atomics.d : src\gcc\atomics.d
+	copy $** $@
+
+$(IMPDIR)\gcc\builtins.d : src\gcc\builtins.d
+	copy $** $@
+	
+$(IMPDIR)\phobos-ver-syms : src\phobos-ver-syms
 	copy $** $@
 
 ################### C Targets ############################
