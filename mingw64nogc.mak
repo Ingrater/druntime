@@ -36,7 +36,7 @@ DRUNTIME_RELEASE_OBJ=lib$(DRUNTIME_BASE)_mingw.o
 
 
 
-target : copy $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE)
+target : copydir copy $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE)
 
 MANIFEST= \
 	LICENSE \
@@ -260,7 +260,7 @@ MANIFEST= \
 	src\gcc\builtins.d \
 	src\gcc\deh.d \
 	src\gcc\unwind.d \
-	src\gcc\unwind_generic.d \ 
+	src\gcc\unwind_generic.d \
 	src\gcc\unwind_pe.d 
 
 SRCS= \
@@ -412,12 +412,12 @@ IMPORTS=\
 	$(IMPDIR)\core\sync\semaphore.di
 
 COPY=\
-	src\gcc\atomics.d \
-	src\gcc\builtins.d \
-	src\gcc\deh.d \
-	src\gcc\unwind.d \
-	src\gcc\unwind_generic.d \
-	src\phobos-ver-syms
+	$(IMPDIR)\gcc\atomics.d \
+	$(IMPDIR)\gcc\builtins.d \
+	$(IMPDIR)\gcc\deh.d \
+	$(IMPDIR)\gcc\unwind.d \
+	$(IMPDIR)\gcc\unwind_generic.d \
+	$(IMPDIR)\phobos-ver-syms
 
 ######################## Header .di file generation ##############################
 
@@ -734,6 +734,15 @@ $(IMPDIR)\gcc\builtins.d : src\gcc\builtins.d
 	copy $** $@
 	
 $(IMPDIR)\phobos-ver-syms : src\phobos-ver-syms
+	copy $** $@
+	
+$(IMPDIR)\gcc\deh.d : src\gcc\deh.d
+	copy $** $@
+
+$(IMPDIR)\gcc\unwind.d : src\gcc\unwind.d
+	copy $** $@
+
+$(IMPDIR)\gcc\unwind_generic.d : src\gcc\unwind_generic.d
 	copy $** $@
 
 ################### C Targets ############################

@@ -1362,12 +1362,7 @@ private:
     //
     // Standard types
     //
-	version( MinGW )
-	{
-	    alias uint TLSKey;
-        alias uint ThreadAddr;
-	}
-    else version( Windows )
+	version( Windows )
     {
         alias uint TLSKey;
         alias uint ThreadAddr;

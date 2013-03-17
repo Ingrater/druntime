@@ -440,7 +440,7 @@ private:
         else version (Solaris) enum ThreadSize = 176;
         else version (Posix)   enum ThreadSize = 184;
         else static assert(0, "Platform not supported.");
-      }
+	  }
     }
     else
     {
