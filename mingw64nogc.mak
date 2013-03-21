@@ -398,9 +398,9 @@ SRCS= \
 	src\gcc\unwind_generic.d \
 	src\gcc\unwind_pe.d
 
-OBJS=errno_c_mingw64.o
+OBJS=errno_c_mingw64.o cbridge_stdio_mingw64.o
 
-OBJS_TO_DELETE=errno_c_mingw64.o $(DRUNTIME_RELEASE_OBJ) $(DRUNTIME_DEBUG_OBJ)
+OBJS_TO_DELETE=$(OBJS) $(DRUNTIME_RELEASE_OBJ) $(DRUNTIME_DEBUG_OBJ)
 
 IMPORTS=\
 	$(IMPDIR)\core\sync\barrier.di \
@@ -447,7 +447,7 @@ $(IMPDIR)\core\sync\semaphore.di : src\core\sync\semaphore.d
 ######################## Header .di file copy ##############################
 
 copydir: $(IMPDIR)
-	@mkdir $(IMPDIR)\core\gcc 2> NUL
+	@mkdir $(IMPDIR)\gcc 2> NUL
 
 copy: $(COPY)
 
