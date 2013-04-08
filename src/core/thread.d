@@ -4047,7 +4047,7 @@ private:
         //       room for this struct explicitly would be to mash it into the
         //       base of the stack being allocated below.  However, doing so
         //       requires too much special logic to be worthwhile.
-        m_ctxt = new Thread.Context;
+        m_ctxt = New!(Thread.Context)();
 
         static if( __traits( compiles, VirtualAlloc ) )
         {
@@ -4184,6 +4184,7 @@ private:
             }
         }
         m_pmem = null;
+        Delete(m_ctxt);
         m_ctxt = null;
     }
 
