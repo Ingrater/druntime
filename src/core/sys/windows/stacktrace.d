@@ -611,7 +611,7 @@ private:
 }
 
 
-/*shared static this()
+shared static this()
 {
     auto dbghelp = DbgHelp.get();
 
@@ -635,4 +635,4 @@ private:
         {} // for now it's fine if the modules don't load
     initialized = true;
     //SetUnhandledExceptionFilter( &unhandeledExceptionFilterHandler );
-}*/
+}
