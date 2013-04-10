@@ -54,6 +54,11 @@ struct PointerHashPolicy
     else
       return cast(uint)((cast(size_t)ptr / 8) % uint.max);
   }
+  
+  static bool equals(void* lhs, void* rhs)
+  {
+    return (lhs is rhs);
+  }
 }
 
 private {
@@ -184,16 +189,16 @@ class StdAllocator : IAdvancedAllocator
       return hashOf(backtrace.ptr, typeof(backtrace[0]).sizeof * backtraceSize);
     }
 
-    int opEquals(ref const(MemoryBlockInfo) rh)
+    bool opEquals(ref const(MemoryBlockInfo) rh)
     {
       if(backtraceSize != rh.backtraceSize)
-        return 0;
+        return false;
       for(int i=0; i<backtraceSize; i++)
       {
         if(backtrace[i] != rh.backtrace[i])
-          return 0;
+          return false;
       }
-      return 1;
+      return true;
     }
   }
 
