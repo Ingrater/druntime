@@ -103,14 +103,15 @@ struct StdHashPolicy
   {
     return hashOf(&value, T.sizeof);
   }
+
+  static bool equals(T)(T lhs, T rhs)
+  {
+    return lhs == rhs;
+  }
 }
 
 final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
 {
-  static if(is(K == class) || is(K == interface))
-  {
-    static assert(__traits(hasMember,K,"Equals"), "Classes and interfaces need a Equals member to be stored in the hashmap");
-  }
   private:
     enum State {
       Free, // 0
@@ -237,16 +238,8 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t index = HP.Hash(key) % m_Data.length;
       while(m_Data[index].state != State.Free)
       {
-        static if(is(K == class) || is(K == interface))
-        {
-          if(m_Data[index].state == State.Data && m_Data[index].key.Equals(key) && key.Equals(m_Data[index].key))
-            return m_Data[index].value;
-        }
-        else
-        {
-          if(m_Data[index].state == State.Data && m_Data[index].key == key)
-            return m_Data[index].value;
-        }
+        if(m_Data[index].state == State.Data && HP.equals(m_Data[index].key, key))
+          return m_Data[index].value;
         index = (index + 1) % m_Data.length;
       }
       
