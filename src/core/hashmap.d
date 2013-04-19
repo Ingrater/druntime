@@ -274,16 +274,8 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t searched = 0;
       while(m_Data[index].state != State.Free && searched < m_Data.length)
       {
-        static if(is(K == class) || is(K == interface))
-        {
-          if(m_Data[index].state == State.Data && m_Data[index].key.Equals(key) && key.Equals(m_Data[index].key))
-            return index;
-        }
-        else
-        {
-          if(m_Data[index].state == State.Data && m_Data[index].key == key)
-            return index;
-        }
+        if(m_Data[index].state == State.Data && HP.equals(m_Data[index].key, key))
+          return index;
         index = (index + 1) % m_Data.length;
         searched++;
       }
@@ -351,21 +343,10 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       bool found = false;
       while(m_Data[index].state != State.Free)
       {
-        static if(is(K == class) || is(K == interface))
+        if(m_Data[index].state == State.Data && HP.equals(m_Data[index].key, key))
         {
-          if(m_Data[index].state == State.Data && m_Data[index].key.Equals(key) && key.Equals(m_Data[index].key))
-          {
-            found = true;
-            break;
-          }
-        }
-        else
-        {
-          if(m_Data[index].state == State.Data && m_Data[index].key == key)
-          {
-            found = true;
-            break;
-          }
+          found = true;
+          break;
         }
         index = (index + 1) % m_Data.length;
       }
