@@ -662,7 +662,12 @@ auto AllocatorNew(T,AT,ARGS...)(AT allocator, ARGS args)
   }
   else
   {
-    *(cast(T*)mem) = T.init;
+    auto ti = typeid(StripModifier!T);
+    assert(memSize == ti.init().length, "T.sizeof and typeid(T).init.length do not match");
+    if(ti.init().ptr is null)
+      memset(mem, 0, mem.length);
+    else
+      mem[] = (cast(void[])ti.init())[];
     auto result = (cast(T*)mem);
     static if(ARGS.length > 0 && is(typeof(result.__ctor(args))))
     {
@@ -740,7 +745,7 @@ struct composite(T)
     }
     else
     {
-      static assert(args.length == 0 && !is(typeof(&T.__ctor)),
+      static assert(false,
                     "Don't know how to initialize an object of type "
                     ~ T.stringof ~ " with arguments:\n" ~ ARGS.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
     }
