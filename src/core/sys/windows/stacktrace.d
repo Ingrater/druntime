@@ -37,6 +37,8 @@ extern(Windows)
 
     alias LONG function(void*) UnhandeledExceptionFilterFunc;
     void* SetUnhandledExceptionFilter(void* handler);
+
+    USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID *BackTrace, PULONG BackTraceHash);
 }
 
 
@@ -243,6 +245,15 @@ private:
         CONTEXT      c;
         version(NOGCSAFE){
           bool         allocated = false;
+        }
+
+        version(Win64)
+        {
+          auto backtraceLength = RtlCaptureStackBackTrace(skip, cast(uint)addresses.length, cast(void**)addresses.ptr, null);
+          if(backtraceLength > 1)
+          {
+            return addresses[0..backtraceLength];
+          }
         }
 
         c.ContextFlags = CONTEXT_FULL;

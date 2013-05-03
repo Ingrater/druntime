@@ -175,7 +175,7 @@ class StdAllocator : IAdvancedAllocator
   static struct MemoryBlockInfo
   {
     size_t size;
-    size_t[10] backtrace;
+    size_t[14] backtrace;
     byte backtraceSize;
     ubyte flags; //combination of BlockFlags
     
@@ -206,7 +206,7 @@ class StdAllocator : IAdvancedAllocator
   {  
     public static struct TraceInfo 
     {
-      char[][10] trace;
+      char[][14] trace;
       size_t count;
     }
   }
@@ -269,7 +269,7 @@ class StdAllocator : IAdvancedAllocator
         leakSum += leak.size;
         if( !traceCache.exists(leak) )
         {
-          long[10] backtrace;
+          long[14] backtrace;
           for(int i=0; i<leak.backtraceSize; i++)
           {
             backtrace[i] = leak.backtrace[i];
@@ -465,8 +465,8 @@ class StdAllocator : IAdvancedAllocator
           // TODO implement for linux / osx
           version(Windows)
           {
-            long backtrace[10];
-            info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace, false, 0).length;
+            long backtrace[14];
+            info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace, false, 3).length;
             for(int i=0; i<info.backtraceSize; i++)
             {
               info.backtrace[i] = cast(size_t)backtrace[i];
@@ -526,7 +526,7 @@ class StdAllocator : IAdvancedAllocator
             // TODO implement for linux / osx
             version(Windows)
             {
-              long backtrace[10];
+              long backtrace[14];
               info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace,false,3).length;
               for(int i=0; i<info.backtraceSize; i++)
               {
