@@ -240,6 +240,7 @@ class StdAllocator : IAdvancedAllocator
     final void InitMemoryTracking()
     {
       printf("initializing memory tracking\n");
+      initializeStackTracing();
       g_trackingAllocator = New!TrackingAllocator();
       m_memoryMap = AllocatorNew!(typeof(m_memoryMap), TrackingAllocator)(g_trackingAllocator, g_trackingAllocator);
       m_allocMutex = New!Mutex();
@@ -465,7 +466,7 @@ class StdAllocator : IAdvancedAllocator
           version(Windows)
           {
             long backtrace[10];
-            info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace,false,3).length;
+            info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace, false, 0).length;
             for(int i=0; i<info.backtraceSize; i++)
             {
               info.backtrace[i] = cast(size_t)backtrace[i];
@@ -745,7 +746,7 @@ struct composite(T)
     }
     else
     {
-      static assert(false,
+      static assert(args.length == 0 && !is(typeof(T.__ctor)),
                     "Don't know how to initialize an object of type "
                     ~ T.stringof ~ " with arguments:\n" ~ ARGS.stringof ~ "\nAvailable ctors:\n" ~ ListAvailableCtors!T() );
     }

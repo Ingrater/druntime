@@ -92,27 +92,6 @@ private
         char[MAX_PATH] temp;
         DWORD          len;
 
-        if( (len = GetCurrentDirectoryA( temp.length, temp.ptr )) > 0 )
-        {
-            path ~= temp[0 .. len];
-            path ~= ";";
-        }
-        if( (len = GetModuleFileNameA( null,temp.ptr,temp.length )) > 0 )
-        {
-            foreach_reverse( i, ref char e; temp[0 .. len] )
-            {
-                if( e == '\\' || e == '/' || e == ':' )
-                {
-                    len -= i;
-                    break;
-                }
-            }
-            if( len > 0 )
-            {
-                path ~= temp[0 .. len];
-                path ~= ";";
-            }
-        }
         foreach( e; defaultPathList )
         {
             if( (len = GetEnvironmentVariableA( e.ptr, temp.ptr, temp.length )) > 0 )
@@ -125,114 +104,7 @@ private
         return path;
     }
 
-
-    bool loadModules( HANDLE hProcess, DWORD pid )
-    {
-        __gshared string[2] systemDlls = ["kernel32.dll", "tlhelp32.dll"];
-
-        CreateToolhelp32SnapshotFunc CreateToolhelp32Snapshot;
-        Module32FirstFunc            Module32First;
-        Module32NextFunc             Module32Next;
-        HMODULE                      dll;
-
-        foreach( e; systemDlls )
-        {
-            if( (dll = cast(HMODULE) Runtime.loadLibrary( e )) is null )
-                continue;
-            CreateToolhelp32Snapshot = cast(CreateToolhelp32SnapshotFunc) GetProcAddress( dll,"CreateToolhelp32Snapshot" );
-            Module32First            = cast(Module32FirstFunc) GetProcAddress( dll,"Module32First" );
-            Module32Next             = cast(Module32NextFunc) GetProcAddress( dll,"Module32Next" );
-            if( CreateToolhelp32Snapshot !is null && Module32First !is null && Module32Next !is null )
-                break;
-            Runtime.unloadLibrary( dll );
-            dll = null;
-        }
-        if( dll is null )
-        {
-            return false;
-        }
-
-        auto hSnap = CreateToolhelp32Snapshot( TH32CS_SNAPMODULE, pid );
-        if( hSnap == INVALID_HANDLE_VALUE )
-            return false;
-
-        MODULEENTRY32 moduleEntry;
-        moduleEntry.dwSize = MODULEENTRY32.sizeof;
-
-        auto more  = cast(bool) Module32First( hSnap, &moduleEntry );
-        int  count = 0;
-
-        while( more )
-        {
-            count++;
-            loadModule( hProcess,
-                        moduleEntry.szExePath.ptr,
-                        moduleEntry.szModule.ptr,
-                        cast(DWORD64) moduleEntry.modBaseAddr,
-                        moduleEntry.modBaseSize );
-            more = cast(bool) Module32Next( hSnap, &moduleEntry );
-        }
-
-        CloseHandle( hSnap );
-        Runtime.unloadLibrary( dll );
-        return count > 0;
-    }
-
-
-    void loadModule( HANDLE hProcess, PCSTR img, PCSTR mod, DWORD64 baseAddr, DWORD size )
-    {
-        auto dbghelp       = DbgHelp.get();
-        DWORD64 moduleAddr = dbghelp.SymLoadModule64( hProcess,
-                                                      HANDLE.init,
-                                                      img,
-                                                      mod,
-                                                      baseAddr,
-                                                      size );
-        if( moduleAddr == 0 )
-            return;
-
-        IMAGEHLP_MODULE64 moduleInfo;
-        moduleInfo.SizeOfStruct = IMAGEHLP_MODULE64.sizeof;
-
-        if( dbghelp.SymGetModuleInfo64( hProcess, moduleAddr, &moduleInfo ) == TRUE )
-        {
-            if( moduleInfo.SymType == SYM_TYPE.SymNone )
-            {
-                dbghelp.SymUnloadModule64( hProcess, moduleAddr );
-                moduleAddr = dbghelp.SymLoadModule64( hProcess,
-                                                      HANDLE.init,
-                                                      img,
-                                                      null,
-                                                      cast(DWORD64) 0,
-                                                      0 );
-                if( moduleAddr == 0 )
-                    return;
-            }
-        }
-        //printf( "Successfully loaded module %s\n", img );
-    }
-
-
-    /+
-    extern(Windows) static LONG unhandeledExceptionFilterHandler(void* info)
-    {
-        printStackTrace();
-        return 0;
-    }
-
-
-    static void printStackTrace()
-    {
-        auto stack = TraceHandler( null );
-        foreach( char[] s; stack )
-        {
-            printf( "%s\n",s );
-        }
-    }
-    +/
-
-
-    __gshared immutable bool initialized;
+    __gshared bool initialized = false;
 }
 
 
@@ -316,7 +188,9 @@ public:
     {
       synchronized( StackTrace.classinfo )
       {
-        return traceAddressesNoSync(addresses,allocateIfToSmall,skip);
+        if(!initialized) 
+          return [];
+        return traceAddressesNoSync(addresses, allocateIfToSmall, skip);
       }
     }
     
@@ -324,6 +198,8 @@ public:
     {
       synchronized( StackTrace.classinfo )
       {
+        if(!initialized) 
+          return trace_t();
         return resolveAddressesNoSync(addresses);
       }
     }
@@ -370,8 +246,8 @@ private:
         }
 
         c.ContextFlags = CONTEXT_FULL;
-        ContextHelper( c );
-        //RtlCaptureContext( &c );
+        //ContextHelper( c );
+        RtlCaptureContext( &c );
 
         //x86
         version(X86)
@@ -401,15 +277,8 @@ private:
         size_t frameNum = 0;
         for( ; ; frameNum++ )
         {
-            if( dbghelp.StackWalk64( imageType,
-                                     hProcess,
-                                     hThread,
-                                     &stackframe,
-                                     &c,
-                                     null,
-                                     cast(FunctionTableAccessProc64) dbghelp.SymFunctionTableAccess64,
-                                     cast(GetModuleBaseProc64) dbghelp.SymGetModuleBase64,
-                                     null) != TRUE )
+            if( dbghelp.StackWalk64( imageType, hProcess, hThread, &stackframe, &c,
+                                     null, null, null, null) != TRUE )
             {
                 //printf( "End of Callstack\n" );
                 break;
@@ -513,8 +382,12 @@ private:
                       try {
                         char[2048] decodeBuffer;
                         size_t index = 0;
-                        char[] decodedName = decodeDmdString( symbolName, index, decodeBuffer);
-                        char[] demangledName = demangle( decodedName, demangleBuf );
+                        char[] demangledName = symbolName;
+                        version(DigitalMars) version(Win32)
+                        {
+                          demangledName = decodeDmdString( demangledName, index, decodeBuffer);
+                        }
+                        demangledName = demangle( demangledName, demangleBuf );
                         cur ~= demangledName;
                         if(demangledName.ptr != demangleBuf.ptr)
                           StdAllocator.globalInstance.FreeMemory(demangledName.ptr);
@@ -610,29 +483,81 @@ private:
     }
 }
 
+// Workaround OPTLINK bug (Bugzilla 8263)
+extern(Windows) BOOL FixupDebugHeader(HANDLE hProcess, ULONG ActionCode,
+                                      ulong CallbackContext, ulong UserContext)
+{
+  if (ActionCode == CBA_READ_MEMORY)
+  {
+    auto p = cast(IMAGEHLP_CBA_READ_MEMORY*)CallbackContext;
+    if (!(p.addr & 0xFF) && p.bytes == 0x1C &&
+        // IMAGE_DEBUG_DIRECTORY.PointerToRawData
+        (*cast(DWORD*)(p.addr + 24) & 0xFF) == 0x20)
+    {
+      immutable base = DbgHelp.get().SymGetModuleBase64(hProcess, p.addr);
+      // IMAGE_DEBUG_DIRECTORY.AddressOfRawData
+      if (base + *cast(DWORD*)(p.addr + 20) == p.addr + 0x1C &&
+          *cast(DWORD*)(p.addr + 0x1C) == 0 &&
+            *cast(DWORD*)(p.addr + 0x20) == ('N'|'B'<<8|'0'<<16|'9'<<24))
+      {
+        printf("fixup IMAGE_DEBUG_DIRECTORY.AddressOfRawData\n");
+        memcpy(p.buf, cast(void*)p.addr, 0x1C);
+        *cast(DWORD*)(p.buf + 20) = cast(DWORD)(p.addr - base) + 0x20;
+        *p.bytesread = 0x1C;
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
+}
+
+private size_t formatLastError(char[] buffer)
+{
+  DWORD lastError = GetLastError();
+  return cast(size_t)FormatMessageA(
+                                        FORMAT_MESSAGE_FROM_SYSTEM |
+                                        FORMAT_MESSAGE_IGNORE_INSERTS,
+                                        null,
+                                        lastError,
+                                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                        buffer.ptr,
+                                        cast(uint)buffer.length, 
+                                        null );
+}
+
+void initializeStackTracing()
+{
+  if(initialized)
+    return;
+  auto dbghelp = DbgHelp.get();
+
+  if( dbghelp is null )
+    return; // dbghelp.dll not available
+
+  auto hProcess = GetCurrentProcess();
+  auto symPath  = generateSearchPath();
+
+  auto symOptions = dbghelp.SymGetOptions();
+  symOptions |= SYMOPT_LOAD_LINES;
+  symOptions |= SYMOPT_FAIL_CRITICAL_ERRORS;
+  symOptions |= SYMOPT_DEFERRED_LOAD;
+  symOptions  = dbghelp.SymSetOptions( symOptions );
+
+  if(!dbghelp.SymInitialize( hProcess, symPath.ptr, TRUE ))
+  {
+    char[1024] buffer;
+    size_t len = formatLastError(buffer);
+    printf("SymInitialize init failed with: %-*s\n", len, buffer.ptr);
+    return;
+  }
+
+  dbghelp.SymRegisterCallback64(hProcess, &FixupDebugHeader, 0);
+
+  initialized = true;
+}
+
 
 shared static this()
 {
-    auto dbghelp = DbgHelp.get();
-
-    if( dbghelp is null )
-        return; // dbghelp.dll not available
-
-    auto hProcess = GetCurrentProcess();
-    auto pid      = GetCurrentProcessId();
-    auto symPath  = generateSearchPath();
-    auto ret      = dbghelp.SymInitialize( hProcess,
-                                           symPath.ptr,
-                                           FALSE );
-    assert( ret != FALSE );
-
-    auto symOptions = dbghelp.SymGetOptions();
-    symOptions |= SYMOPT_LOAD_LINES;
-    symOptions |= SYMOPT_FAIL_CRITICAL_ERRORS;
-    symOptions  = dbghelp.SymSetOptions( symOptions );
-
-    if( !loadModules( hProcess, pid ) )
-        {} // for now it's fine if the modules don't load
-    initialized = true;
-    //SetUnhandledExceptionFilter( &unhandeledExceptionFilterHandler );
+  initializeStackTracing();
 }

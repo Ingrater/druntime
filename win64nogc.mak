@@ -17,7 +17,7 @@ IMPDIR=import
 DFLAGS=-m$(MODEL) -w -d -Isrc -Iimport -property -version=NOGCSAFE -version=RTTI
 UDFLAGS=-m$(MODEL) -debug -g -nofloat -w -d -Isrc -Iimport -property
 DFLAGS_RELEASE=-release -O -noboundscheck -version=NO_INVARIANTS
-DFLAGS_DEBUG=-debug -version=MEMORY_TRACKING -g -op
+DFLAGS_DEBUG=-debug -version=MEMORY_TRACKING -g -op -gs
 DDOCFLAGS=-c -w -o- -Isrc -Iimport
 
 #CFLAGS=/O2 /I$(VCDIR)\INCLUDE /I$(SDKDIR)\Include
