@@ -909,6 +909,8 @@ struct RCArray(T,AT = StdAllocator)
   {
     return hashOf(m_Data.ptr, m_Data.length);
   }
+
+  auto getDataObject() { return m_DataObject; }
 }
 
 RCArray!(immutable(char)) _T(immutable(char)[] data)

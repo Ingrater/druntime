@@ -246,11 +246,19 @@ extern (C)
 
     export void _d_array_bounds(ModuleInfo* m, uint line)
     {
+        debug
+        {
+          onAssertErrorMsg(m.name, line, "array out of bounds access");
+        }
         onRangeError(m.name, line);
     }
 
     export void _d_switch_error(ModuleInfo* m, uint line)
     {
+        debug
+        {
+          onAssertErrorMsg(m.name, line, "unhandeled value in switch");
+        }
         onSwitchError(m.name, line);
     }
 }

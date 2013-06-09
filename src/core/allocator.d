@@ -650,10 +650,14 @@ auto AllocatorNew(T,AT,ARGS...)(AT allocator, ARGS args)
     {
       allocator.SetIsClass(mem.ptr);
     }
+	
+	static if(__traits(hasMember, T, "SetAllocator"))
+	{
+	  result.SetAllocator(allocator);
+	}
     
     static if(is(T : RefCounted))
     {
-      result.SetAllocator(allocator);
       return ReturnRefCounted!T(result);
     }
     else
