@@ -165,7 +165,14 @@ private TrackingAllocator g_trackingAllocator;
 class StdAllocator : IAdvancedAllocator
 {
   alias g_stdAllocator globalInstance;
-  enum size_t alignment = 4; //default alignment 4 byte
+  static if(size_t.sizeof == 4)
+  {
+    enum size_t alignment = 4; // default alignment 4 byte (32 bit)
+  }
+  else
+  {
+    enum size_t alignment = 16; // default alignment 16 byte (64 bit)
+  }
 
   enum BlockFlags
   {
@@ -450,7 +457,7 @@ class StdAllocator : IAdvancedAllocator
     if(mem is null)
     {
       version(DUMA)
-        mem = _duma_memalign(size_t.sizeof,size,__FILE__,__LINE__);
+        mem = _duma_memalign(alignment, size, __FILE__, __LINE__);
       else
         mem = malloc(size);
     }
@@ -711,8 +718,19 @@ void Destruct(Object obj)
 
 struct DefaultCtor {}; //call default ctor type
 
+enum defaultCtor = DefaultCtor();
+
 struct composite(T)
 {
+  static if(size_t.sizeof == 4)
+  {
+    align(4):
+  }
+  else
+  {
+    align(16):
+  }
+
   static assert(is(T == class),"can only composite classes");
   void[__traits(classInstanceSize, T)] _classMemory = void;
   bool m_destructed = false;
@@ -740,7 +758,7 @@ struct composite(T)
   this(DefaultCtor c){ 
   };
 
-  void construct(ARGS...)(ARGS args) //TODO fix: workaround because constructor can not be a template
+  void construct(ARGS...)(ARGS args) //TODO fix: workaround because constructor can not be a template BUG 4749
   {
     _classMemory[] = typeid(T).init[];
     T result = (cast(T)_classMemory.ptr);
@@ -774,6 +792,9 @@ struct composite(T)
     }
   }
 }
+
+//TODO should work with dmd 2.063
+//static assert((composite!Object).alignof == StdAllocator.alignment);
 
 void AllocatorDelete(T,AT)(AT allocator, T obj)
 {
