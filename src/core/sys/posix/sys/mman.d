@@ -132,7 +132,7 @@ version( linux )
     //void* mmap(void*, size_t, int, int, int, off_t);
     int   munmap(void*, size_t);
 
-  static if( __USE_LARGEFILE64 )
+  static if( __USE_FILE_OFFSET64 )
   {
     void* mmap64(void*, size_t, int, int, int, off_t);
     alias mmap64 mmap;
@@ -183,7 +183,15 @@ version( linux )
     enum MAP_SHARED     = 0x01;
     enum MAP_PRIVATE    = 0x02;
     enum MAP_FIXED      = 0x10;
-    enum MAP_ANON       = 0x20; // non-standard
+
+    version (X86)
+        enum MAP_ANON       = 0x20;   // non-standard
+    else version (X86_64)
+        enum MAP_ANON       = 0x20;   // non-standard
+    else version (MIPS32)
+        enum MAP_ANON       = 0x0800; // non-standard
+    else
+        static assert(0, "unimplemented");
 
     enum MAP_FAILED     = cast(void*) -1;
 

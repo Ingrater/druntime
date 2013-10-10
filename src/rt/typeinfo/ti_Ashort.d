@@ -21,26 +21,16 @@ private import rt.util.hash;
 class TypeInfo_As : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
-    override to_string_t toString() 
-    { 
-      version(NOGCSAFE)
-        return to_string_t("short[]");
-      else
-        return "short[]"; 
-    }
 
-    @trusted:
-    const:
-    pure:
-    nothrow:
+    override string toString() const { return "short[]"; }
 
-    override size_t getHash(in void* p)
+    override size_t getHash(in void* p) @trusted const
     {
         short[] s = *cast(short[]*)p;
         return hashOf(s.ptr, s.length * short.sizeof);
     }
 
-    override bool equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2) const
     {
         short[] s1 = *cast(short[]*)p1;
         short[] s2 = *cast(short[]*)p2;
@@ -49,7 +39,7 @@ class TypeInfo_As : TypeInfo_Array
                memcmp(cast(void *)s1, cast(void *)s2, s1.length * short.sizeof) == 0;
     }
 
-    override int compare(in void* p1, in void* p2)
+    override int compare(in void* p1, in void* p2) const
     {
         short[] s1 = *cast(short[]*)p1;
         short[] s2 = *cast(short[]*)p2;
@@ -70,12 +60,10 @@ class TypeInfo_As : TypeInfo_Array
         return 0;
     }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(short);
+        return cast(inout)typeid(short);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 
@@ -83,20 +71,9 @@ class TypeInfo_As : TypeInfo_Array
 
 class TypeInfo_At : TypeInfo_As
 {
-    override to_string_t toString() 
-    { 
-      version(NOGCSAFE)
-        return to_string_t("ushort[]");
-      else
-        return "ushort[]";
-    }
-    @trusted:
-    const:
-    pure:
-    nothrow:
+    override string toString() const { return "ushort[]"; }
 
-
-    override int compare(in void* p1, in void* p2)
+    override int compare(in void* p1, in void* p2) const
     {
         ushort[] s1 = *cast(ushort[]*)p1;
         ushort[] s2 = *cast(ushort[]*)p2;
@@ -117,35 +94,20 @@ class TypeInfo_At : TypeInfo_As
         return 0;
     }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(ushort);
+        return cast(inout)typeid(ushort);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // wchar[]
 
 class TypeInfo_Au : TypeInfo_At
 {
-    override to_string_t toString() 
-    { 
-      version(NOGCSAFE)
-        return to_string_t("wchar[]");
-      else
-        return "wchar[]"; 
-    }
-    @trusted:
-    const:
-    pure:
-    nothrow:
+    override string toString() const { return "wchar[]"; }
 
-
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(wchar);
+        return cast(inout)typeid(wchar);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }

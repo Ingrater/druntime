@@ -20,27 +20,17 @@ private import rt.util.hash;
 
 class TypeInfo_Ae : TypeInfo_Array
 {
-    override to_string_t toString() 
-    { 
-      version(NOGCSAFE)
-        return to_string_t("real[]");
-      else
-        return "real[]"; 
-    }
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 
-    @trusted:
-    const:
-    pure:
-    nothrow:
+    override string toString() const { return "real[]"; }
 
-    override size_t getHash(in void* p)
+    override size_t getHash(in void* p) @trusted const
     {
         real[] s = *cast(real[]*)p;
         return hashOf(s.ptr, s.length * real.sizeof);
     }
 
-    override bool equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2) const
     {
         real[] s1 = *cast(real[]*)p1;
         real[] s2 = *cast(real[]*)p2;
@@ -56,7 +46,7 @@ class TypeInfo_Ae : TypeInfo_Array
         return true;
     }
 
-    override int compare(in void* p1, in void* p2)
+    override int compare(in void* p1, in void* p2) const
     {
         real[] s1 = *cast(real[]*)p1;
         real[] s2 = *cast(real[]*)p2;
@@ -77,34 +67,20 @@ class TypeInfo_Ae : TypeInfo_Array
         return 0;
     }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(real);
+        return cast(inout)typeid(real);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // ireal[]
 
 class TypeInfo_Aj : TypeInfo_Ae
 {
-    override to_string_t toString() 
-    {
-      version(NOGCSAFE)
-        return to_string_t("ireal[]");
-      else
-        return "ireal[]"; 
-    }
-    @trusted:
-    const:
-    pure:
-    nothrow:
+    override string toString() const { return "ireal[]"; }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(ireal);
+        return cast(inout)typeid(ireal);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }

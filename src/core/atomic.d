@@ -21,11 +21,15 @@ version( D_InlineAsm_X86 )
     version = AsmX86_32;
     enum has64BitCAS = true;
 }
-version( D_InlineAsm_X86_64 )
+else version( D_InlineAsm_X86_64 )
 {
     version = AsmX86;
     version = AsmX86_64;
     enum has64BitCAS = true;
+}
+else
+{
+    enum has64BitCAS = false;
 }
 
 private
@@ -138,7 +142,8 @@ version( CoreDdoc )
         seq,    /// Fully sequenced (acquire + release).
     }
 
-    deprecated alias MemoryOrder msync; /// Deprecated. Please use MemoryOrder instead.
+    deprecated("Please use MemoryOrder instead.")
+    alias MemoryOrder msync;
 
     /**
      * Inserts a full load/store memory fence (on platforms that need it). This ensures
@@ -318,7 +323,8 @@ else version( AsmX86_32 )
         seq,
     }
 
-    deprecated alias MemoryOrder msync;
+    deprecated("Please use MemoryOrder instead.")
+    alias MemoryOrder msync;
 
 
     private
@@ -788,7 +794,8 @@ else version( AsmX86_64 )
         seq,
     }
 
-    deprecated alias MemoryOrder msync;
+    deprecated("Please use MemoryOrder instead.")
+    alias MemoryOrder msync;
 
 
     private

@@ -20,27 +20,17 @@ private import rt.util.hash;
 
 class TypeInfo_Ac : TypeInfo_Array
 {
-    override to_string_t toString() 
-    { 
-      version(NOGCSAFE)
-        return to_string_t("creal[]");
-      else
-        return "creal[]"; 
-    }
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
-	
-	@trusted:
-    const:
-    pure:
-    nothrow:
 
-    override size_t getHash(in void* p)
+    override string toString() const { return "creal[]"; }
+
+    override size_t getHash(in void* p) @trusted const
     {
         creal[] s = *cast(creal[]*)p;
         return hashOf(s.ptr, s.length * creal.sizeof);
     }
 
-    override bool equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2) const
     {
         creal[] s1 = *cast(creal[]*)p1;
         creal[] s2 = *cast(creal[]*)p2;
@@ -56,7 +46,7 @@ class TypeInfo_Ac : TypeInfo_Array
         return true;
     }
 
-    override int compare(in void* p1, in void* p2)
+    override int compare(in void* p1, in void* p2) const
     {
         creal[] s1 = *cast(creal[]*)p1;
         creal[] s2 = *cast(creal[]*)p2;
@@ -77,10 +67,8 @@ class TypeInfo_Ac : TypeInfo_Array
         return 0;
     }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(creal);
+        return cast(inout)typeid(creal);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }

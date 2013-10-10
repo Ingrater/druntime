@@ -81,83 +81,274 @@ mode_t umask(mode_t);
 
 version( linux )
 {
-    struct stat_t
+    version (X86)
     {
-        dev_t       st_dev;
-        static if(__WORDSIZE==32)
+        struct stat_t
         {
-            ushort      __pad1;
-        }
-        static if( !__USE_FILE_OFFSET64 || __WORDSIZE==64 )
-        {
-            uint        st_ino;
-        }
-        else
-        {
-            uint        __st_ino;
-        }
-        static if (__WORDSIZE==32)
-        {
-            mode_t      st_mode;
-            nlink_t     st_nlink;
-        }
-        else
-        {
-            nlink_t     st_nlink;
-            mode_t      st_mode;
-        }
-        uid_t       st_uid;
-        gid_t       st_gid;
-        static if(__WORDSIZE==64)
-        {
-            uint        pad0;
-        }
-        dev_t       st_rdev;
-        static if(__WORDSIZE==32)
-        {
-            ushort      __pad2;
-        }
-        off_t       st_size;
-        blksize_t   st_blksize;
-        blkcnt_t    st_blocks;
-        static if( __USE_MISC || __USE_XOPEN2K8 )
-        {
-            timespec    st_atim;
-            timespec    st_mtim;
-            timespec    st_ctim;
-            extern(D)
+            dev_t       st_dev;
+            static if(__WORDSIZE==32)
             {
-                @property ref time_t st_atime() { return st_atim.tv_sec; }
-                @property ref time_t st_mtime() { return st_mtim.tv_sec; }
-                @property ref time_t st_ctime() { return st_ctim.tv_sec; }
+                ushort      __pad1;
             }
-        }
-        else
-        {
-            time_t      st_atime;
-            c_ulong     st_atimensec;
-            time_t      st_mtime;
-            c_ulong     st_mtimensec;
-            time_t      st_ctime;
-            c_ulong     st_ctimensec;
-        }
-        static if(__WORDSIZE==64)
-        {
-            c_long      __unused[3];
-        }
-        else
-        {
-            static if( __USE_FILE_OFFSET64 )
+            static if( !__USE_FILE_OFFSET64 || __WORDSIZE==64 )
             {
-                ino_t       st_ino;
+                uint        st_ino;
             }
             else
             {
-                c_ulong     __unused4;
-                c_ulong     __unused5;
+                uint        __st_ino;
+            }
+            static if (__WORDSIZE==32)
+            {
+                mode_t      st_mode;
+                nlink_t     st_nlink;
+            }
+            else
+            {
+                nlink_t     st_nlink;
+                mode_t      st_mode;
+            }
+            uid_t       st_uid;
+            gid_t       st_gid;
+            static if(__WORDSIZE==64)
+            {
+                uint        pad0;
+            }
+            dev_t       st_rdev;
+            static if(__WORDSIZE==32)
+            {
+                ushort      __pad2;
+            }
+            off_t       st_size;
+            blksize_t   st_blksize;
+            blkcnt_t    st_blocks;
+            static if( __USE_MISC || __USE_XOPEN2K8 )
+            {
+                timespec    st_atim;
+                timespec    st_mtim;
+                timespec    st_ctim;
+                extern(D)
+                {
+                    @property ref time_t st_atime() { return st_atim.tv_sec; }
+                    @property ref time_t st_mtime() { return st_mtim.tv_sec; }
+                    @property ref time_t st_ctime() { return st_ctim.tv_sec; }
+                }
+            }
+            else
+            {
+                time_t      st_atime;
+                c_ulong     st_atimensec;
+                time_t      st_mtime;
+                c_ulong     st_mtimensec;
+                time_t      st_ctime;
+                c_ulong     st_ctimensec;
+            }
+            static if(__WORDSIZE==64)
+            {
+                c_long      __unused[3];
+            }
+            else
+            {
+                static if( __USE_FILE_OFFSET64 )
+                {
+                    ino_t       st_ino;
+                }
+                else
+                {
+                    c_ulong     __unused4;
+                    c_ulong     __unused5;
+                }
             }
         }
     }
+    else version (X86_64)
+    {
+        struct stat_t
+        {
+            dev_t       st_dev;
+            static if(__WORDSIZE==32)
+            {
+                ushort      __pad1;
+            }
+            static if( !__USE_FILE_OFFSET64 || __WORDSIZE==64 )
+            {
+                uint        st_ino;
+            }
+            else
+            {
+                uint        __st_ino;
+            }
+            static if (__WORDSIZE==32)
+            {
+                mode_t      st_mode;
+                nlink_t     st_nlink;
+            }
+            else
+            {
+                nlink_t     st_nlink;
+                mode_t      st_mode;
+            }
+            uid_t       st_uid;
+            gid_t       st_gid;
+            static if(__WORDSIZE==64)
+            {
+                uint        pad0;
+            }
+            dev_t       st_rdev;
+            static if(__WORDSIZE==32)
+            {
+                ushort      __pad2;
+            }
+            off_t       st_size;
+            blksize_t   st_blksize;
+            blkcnt_t    st_blocks;
+            static if( __USE_MISC || __USE_XOPEN2K8 )
+            {
+                timespec    st_atim;
+                timespec    st_mtim;
+                timespec    st_ctim;
+                extern(D)
+                {
+                    @property ref time_t st_atime() { return st_atim.tv_sec; }
+                    @property ref time_t st_mtime() { return st_mtim.tv_sec; }
+                    @property ref time_t st_ctime() { return st_ctim.tv_sec; }
+                }
+            }
+            else
+            {
+                time_t      st_atime;
+                c_ulong     st_atimensec;
+                time_t      st_mtime;
+                c_ulong     st_mtimensec;
+                time_t      st_ctime;
+                c_ulong     st_ctimensec;
+            }
+            static if(__WORDSIZE==64)
+            {
+                c_long      __unused[3];
+            }
+            else
+            {
+                static if( __USE_FILE_OFFSET64 )
+                {
+                    ino_t       st_ino;
+                }
+                else
+                {
+                    c_ulong     __unused4;
+                    c_ulong     __unused5;
+                }
+            }
+        }
+    }
+    else version (MIPS_O32)
+    {
+        struct stat_t
+        {
+            c_ulong     st_dev;
+            c_long[3]   st_pad1;
+            ino_t       st_ino;
+            mode_t      st_mode;
+            nlink_t     st_nlink;
+            uid_t       st_uid;
+            gid_t       st_gid;
+            c_ulong     st_rdev;
+            static if (!__USE_FILE_OFFSET64)
+            {
+                c_long[2]   st_pad2;
+                off_t       st_size;
+                c_long      st_pad3;
+            }
+            else
+            {
+                c_long[3]   st_pad2;
+                off_t       st_size;
+            }
+            static if (__USE_MISC || __USE_XOPEN2K8)
+            {
+                timespec    st_atim;
+                timespec    st_mtim;
+                timespec    st_ctim;
+                extern(D)
+                {
+                    @property ref time_t st_atime() { return st_atim.tv_sec; }
+                    @property ref time_t st_mtime() { return st_mtim.tv_sec; }
+                    @property ref time_t st_ctime() { return st_ctim.tv_sec; }
+                }
+            }
+            else
+            {
+                time_t      st_atime;
+                c_ulong     st_atimensec;
+                time_t      st_mtime;
+                c_ulong     st_mtimensec;
+                time_t      st_ctime;
+                c_ulong     st_ctimensec;
+            }
+            blksize_t   st_blksize;
+            static if (!__USE_FILE_OFFSET64)
+            {
+                blkcnt_t    st_blocks;
+            }
+            else
+            {
+                c_long      st_pad4;
+                blkcnt_t    st_blocks;
+            }
+            c_long[14]  st_pad5;
+        }
+    }
+    else version (PPC)
+    {
+        struct stat_t
+        {
+            c_ulong     st_dev;
+            ino_t       st_ino;
+            mode_t      st_mode;
+            nlink_t     st_nlink;
+            uid_t       st_uid;
+            gid_t       st_gid;
+            c_ulong     st_rdev;
+            off_t       st_size;
+            c_ulong     st_blksize;
+            c_ulong     st_blocks;
+            c_ulong     st_atime;
+            c_ulong     st_atime_nsec;
+            c_ulong     st_mtime;
+            c_ulong     st_mtime_nsec;
+            c_ulong     st_ctime;
+            c_ulong     st_ctime_nsec;
+            c_ulong     __unused4;
+            c_ulong     __unused5;
+        }
+    }
+    else version (PPC64)
+    {
+        struct stat_t
+        {
+            c_ulong     st_dev;
+            ino_t       st_ino;
+            nlink_t     st_nlink;
+            mode_t      st_mode;
+            uid_t       st_uid;
+            gid_t       st_gid;
+            c_ulong     st_rdev;
+            off_t       st_size;
+            c_ulong     st_blksize;
+            c_ulong     st_blocks;
+            c_ulong     st_atime;
+            c_ulong     st_atime_nsec;
+            c_ulong     st_mtime;
+            c_ulong     st_mtime_nsec;
+            c_ulong     st_ctime;
+            c_ulong     st_ctime_nsec;
+            c_ulong     __unused4;
+            c_ulong     __unused5;
+            c_ulong     __unused6;
+        }
+    }
+    else
+        static assert(0, "unimplemented");
 
     enum S_IRUSR    = 0x100; // octal 0400
     enum S_IWUSR    = 0x080; // octal 0200
@@ -436,13 +627,13 @@ else version (Solaris)
     enum S_ISVTX = 0x200;
 
     private
-    {   
+    {
         extern (D) bool S_ISTYPE(mode_t mode, uint mask)
         {
             return (mode & S_IFMT) == mask;
         }
     }
-      
+
     extern (D) bool S_ISBLK(mode_t mode) { return S_ISTYPE(mode, S_IFBLK); }
     extern (D) bool S_ISCHR(mode_t mode) { return S_ISTYPE(mode, S_IFCHR); }
     extern (D) bool S_ISDIR(mode_t mode) { return S_ISTYPE(mode, S_IFDIR); }

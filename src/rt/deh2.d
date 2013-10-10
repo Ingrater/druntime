@@ -26,33 +26,16 @@ else version (Win64)
 version (deh2)
 {
 
-//debug=PRINTF
+//debug=PRINTF;
 debug(PRINTF) import core.stdc.stdio : printf;
 
 extern (C)
 {
-    version (OSX)
-    {
-        // Set by rt.memory_osx.onAddImage()
-        __gshared ubyte[] _deh_eh_array;
-    }
-    else
-    {
-        extern __gshared
-        {
-            /* Symbols created by the compiler and inserted into the object file
-             * that 'bracket' the __deh_eh segment
-             */
-            void* _deh_beg;
-            void* _deh_end;
-        }
-    }
-
     Throwable.TraceInfo _d_traceContext(void* ptr = null);
 
     int _d_isbaseof(ClassInfo oc, ClassInfo c);
 
-    void _d_createTrace(Object*);
+    void _d_createTrace(Object*, void*);
 }
 
 alias int function() fp_t;   // function pointer in ambient memory model
@@ -128,21 +111,23 @@ void terminate()
  * Return DHandlerTable if there is one, NULL if not.
  */
 
-FuncTable *__eh_finddata(void *address)
+immutable(FuncTable)* __eh_finddata(void *address)
+{
+    import rt.sections;
+    foreach (ref sg; SectionGroup)
+    {
+        auto pstart = sg.ehTables.ptr;
+        auto pend = pstart + sg.ehTables.length;
+        if (auto ft = __eh_finddata(address, pstart, pend))
+            return ft;
+    }
+    return null;
+}
+
+immutable(FuncTable)* __eh_finddata(void *address, immutable(FuncTable)* pstart, immutable(FuncTable)* pend)
 {
     debug(PRINTF) printf("FuncTable.sizeof = %p\n", FuncTable.sizeof);
     debug(PRINTF) printf("__eh_finddata(address = %p)\n", address);
-
-    version (OSX)
-    {
-        auto pstart = cast(FuncTable *)_deh_eh_array.ptr;
-        auto pend   = cast(FuncTable *)(_deh_eh_array.ptr + _deh_eh_array.length);
-    }
-    else
-    {
-        auto pstart = cast(FuncTable *)&_deh_beg;
-        auto pend   = cast(FuncTable *)&_deh_end;
-    }
     debug(PRINTF) printf("_deh_beg = %p, _deh_end = %p\n", pstart, pend);
 
     for (auto ft = pstart; 1; ft++)
@@ -159,7 +144,7 @@ FuncTable *__eh_finddata(void *address)
              */
             if (ft.fptr == null)
             {
-                ft = cast(FuncTable *)(cast(void**)ft + 1);
+                ft = cast(immutable(FuncTable)*)(cast(void**)ft + 1);
                 goto Lagain;
             }
         }
@@ -167,7 +152,7 @@ FuncTable *__eh_finddata(void *address)
         debug(PRINTF) printf("  ft = %p, fptr = %p, handlertable = %p, fsize = x%03x\n",
               ft, ft.fptr, ft.handlertable, ft.fsize);
 
-        void *fptr = ft.fptr;
+        immutable(void)* fptr = ft.fptr;
         version (Win64)
         {
             /* If linked with /DEBUG, the linker rewrites it so the function pointer points
@@ -248,7 +233,7 @@ extern (C) void _d_throwc(Object *h)
     else
         static assert(0);
 
-    _d_createTrace(h);
+    _d_createTrace(h, null);
 
 //static uint abc;
 //if (++abc == 2) *(char *)0=0;

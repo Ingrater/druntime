@@ -17,7 +17,7 @@ private
 {
     import core.stdc.string;
     import rt.util.string;
-    debug import core.stdc.stdio;
+    debug(PRINTF) import core.stdc.stdio;
 }
 
 extern (C) @trusted:
@@ -32,7 +32,7 @@ export byte[] _d_arraycopy(size_t size, byte[] from, byte[] to)
         char[10] tmp1 = void;
         char[10] tmp2 = void;
         string msg = "lengths don't match for array copy, "c;
-        msg ~= tmp1.intToString(to.length) ~ " = " ~ tmp2.intToString(from.length);
+        msg ~= tmp1.uintToString(to.length) ~ " = " ~ tmp2.uintToString(from.length);
         throw new Error(msg);
     }
     else if (to.ptr + to.length * size <= from.ptr ||

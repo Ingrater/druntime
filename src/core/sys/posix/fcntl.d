@@ -101,16 +101,47 @@ version( linux )
     enum F_UNLCK        = 2;
     enum F_WRLCK        = 1;
 
-    enum O_CREAT        = 0x40;   // octal   0100
-    enum O_EXCL         = 0x80;   // octal   0200
-    enum O_NOCTTY       = 0x100;  // octal   0400
-    enum O_TRUNC        = 0x200;  // octal  01000
+    version (X86)
+    {
+        enum O_CREAT        = 0x40;   // octal   0100
+        enum O_EXCL         = 0x80;   // octal   0200
+        enum O_NOCTTY       = 0x100;  // octal   0400
+        enum O_TRUNC        = 0x200;  // octal  01000
 
-    enum O_APPEND       = 0x400;  // octal  02000
-    enum O_NONBLOCK     = 0x800;  // octal  04000
-    enum O_SYNC         = 0x1000; // octal 010000
-    enum O_DSYNC        = O_SYNC;
-    enum O_RSYNC        = O_SYNC;
+        enum O_APPEND       = 0x400;  // octal  02000
+        enum O_NONBLOCK     = 0x800;  // octal  04000
+        enum O_SYNC         = 0x1000; // octal 010000
+        enum O_DSYNC        = O_SYNC;
+        enum O_RSYNC        = O_SYNC;
+    }
+    else version (X86_64)
+    {
+        enum O_CREAT        = 0x40;   // octal   0100
+        enum O_EXCL         = 0x80;   // octal   0200
+        enum O_NOCTTY       = 0x100;  // octal   0400
+        enum O_TRUNC        = 0x200;  // octal  01000
+
+        enum O_APPEND       = 0x400;  // octal  02000
+        enum O_NONBLOCK     = 0x800;  // octal  04000
+        enum O_SYNC         = 0x1000; // octal 010000
+        enum O_DSYNC        = O_SYNC;
+        enum O_RSYNC        = O_SYNC;
+    }
+    else version (MIPS32)
+    {
+        enum O_CREAT        = 0x0100;
+        enum O_EXCL         = 0x0400;
+        enum O_NOCTTY       = 0x0800;
+        enum O_TRUNC        = 0x0200;
+
+        enum O_APPEND       = 0x0008;
+        enum O_DSYNC        = O_SYNC;
+        enum O_NONBLOCK     = 0x0080;
+        enum O_RSYNC        = O_SYNC;
+        enum O_SYNC         = 0x0010;
+    }
+    else
+        static assert(0, "unimplemented");
 
     enum O_ACCMODE      = 0x3;
     enum O_RDONLY       = 0x0;
@@ -126,7 +157,7 @@ version( linux )
         pid_t   l_pid;
     }
 
-    static if( __USE_LARGEFILE64 )
+    static if( __USE_FILE_OFFSET64 )
     {
         int   creat64(in char*, mode_t);
         alias creat64 creat;

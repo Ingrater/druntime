@@ -21,27 +21,16 @@ private import rt.util.hash;
 class TypeInfo_Ad : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
-	
-    override to_string_t toString() 
-    { 
-      version(NOGCSAFE)
-        return to_string_t("double[]");
-      else
-        return "double[]"; 
-    }
-	
-	@trusted:
-    const:
-    pure:
-    nothrow:
-	
-    override size_t getHash(in void* p)
+
+    override string toString() const { return "double[]"; }
+
+    override size_t getHash(in void* p) @trusted const
     {
         double[] s = *cast(double[]*)p;
         return hashOf(s.ptr, s.length * double.sizeof);
     }
 
-    override bool equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2) const
     {
         double[] s1 = *cast(double[]*)p1;
         double[] s2 = *cast(double[]*)p2;
@@ -57,7 +46,7 @@ class TypeInfo_Ad : TypeInfo_Array
         return true;
     }
 
-    override int compare(in void* p1, in void* p2)
+    override int compare(in void* p1, in void* p2) const
     {
         double[] s1 = *cast(double[]*)p1;
         double[] s2 = *cast(double[]*)p2;
@@ -78,31 +67,20 @@ class TypeInfo_Ad : TypeInfo_Array
         return 0;
     }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(double);
+        return cast(inout)typeid(double);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // idouble[]
 
 class TypeInfo_Ap : TypeInfo_Ad
 {
+    override string toString() const { return "idouble[]"; }
 
-    override to_string_t toString() const
-    { 
-      version(NOGCSAFE)
-        return to_string_t("idouble[]");
-      else
-        return "idouble[]"; 
-    }
-
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(idouble);
+        return cast(inout)typeid(idouble);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }

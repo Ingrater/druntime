@@ -7,13 +7,13 @@
  * Source:    $(DRUNTIMESRC core/sys/windows/_stacktrace.d)
  */
 
-/*          Copyright Benjamin Thaut 2010 - 2011.
+/*          Copyright Benjamin Thaut 2010 - 2012.
  * Distributed under the Boost Software License, Version 1.0.
- *    (See accompanying file LICENSE_1_0.txt or copy at
+ *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.windows.stacktrace;
-
+version(Windows):
 
 import core.demangle;
 import core.runtime;
@@ -21,554 +21,361 @@ import core.stdc.stdlib;
 import core.stdc.string;
 import core.sys.windows.dbghelp;
 import core.sys.windows.windows;
-import core.stdc.stdio;
 
-version(NOGCSAFE)
-{
-  import core.allocator;
-  import core.refcounted;
-}
+//debug=PRINTF;
+debug(PRINTF) import core.stdc.stdio;
 
 
-extern(Windows)
-{
-    DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR pBuffer, DWORD nSize);
-    void  RtlCaptureContext(CONTEXT* ContextRecord);
-
-    alias LONG function(void*) UnhandeledExceptionFilterFunc;
-    void* SetUnhandledExceptionFilter(void* handler);
-
-    USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID *BackTrace, PULONG BackTraceHash);
-}
+extern(Windows) void RtlCaptureContext(CONTEXT* ContextRecord);
+extern(Windows) DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR pBuffer, DWORD nSize);
 
 
-enum : uint
-{
-    MAX_MODULE_NAME32 = 255,
-    TH32CS_SNAPMODULE = 0x00000008,
-    MAX_NAMELEN       = 1024,
-};
-
-
-extern(System)
-{
-    alias HANDLE function(DWORD dwFlags, DWORD th32ProcessID) CreateToolhelp32SnapshotFunc;
-    alias BOOL   function(HANDLE hSnapshot, MODULEENTRY32 *lpme) Module32FirstFunc;
-    alias BOOL   function(HANDLE hSnapshot, MODULEENTRY32 *lpme) Module32NextFunc;
-}
-
-
-struct MODULEENTRY32
-{
-    DWORD   dwSize;
-    DWORD   th32ModuleID;
-    DWORD   th32ProcessID;
-    DWORD   GlblcntUsage;
-    DWORD   ProccntUsage;
-    BYTE*   modBaseAddr;
-    DWORD   modBaseSize;
-    HMODULE hModule;
-    CHAR[MAX_MODULE_NAME32 + 1] szModule;
-    CHAR[MAX_PATH] szExePath;
-}
-
-
-private
-{
-    version(NOGCSAFE)
-    {
-      alias RCArray!char path_t; 
-    }
-    else
-    {
-      alias string path_t;
-    }
-  
-    path_t generateSearchPath()
-    {
-        __gshared string[3] defaultPathList = ["_NT_SYMBOL_PATH",
-                                               "_NT_ALTERNATE_SYMBOL_PATH",
-                                               "SYSTEMROOT"];
-
-        path_t         path;
-        char[MAX_PATH] temp;
-        DWORD          len;
-
-        foreach( e; defaultPathList )
-        {
-            if( (len = GetEnvironmentVariableA( e.ptr, temp.ptr, temp.length )) > 0 )
-            {
-                path ~= temp[0 .. len];
-                path ~= ";";
-            }
-        }
-        path ~= "\0";
-        return path;
-    }
-
-    __gshared bool initialized = false;
-}
+private __gshared immutable bool initialized;
 
 
 class StackTrace : Throwable.TraceInfo
 {
 public:
-    this()
+    /**
+     * Constructor
+     * Params:
+     *  skip = The number of stack frames to skip.
+     *  context = The context to receive the stack trace from. Can be null.
+     */
+    this(size_t skip, CONTEXT* context)
     {
+        if(context is null)
+        {
+            version(Win64)
+                static enum INTERNALFRAMES = 4;
+            else
+                static enum INTERNALFRAMES = 2;
+                
+            skip += INTERNALFRAMES; //skip the stack frames within the StackTrace class
+        }
+        else
+        {
+            //When a exception context is given the first stack frame is repeated for some reason
+            version(Win64)
+                static enum INTERNALFRAMES = 1;
+            else
+                static enum INTERNALFRAMES = 1;
+                
+            skip += INTERNALFRAMES;
+        }
         if( initialized )
-            m_trace = trace();
-    }
-  
-    version(NOGCSAFE)
-    {
-      alias RCArray!(immutable(char)) line_t;
-      alias RCArray!(line_t) trace_t;
-    }
-    else
-    {
-      alias char[] line_t;
-      alias char[][] trace_t;
+            m_trace = trace(skip, context);
     }
 
-    int opApply( scope int delegate(ref string) dg )
+    int opApply( scope int delegate(ref const(char[])) dg ) const
     {
-        return opApply( (ref size_t, ref string buf)
+        return opApply( (ref size_t, ref const(char[]) buf)
                         {
                             return dg( buf );
                         });
     }
 
-    int opApply( scope int delegate(ref size_t, ref string) dg )
+
+    int opApply( scope int delegate(ref size_t, ref const(char[])) dg ) const
     {
         int result;
-
-        foreach( i, e; m_trace )
+        foreach( i, e; resolve(m_trace) )
         {
-          version(NOGCSAFE)
-          {
-            auto temp = e[];
-            if( (result = dg(i, temp )) != 0)
-              break;
-          }
-          else {
-            auto temp = cast(string)e;
-            if( (result = dg( i, temp )) != 0 )
+            if( (result = dg( i, e )) != 0 )
                 break;
-          }
         }
         return result;
     }
 
 
-    override to_string_t toString()
+    override string toString() const
     {
-        version(NOGCSAFE)
+        string result;
+
+        foreach( e; this )
         {
-          rcstring result;
-          
-          foreach( e; m_trace)
-          {
-            result ~= e;
-            result ~= "\n";
-          }
-          return result;
+            result ~= e ~ "\n";
         }
-        else
-        {
-          string result;
-
-          foreach( e; m_trace )
-          {
-              result ~= e;
-              result ~= "\n";
-          }
-          return result;
-        }
-    }
-    
-    static long[] traceAddresses(long[] addresses, bool allocateIfToSmall = true, int skip = 0)
-    {
-      synchronized( StackTrace.classinfo )
-      {
-        if(!initialized) 
-          return [];
-        return traceAddressesNoSync(addresses, allocateIfToSmall, skip);
-      }
-    }
-    
-    static trace_t resolveAddresses(long[] addresses)
-    {
-      synchronized( StackTrace.classinfo )
-      {
-        if(!initialized) 
-          return trace_t();
-        return resolveAddressesNoSync(addresses);
-      }
+        return result;
     }
 
-private:
-    trace_t m_trace;
-
-
-    static trace_t trace()
+    /**
+     * Receive a stack trace in the form of an address list.
+     * Params:
+     *  skip = How many stack frames should be skipped.
+     *  context = The context that should be used. If null the current context is used.
+     * Returns:
+     *  A list of addresses that can be passed to resolve at a later point in time.
+     */
+    static ulong[] trace(size_t skip = 0, CONTEXT* context = null)
     {
         synchronized( StackTrace.classinfo )
         {
-            long[10] addressesBuffer;
-            long[] addresses = traceAddressesNoSync(addressesBuffer,true);
-            auto result = resolveAddressesNoSync(addresses);
-            version(NOGCSAFE)
-            {
-              if(addresses.ptr != addressesBuffer.ptr)
-              {
-                StdAllocator.globalInstance.FreeMemory(addresses.ptr);
-              }
-            }
-            return result;
+            return traceNoSync(skip, context);
         }
     }
-    
-    static void ContextHelper( ref CONTEXT c )
-    {
-      RtlCaptureContext( &c );
-    }
-  
-    static long[] traceAddressesNoSync(long[] addresses, bool allocateIfToSmall = true, int skip = 0)
-    {
-        assert(addresses.length > 0,"need at least space to write 1 address");
-        auto         dbghelp  = DbgHelp.get();
-        auto         hThread  = GetCurrentThread();
-        auto         hProcess = GetCurrentProcess();
-        STACKFRAME64 stackframe;
-        DWORD        imageType;
-        char[][]     trace;
-        CONTEXT      c;
-        version(NOGCSAFE){
-          bool         allocated = false;
-        }
 
-        version(Win64)
+    /**
+     * Resolve a stack trace.
+     * Params:
+     *  addresses = A list of addresses to resolve.
+     * Returns:
+     *  An array of strings with the results.
+     */
+    static char[][] resolve(const(ulong)[] addresses)
+    {
+        synchronized( StackTrace.classinfo )
         {
-          auto backtraceLength = RtlCaptureStackBackTrace(skip, cast(uint)addresses.length, cast(void**)addresses.ptr, null);
-          if(backtraceLength > 1)
-          {
-            return addresses[0..backtraceLength];
-          }
+            return resolveNoSync(addresses);
         }
+    }
 
-        c.ContextFlags = CONTEXT_FULL;
-        //ContextHelper( c );
-        RtlCaptureContext( &c );
+private:
+    ulong[] m_trace;
+
+
+    static ulong[] traceNoSync(size_t skip, CONTEXT* context)
+    {
+        auto dbghelp  = DbgHelp.get();
+        if(dbghelp is null)
+            return []; // dbghelp.dll not available
+
+        HANDLE       hThread  = GetCurrentThread();
+        HANDLE       hProcess = GetCurrentProcess();
+        CONTEXT      ctxt;
+
+        if(context is null)
+        {
+            ctxt.ContextFlags = CONTEXT_FULL;
+            RtlCaptureContext(&ctxt);
+        }
+        else
+        {
+            ctxt = *context;
+        }
 
         //x86
-        version(X86)
+        STACKFRAME64 stackframe;
+        with (stackframe)
         {
-          imageType                   = IMAGE_FILE_MACHINE_I386;
-          stackframe.AddrPC.Offset    = cast(DWORD64) c.Eip;
-          stackframe.AddrPC.Mode      = ADDRESS_MODE.AddrModeFlat;
-          stackframe.AddrFrame.Offset = cast(DWORD64) c.Ebp;
-          stackframe.AddrFrame.Mode   = ADDRESS_MODE.AddrModeFlat;
-          stackframe.AddrStack.Offset = cast(DWORD64) c.Esp;
-          stackframe.AddrStack.Mode   = ADDRESS_MODE.AddrModeFlat; 
-        }
-        else version(X86_64)
-        {
-          imageType                   = IMAGE_FILE_MACHINE_AMD64;
-          stackframe.AddrPC.Offset    = cast(DWORD64) c.Rip;
-          stackframe.AddrPC.Mode      = ADDRESS_MODE.AddrModeFlat;
-          stackframe.AddrFrame.Offset = cast(DWORD64) c.Rbp;
-          stackframe.AddrFrame.Mode   = ADDRESS_MODE.AddrModeFlat;
-          stackframe.AddrStack.Offset = cast(DWORD64) c.Rsp;
-          stackframe.AddrStack.Mode   = ADDRESS_MODE.AddrModeFlat; 
-        }
-        else
-          static assert(0, "plattform not supported");
-
-        //printf( "Callstack:\n" );
-        size_t frameNum = 0;
-        for( ; ; frameNum++ )
-        {
-            if( dbghelp.StackWalk64( imageType, hProcess, hThread, &stackframe, &c,
-                                     null, null, null, null) != TRUE )
+            version(X86) 
             {
-                //printf( "End of Callstack\n" );
-                break;
+                enum Flat = ADDRESS_MODE.AddrModeFlat;
+                AddrPC.Offset    = ctxt.Eip;
+                AddrPC.Mode      = Flat;
+                AddrFrame.Offset = ctxt.Ebp;
+                AddrFrame.Mode   = Flat;
+                AddrStack.Offset = ctxt.Esp;
+                AddrStack.Mode   = Flat;
             }
-          
+        else version(X86_64)
+            {
+                enum Flat = ADDRESS_MODE.AddrModeFlat;
+                AddrPC.Offset    = ctxt.Rip;
+                AddrPC.Mode      = Flat;
+                AddrFrame.Offset = ctxt.Rbp;
+                AddrFrame.Mode   = Flat;
+                AddrStack.Offset = ctxt.Rsp;
+                AddrStack.Mode   = Flat;
+            }
+        }
+
+        version (X86)         enum imageType = IMAGE_FILE_MACHINE_I386;
+        else version (X86_64) enum imageType = IMAGE_FILE_MACHINE_AMD64;
+        else                  static assert(0, "unimplemented");
+
+        ulong[] result;
+        size_t frameNum = 0;
+        
+        // do ... while so that we don't skip the first stackframe
+        do 
+        {
             if( stackframe.AddrPC.Offset == stackframe.AddrReturn.Offset )
             {
-                //printf( "Endless callstack\n" );
+                debug(PRINTF) printf("Endless callstack\n");
                 break;
             }
-            
-            //Skip first stack frame
-            if(frameNum < skip)
-              continue;
-            
-            if(frameNum-skip >= addresses.length)
+            if(frameNum >= skip)
             {
-              if(allocateIfToSmall)
-              {
-                version(NOGCSAFE)
+                result ~= stackframe.AddrPC.Offset;
+            }
+            frameNum++;
+        }
+        while (dbghelp.StackWalk64(imageType, hProcess, hThread, &stackframe,
+                                   &ctxt, null, null, null, null));
+        return result;
+    }
+
+    static char[][] resolveNoSync(const(ulong)[] addresses)
+    {
+        auto dbghelp  = DbgHelp.get();
+        if(dbghelp is null)
+            return []; // dbghelp.dll not available
+
+        HANDLE hProcess = GetCurrentProcess();
+
+        static struct BufSymbol
+        {
+        align(1):
+            IMAGEHLP_SYMBOL64 _base;
+            TCHAR[1024] _buf;
+        }
+        BufSymbol bufSymbol=void;
+        IMAGEHLP_SYMBOL64* symbol = &bufSymbol._base;
+        symbol.SizeOfStruct = IMAGEHLP_SYMBOL64.sizeof;
+        symbol.MaxNameLength = bufSymbol._buf.length;
+
+        char[][] trace;
+        foreach(pc; addresses)
+        {
+            if( pc != 0 )
+            {
+                char[] res;
+                if (dbghelp.SymGetSymFromAddr64(hProcess, pc, null, symbol) &&
+                    *symbol.Name.ptr)
                 {
-                  if(allocated)
-                  {
-                    long* mem = cast(long*)StdAllocator.globalInstance.ReallocateMemory(addresses.ptr,addresses.length * 2 * long.sizeof);
-                    addresses = mem[0..(addresses.length * 2)];
-                  }
-                  else
-                  {
-                    long* mem = cast(long*)StdAllocator.globalInstance.AllocateMemory(addresses.length * 2 * long.sizeof);
-                    addresses = mem[0..(addresses.length * 2)];
-                    allocated = true;
-                  }
-                }
-                else {
-                  long[] mem = new long[addresses.length * 2];
-                  mem[0..addresses.length] = addresses[];
-                  addresses = mem;
-                }
-              }
-              else {
-                return addresses;
-              }
-            }
-            
-            addresses[frameNum-skip] = stackframe.AddrPC.Offset;
-        }
-        if(frameNum < skip)
-          frameNum = skip;
-        return addresses[0..(frameNum-skip)];
-    }
-    
-    static trace_t resolveAddressesNoSync(long[] addresses)
-    {
-      trace_t trace;
-      auto dbghelp    = DbgHelp.get();
-      auto hProcess   = GetCurrentProcess();
-      auto symbolSize = IMAGEHLP_SYMBOL64.sizeof + MAX_NAMELEN;
-      version(DUMA)
-        auto symbol   = cast(IMAGEHLP_SYMBOL64*) _duma_calloc( symbolSize, 1, __FILE__, __LINE__);
-      else
-        auto symbol   = cast(IMAGEHLP_SYMBOL64*) calloc( symbolSize, 1 );
+                    DWORD disp;
+                    IMAGEHLP_LINE64 line=void;
+                    line.SizeOfStruct = IMAGEHLP_LINE64.sizeof;
 
-      static assert((IMAGEHLP_SYMBOL64.sizeof + MAX_NAMELEN) <= uint.max, "symbolSize should never exceed uint.max");
-
-      symbol.SizeOfStruct  = cast(DWORD)symbolSize;
-      symbol.MaxNameLength = MAX_NAMELEN;
-
-      IMAGEHLP_LINE64 line;
-      line.SizeOfStruct = IMAGEHLP_LINE64.sizeof;
-
-      IMAGEHLP_MODULE64 moduleInfo;
-      moduleInfo.SizeOfStruct = IMAGEHLP_MODULE64.sizeof;
-        
-      foreach(address; addresses)
-      {
-        if( address != 0 )
-        {
-            DWORD64 offset;
-
-            if( dbghelp.SymGetSymFromAddr64( hProcess,
-                                             address,
-                                             &offset,
-                                             symbol ) == TRUE )
-            {
-                DWORD    displacement;
-                char[]   lineBuf;
-                char[20] temp;
-                
-                auto         symbolName = (cast(char*) symbol.Name.ptr)[0 .. strlen(symbol.Name.ptr)];
-
-                if( dbghelp.SymGetLineFromAddr64( hProcess, address, &displacement, &line ) == TRUE )
-                {     
-                    char[2048] demangleBuf;
-                    version(NOGCSAFE){
-                      line_t cur;
-                      
-                      cur ~= line.FileName[0 .. strlen( line.FileName )];
-                      cur ~= "(";
-                      cur ~= format( temp[], line.LineNumber );
-                      cur ~= "):";
-                      try {
-                        char[2048] decodeBuffer;
-                        size_t index = 0;
-                        char[] demangledName = symbolName;
-                        version(DigitalMars) version(Win32)
-                        {
-                          demangledName = decodeDmdString( demangledName, index, decodeBuffer);
-                        }
-                        demangledName = demangle( demangledName, demangleBuf );
-                        cur ~= demangledName;
-                        if(demangledName.ptr != demangleBuf.ptr)
-                          StdAllocator.globalInstance.FreeMemory(demangledName.ptr);
-                      }
-                      catch(Exception ex)
-                      {
-                        cur ~= symbolName;
-                        //no need to delete the exception here because it is in static memory
-                      }
-                      trace ~= cur;
-                    }
-                    else {
-                      char[2048] decodeBuffer;
-                      size_t index = 0;
-                      char[] decodedName = decodeDmdString( symbolName, index, decodeBuffer);
-                      // displacement bytes from beginning of line
-                      trace ~= line.FileName[0 .. strlen( line.FileName )] ~
-                               "(" ~ format( temp[], line.LineNumber ) ~ "): " ~
-                               demangle( decodedName, demangleBuf );
-                    }
+                    if (dbghelp.SymGetLineFromAddr64(hProcess, pc, &disp, &line))
+                        res = formatStackFrame(cast(void*)pc, symbol.Name.ptr,
+                                               line.FileName, line.LineNumber);
+                    else
+                        res = formatStackFrame(cast(void*)pc, symbol.Name.ptr);
                 }
-                else {
-                  version(NOGCSAFE)
-                  {
-                    trace ~= line_t(symbolName);
-                  }
-                  else {
-                    trace ~= symbolName;
-                  }
-                }
-            }
-            else
-            {
-                char[22] temp;
-                auto     val = format( temp[], address, 16 );
-                version(NOGCSAFE)
-                {
-                  trace ~= line_t(val);
-                }
-                else {
-                  trace ~= val.dup;
-                }
+                else
+                    res = formatStackFrame(cast(void*)pc);
+                trace ~= res;
             }
         }
-        else {
-          version(NOGCSAFE)
-          {
-            trace ~= line_t("unknown");
-          }
-          else 
-          {
-            trace ~= "unkown".dup;
-          }
-        }
-      }
-      version(DUMA)
-        _duma_free( symbol, __FILE__, __LINE__ );
-      else
-        free( symbol );
-      return trace;        
+        return trace;
     }
 
-    // TODO: Remove this in favor of an external conversion.
-    static char[] format( char[] buf, ulong val, uint base = 10 )
-    in
+    static char[] formatStackFrame(void* pc)
     {
-        assert( buf.length > 9 );
-    }
-    body
-    {
-        auto p = buf.ptr + buf.length;
+        import core.stdc.stdio : snprintf;
+        char[2+2*size_t.sizeof+1] buf=void;
 
-        if( base < 11 )
+        immutable len = snprintf(buf.ptr, buf.length, "0x%p", pc);
+        len < buf.length || assert(0);
+        return buf[0 .. len].dup;
+    }
+
+    static char[] formatStackFrame(void* pc, char* symName)
+    {
+        char[2048] demangleBuf=void;
+
+        auto res = formatStackFrame(pc);
+        res ~= " in ";
+        const(char)[] tempSymName = symName[0 .. strlen(symName)];
+        //Deal with dmd mangling of long names
+        version(DigitalMars) version(Win32)
         {
-            do
-            {
-                *--p = cast(char)(val % base + '0');
-            } while( val /= base );
+            size_t decodeIndex = 0;
+            tempSymName = decodeDmdString(tempSymName, decodeIndex);
         }
-        else if( base < 37 )
-        {
-            do
-            {
-                auto x = val % base;
-                *--p = cast(char)(x < 10 ? x + '0' : (x - 10) + 'A');
-            } while( val /= base );
-        }
-        else
-        {
-            assert( false, "base too large" );
-        }
-        return buf[p - buf.ptr .. $];
+        res ~= demangle(tempSymName, demangleBuf);
+        return res;
+    }
+
+    static char[] formatStackFrame(void* pc, char* symName,
+                                   in char* fileName, uint lineNum)
+    {
+        import core.stdc.stdio : snprintf;
+        char[11] buf=void;
+
+        auto res = formatStackFrame(pc, symName);
+        res ~= " at ";
+        res ~= fileName[0 .. strlen(fileName)];
+        res ~= "(";
+        immutable len = snprintf(buf.ptr, buf.length, "%u", lineNum);
+        len < buf.length || assert(0);
+        res ~= buf[0 .. len];
+        res ~= ")";
+        return res;
     }
 }
+
 
 // Workaround OPTLINK bug (Bugzilla 8263)
 extern(Windows) BOOL FixupDebugHeader(HANDLE hProcess, ULONG ActionCode,
                                       ulong CallbackContext, ulong UserContext)
 {
-  if (ActionCode == CBA_READ_MEMORY)
-  {
-    auto p = cast(IMAGEHLP_CBA_READ_MEMORY*)CallbackContext;
-    if (!(p.addr & 0xFF) && p.bytes == 0x1C &&
-        // IMAGE_DEBUG_DIRECTORY.PointerToRawData
-        (*cast(DWORD*)(p.addr + 24) & 0xFF) == 0x20)
+    if (ActionCode == CBA_READ_MEMORY)
     {
-      immutable base = DbgHelp.get().SymGetModuleBase64(hProcess, p.addr);
-      // IMAGE_DEBUG_DIRECTORY.AddressOfRawData
-      if (base + *cast(DWORD*)(p.addr + 20) == p.addr + 0x1C &&
-          *cast(DWORD*)(p.addr + 0x1C) == 0 &&
-            *cast(DWORD*)(p.addr + 0x20) == ('N'|'B'<<8|'0'<<16|'9'<<24))
-      {
-        printf("fixup IMAGE_DEBUG_DIRECTORY.AddressOfRawData\n");
-        memcpy(p.buf, cast(void*)p.addr, 0x1C);
-        *cast(DWORD*)(p.buf + 20) = cast(DWORD)(p.addr - base) + 0x20;
-        *p.bytesread = 0x1C;
-        return TRUE;
-      }
+        auto p = cast(IMAGEHLP_CBA_READ_MEMORY*)CallbackContext;
+        if (!(p.addr & 0xFF) && p.bytes == 0x1C &&
+            // IMAGE_DEBUG_DIRECTORY.PointerToRawData
+            (*cast(DWORD*)(p.addr + 24) & 0xFF) == 0x20)
+        {
+            immutable base = DbgHelp.get().SymGetModuleBase64(hProcess, p.addr);
+            // IMAGE_DEBUG_DIRECTORY.AddressOfRawData
+            if (base + *cast(DWORD*)(p.addr + 20) == p.addr + 0x1C &&
+                *cast(DWORD*)(p.addr + 0x1C) == 0 &&
+                *cast(DWORD*)(p.addr + 0x20) == ('N'|'B'<<8|'0'<<16|'9'<<24))
+            {
+                debug(PRINTF) printf("fixup IMAGE_DEBUG_DIRECTORY.AddressOfRawData\n");
+                memcpy(p.buf, cast(void*)p.addr, 0x1C);
+                *cast(DWORD*)(p.buf + 20) = cast(DWORD)(p.addr - base) + 0x20;
+                *p.bytesread = 0x1C;
+                return TRUE;
+            }
+        }
     }
-  }
-  return FALSE;
+    return FALSE;
 }
 
-private size_t formatLastError(char[] buffer)
+private string generateSearchPath()
 {
-  DWORD lastError = GetLastError();
-  return cast(size_t)FormatMessageA(
-                                        FORMAT_MESSAGE_FROM_SYSTEM |
-                                        FORMAT_MESSAGE_IGNORE_INSERTS,
-                                        null,
-                                        lastError,
-                                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                                        buffer.ptr,
-                                        cast(uint)buffer.length, 
-                                        null );
-}
+    __gshared string[3] defaultPathList = ["_NT_SYMBOL_PATH",
+                                           "_NT_ALTERNATE_SYMBOL_PATH",
+                                           "SYSTEMROOT"];
 
-void initializeStackTracing()
-{
-  if(initialized)
-    return;
-  auto dbghelp = DbgHelp.get();
+    string path;
+    char[2048] temp;
+    DWORD len;
 
-  if( dbghelp is null )
-    return; // dbghelp.dll not available
-
-  auto hProcess = GetCurrentProcess();
-  auto symPath  = generateSearchPath();
-
-  auto symOptions = dbghelp.SymGetOptions();
-  symOptions |= SYMOPT_LOAD_LINES;
-  symOptions |= SYMOPT_FAIL_CRITICAL_ERRORS;
-  symOptions |= SYMOPT_DEFERRED_LOAD;
-  symOptions  = dbghelp.SymSetOptions( symOptions );
-
-  if(!dbghelp.SymInitialize( hProcess, symPath.ptr, TRUE ))
-  {
-    char[1024] buffer;
-    size_t len = formatLastError(buffer);
-    printf("SymInitialize init failed with: %-*s\n", len, buffer.ptr);
-    return;
-  }
-
-  dbghelp.SymRegisterCallback64(hProcess, &FixupDebugHeader, 0);
-
-  initialized = true;
+    foreach( e; defaultPathList )
+    {
+        if( (len = GetEnvironmentVariableA( e.ptr, temp.ptr, temp.length )) > 0 )
+        {
+            path ~= temp[0 .. len];
+            path ~= ";";
+        }
+    }
+    path ~= "\0";
+    return path;
 }
 
 
 shared static this()
 {
-  initializeStackTracing();
+    auto dbghelp = DbgHelp.get();
+
+    if( dbghelp is null )
+        return; // dbghelp.dll not available
+
+    debug(PRINTF) 
+    {
+        API_VERSION* dbghelpVersion = dbghelp.ImagehlpApiVersion();
+        printf("DbgHelp Version %d.%d.%d\n", dbghelpVersion.MajorVersion, dbghelpVersion.MinorVersion, dbghelpVersion.Revision);
+    }
+
+    HANDLE hProcess = GetCurrentProcess();
+
+    DWORD symOptions = dbghelp.SymGetOptions();
+    symOptions |= SYMOPT_LOAD_LINES;
+    symOptions |= SYMOPT_FAIL_CRITICAL_ERRORS;
+    symOptions |= SYMOPT_DEFERRED_LOAD;
+    symOptions  = dbghelp.SymSetOptions( symOptions );
+
+    debug(PRINTF) printf("Search paths: %s\n", generateSearchPath().ptr);
+
+    if (!dbghelp.SymInitialize(hProcess, generateSearchPath().ptr, TRUE))
+        return;
+
+    dbghelp.SymRegisterCallback64(hProcess, &FixupDebugHeader, 0);
+
+    initialized = true;
 }

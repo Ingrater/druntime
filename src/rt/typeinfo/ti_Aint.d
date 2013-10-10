@@ -21,26 +21,16 @@ private import rt.util.hash;
 class TypeInfo_Ai : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
-    override to_string_t toString() 
-    { 
-      version(NOGCSAFE)
-        return to_string_t("int[]");
-      else
-        return "int[]"; 
-    }
 
-    @trusted:
-    const:
-    pure:
-    nothrow:
+    override string toString() const { return "int[]"; }
 
-    override size_t getHash(in void* p)
+    override size_t getHash(in void* p) @trusted const
     {
         int[] s = *cast(int[]*)p;
         return hashOf(s.ptr, s.length * int.sizeof);
     }
 
-    override bool equals(in void* p1, in void* p2)
+    override bool equals(in void* p1, in void* p2) const
     {
         int[] s1 = *cast(int[]*)p1;
         int[] s2 = *cast(int[]*)p2;
@@ -49,7 +39,7 @@ class TypeInfo_Ai : TypeInfo_Array
                memcmp(cast(void *)s1, cast(void *)s2, s1.length * int.sizeof) == 0;
     }
 
-    override int compare(in void* p1, in void* p2)
+    override int compare(in void* p1, in void* p2) const
     {
         int[] s1 = *cast(int[]*)p1;
         int[] s2 = *cast(int[]*)p2;
@@ -70,12 +60,10 @@ class TypeInfo_Ai : TypeInfo_Array
         return 0;
     }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(int);
+        return cast(inout)typeid(int);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 unittest
@@ -93,19 +81,9 @@ unittest
 
 class TypeInfo_Ak : TypeInfo_Ai
 {
-    override to_string_t toString() 
-    {
-      version(NOGCSAFE)
-        return to_string_t("uint[]");
-      else
-        return "uint[]"; 
-    }
-    @trusted:
-    const:
-    pure:
-    nothrow:
+    override string toString() const { return "uint[]"; }
 
-    override int compare(in void* p1, in void* p2)
+    override int compare(in void* p1, in void* p2) const
     {
         uint[] s1 = *cast(uint[]*)p1;
         uint[] s2 = *cast(uint[]*)p2;
@@ -126,35 +104,20 @@ class TypeInfo_Ak : TypeInfo_Ai
         return 0;
     }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(uint);
+        return cast(inout)typeid(uint);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }
 
 // dchar[]
 
 class TypeInfo_Aw : TypeInfo_Ak
 {
-    override to_string_t toString() 
-    {
-      version(NOGCSAFE)
-        return to_string_t("dchar[]");
-      else
-        return "dchar[]"; 
-    }
-	
-    @trusted:
-    const:
-    pure:
-    nothrow:
+    override string toString() const { return "dchar[]"; }
 
-    override @property const(TypeInfo) next() nothrow pure
+    override @property inout(TypeInfo) next() inout
     {
-        return typeid(dchar);
+        return cast(inout)typeid(dchar);
     }
-
-    @property override Type type() nothrow pure { return Type.Array; }
 }
