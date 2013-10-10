@@ -23,7 +23,13 @@ class TypeInfo_Ag : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 
-    override string toString() const { return "byte[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("byte[]");
+      else		
+	    return "byte[]"; 
+	}
 
     override size_t getHash(in void* p) @trusted const
     {
@@ -72,7 +78,13 @@ class TypeInfo_Ag : TypeInfo_Array
 
 class TypeInfo_Ah : TypeInfo_Ag
 {
-    override string toString() const { return "ubyte[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("ubyte[]");
+      else		
+	    return "ubyte[]"; 
+	}
 
     override int compare(in void* p1, in void* p2) const
     {
@@ -92,7 +104,13 @@ class TypeInfo_Ah : TypeInfo_Ag
 
 class TypeInfo_Av : TypeInfo_Ah
 {
-    override string toString() const { return "void[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("void[]");
+      else		
+	    return "void[]"; 
+	}
 
     override @property inout(TypeInfo) next() inout
     {
@@ -104,7 +122,13 @@ class TypeInfo_Av : TypeInfo_Ah
 
 class TypeInfo_Ab : TypeInfo_Ah
 {
-    override string toString() const { return "bool[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("bool[]");
+      else		
+	    return "bool[]"; 
+	}
 
     override @property inout(TypeInfo) next() inout
     {
@@ -116,7 +140,13 @@ class TypeInfo_Ab : TypeInfo_Ah
 
 class TypeInfo_Aa : TypeInfo_Ah
 {
-    override string toString() const { return "char[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("char[]");
+      else		
+	    return "char[]"; 
+	}
 
     override size_t getHash(in void* p) @trusted const
     {
@@ -178,7 +208,13 @@ else
 
 class TypeInfo_Aya : TypeInfo_Aa
 {
-    override string toString() const { return "immutable(char)[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("immutable(char)[]");
+      else		
+	    return "immutable(char)[]"; 
+	}
 
     override @property inout(TypeInfo) next() inout
     {

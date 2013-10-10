@@ -22,7 +22,13 @@ class TypeInfo_Al : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 
-    override string toString() const { return "long[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("long[]");
+      else		
+	    return "long[]"; 
+	}
 
     override size_t getHash(in void* p) @trusted const
     {
@@ -72,7 +78,13 @@ class TypeInfo_Al : TypeInfo_Array
 
 class TypeInfo_Am : TypeInfo_Al
 {
-    override string toString() const { return "ulong[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("ulong[]");
+      else		
+	    return "ulong[]"; 
+	}
 
     override int compare(in void* p1, in void* p2) const
     {

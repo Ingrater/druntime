@@ -23,13 +23,12 @@ class TypeInfo_Ar : TypeInfo_Array
     override to_string_t toString() const
     {
       version(NOGCSAFE)
-        return to_string_t("cdouble[]");
+        return _T("cdouble[]");
       else
         return "cdouble[]"; 
     }
+	
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
-
-    override string toString() const { return "cdouble[]"; }
 
     override size_t getHash(in void* p) @trusted const
     {

@@ -22,7 +22,13 @@ class TypeInfo_As : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 
-    override string toString() const { return "short[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("short[]");
+      else		
+	    return "short[]"; 
+	}
 
     override size_t getHash(in void* p) @trusted const
     {
@@ -71,7 +77,13 @@ class TypeInfo_As : TypeInfo_Array
 
 class TypeInfo_At : TypeInfo_As
 {
-    override string toString() const { return "ushort[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("ushort[]");
+      else		
+	    return "ushort[]"; 
+	}
 
     override int compare(in void* p1, in void* p2) const
     {
@@ -104,7 +116,13 @@ class TypeInfo_At : TypeInfo_As
 
 class TypeInfo_Au : TypeInfo_At
 {
-    override string toString() const { return "wchar[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("wchar[]");
+      else		
+	    return "wchar[]"; 
+	}
 
     override @property inout(TypeInfo) next() inout
     {

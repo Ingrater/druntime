@@ -35,6 +35,18 @@ private __gshared immutable bool initialized;
 
 class StackTrace : Throwable.TraceInfo
 {
+private:
+  version(NOGCSAFE)
+  {
+    alias char[] line_t
+	alias char[][] trace_t;
+  }
+  else
+  {
+    alias rcstring line_t;
+	alias RCArray!line_t trace_t;
+  }
+
 public:
     /**
      * Constructor
@@ -88,9 +100,9 @@ public:
     }
 
 
-    override string toString() const
+    override to_string_t toString() const
     {
-        string result;
+        to_string_t result;
 
         foreach( e; this )
         {
@@ -122,7 +134,7 @@ public:
      * Returns:
      *  An array of strings with the results.
      */
-    static char[][] resolve(const(ulong)[] addresses)
+    static trace_t resolve(const(ulong)[] addresses)
     {
         synchronized( StackTrace.classinfo )
         {
@@ -206,7 +218,7 @@ private:
         return result;
     }
 
-    static char[][] resolveNoSync(const(ulong)[] addresses)
+    static trace_t resolveNoSync(const(ulong)[] addresses)
     {
         auto dbghelp  = DbgHelp.get();
         if(dbghelp is null)

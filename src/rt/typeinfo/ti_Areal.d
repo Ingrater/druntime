@@ -22,7 +22,13 @@ class TypeInfo_Ae : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 
-    override string toString() const { return "real[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("real[]");
+      else		
+	    return "real[]"; 
+	}
 
     override size_t getHash(in void* p) @trusted const
     {
@@ -77,7 +83,13 @@ class TypeInfo_Ae : TypeInfo_Array
 
 class TypeInfo_Aj : TypeInfo_Ae
 {
-    override string toString() const { return "ireal[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("ireal[]");
+      else		
+	    return "ireal[]"; 
+	}
 
     override @property inout(TypeInfo) next() inout
     {

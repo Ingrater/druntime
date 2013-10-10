@@ -22,7 +22,13 @@ class TypeInfo_Af : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 
-    override string toString() const { return "float[]"; }
+    override to_string_t toString() const 
+	{ 
+		version(NOGCSAFE)
+			return _T("float[]");
+		else
+			return "float[]"; 
+	}
 
     override size_t getHash(in void* p) @trusted const
     {
@@ -77,7 +83,13 @@ class TypeInfo_Af : TypeInfo_Array
 
 class TypeInfo_Ao : TypeInfo_Af
 {
-    override string toString() const { return "ifloat[]"; }
+    override to_string_t toString() const 
+	{ 
+	  version(NOGCSAFE)
+	    return _T("ifloat[]");
+	  else
+	    return "ifloat[]"; 
+	}
 
     override @property inout(TypeInfo) next() inout
     {

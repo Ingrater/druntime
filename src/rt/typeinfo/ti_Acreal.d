@@ -22,7 +22,13 @@ class TypeInfo_Ac : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }
 
-    override string toString() const { return "creal[]"; }
+    override to_string_t toString() const 
+	{
+      version(NOGCSAFE)
+        return _T("creal[]");
+      else		
+	    return "creal[]"; 
+	}
 
     override size_t getHash(in void* p) @trusted const
     {
