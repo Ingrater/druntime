@@ -92,64 +92,70 @@ struct OffsetTypeInfo
 
 class TypeInfo
 {
-	  enum Type : ubyte {
-		  Info,
-		  Vector,
-		  Typedef,
-		  Enum,
-		  Pointer,
-		  Array,
-		  StaticArray,
-		  AssociativeArray,
-		  Function,
-		  Delegate,
-		  Class,
-      Obj,
-		  Interface,
-		  Struct,
-		  Tuple,
-		  Const,
-		  Immutable,
-      Shared,
-		  Inout,
-      Byte,
-      UByte,
-      Short,
-      UShort,
-      Int,
-      UInt,
-      Long,
-      ULong,
-      Float,
-      IFloat,
-      CFloat,
-      Double,
-      IDouble,
-      CDouble,
-      Real,
-      IReal,
-      CReal,
-      Char,
-      WChar,
-      DChar,
-      Void,
-      Bool
+    enum Type : ubyte {
+        Info,
+        Vector,
+        Typedef,
+        Enum,
+        Pointer,
+        Array,
+        StaticArray,
+        AssociativeArray,
+        Function,
+        Delegate,
+        Class,
+        Obj,
+        Interface,
+        Struct,
+        Tuple,
+        Const,
+        Immutable,
+        Shared,
+        Inout,
+        Byte,
+        UByte,
+        Short,
+        UShort,
+        Int,
+        UInt,
+        Long,
+        ULong,
+        Float,
+        IFloat,
+        CFloat,
+        Double,
+        IDouble,
+        CDouble,
+        Real,
+        IReal,
+        CReal,
+        Char,
+        WChar,
+        DChar,
+        Void,
+        Bool
 	  }
-    hash_t   getHash(in void* p) @trusted nothrow const;
-    equals_t equals(in void* p1, in void* p2) const;
-    int      compare(in void* p1, in void* p2) const;
-    @property size_t   tsize() nothrow pure const @safe;
-    void     swap(void* p1, void* p2) const;
+	  
+    override to_string_t toString() const;
+    override size_t toHash() @trusted const;
+    override int opCmp(Object o);
+    override bool opEquals(Object o);
+    size_t getHash(in void* p) @trusted nothrow const;
+    bool equals(in void* p1, in void* p2) const;
+    int compare(in void* p1, in void* p2) const;
+    @property size_t tsize() nothrow pure const @safe;
+    void swap(void* p1, void* p2) const;
     @property inout(TypeInfo) next() nothrow pure inout;
-    const(void)[]   init() nothrow pure const @safe; // TODO: make this a property, but may need to be renamed to diambiguate with T.init...
-    @property uint     flags() nothrow pure const @safe;
-    // 1:    // has possible pointers into GC memory
+    const(void)[] init() nothrow pure const @safe; // TODO: make this a property, but may need to be renamed to diambiguate with T.init...
+    @property uint flags() nothrow pure const @safe;
+    // 1: // has possible pointers into GC memory
     const(OffsetTypeInfo)[] offTi() const;
     void destroy(void* p) const;
     void postblit(void* p) const;
     @property size_t talign() nothrow pure const @safe;
     version (X86_64) int argTypes(out TypeInfo arg1, out TypeInfo arg2) @safe nothrow;
     @property immutable(void)* rtInfo() nothrow pure const @safe;
+	
 	@property Type type() nothrow pure const;
 	string GetName() nothrow pure const;
 }
@@ -390,8 +396,8 @@ class Throwable : Object
 {
     interface TraceInfo
     {
-        int opApply(scope int delegate(ref string));
-        int opApply(scope int delegate(ref size_t, ref string));
+        int opApply(scope int delegate(ref const(char[]))) const;
+        int opApply(scope int delegate(ref size_t, ref const(char[]))) const;
         to_string_t toString();
     }
 

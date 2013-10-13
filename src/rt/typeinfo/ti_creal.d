@@ -19,7 +19,7 @@ private import rt.util.hash;
 
 class TypeInfo_c : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("creal");
@@ -103,5 +103,5 @@ class TypeInfo_c : TypeInfo
         return 0;
     }
 
-    @property override Type type() nothrow pure { return Type.Real; }
+    @property override Type type() nothrow pure const { return Type.Real; }
 }

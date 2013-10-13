@@ -17,7 +17,7 @@ module rt.typeinfo.ti_int;
 
 class TypeInfo_i : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("int");
@@ -63,5 +63,5 @@ class TypeInfo_i : TypeInfo
         *cast(int *)p2 = t;
     }
 
-    @property override Type type() nothrow pure { return Type.Int; }
+    @property override Type type() nothrow pure const { return Type.Int; }
 }

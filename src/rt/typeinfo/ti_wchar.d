@@ -17,7 +17,7 @@ module rt.typeinfo.ti_wchar;
 
 class TypeInfo_u : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("wchar");
@@ -65,5 +65,5 @@ class TypeInfo_u : TypeInfo
         return (cast(wchar *)&c)[0 .. 1];
     }
 
-    @property override Type type() nothrow pure { return Type.WChar; }
+    @property override Type type() nothrow pure const { return Type.WChar; }
 }

@@ -15,6 +15,7 @@ module rt.typeinfo.ti_Adouble;
 
 private import rt.typeinfo.ti_double;
 private import rt.util.hash;
+version(NOGCSAFE) import core.refcounted : _T;
 
 // double[]
 

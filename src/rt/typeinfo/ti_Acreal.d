@@ -15,6 +15,7 @@ module rt.typeinfo.ti_Acreal;
 
 private import rt.typeinfo.ti_creal;
 private import rt.util.hash;
+version(NOGCSAFE) import core.refcounted : _T;
 
 // creal[]
 

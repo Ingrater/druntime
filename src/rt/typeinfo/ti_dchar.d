@@ -17,7 +17,7 @@ module rt.typeinfo.ti_dchar;
 
 class TypeInfo_w : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("dchar");
@@ -66,5 +66,5 @@ class TypeInfo_w : TypeInfo
         return (cast(dchar *)&c)[0 .. 1];
     }
 
-    @property override Type type() nothrow pure { return Type.DChar; }
+    @property override Type type() nothrow pure const { return Type.DChar; }
 }

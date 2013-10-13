@@ -19,7 +19,7 @@ private import rt.typeinfo.ti_real;
 
 class TypeInfo_j : TypeInfo_e
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("ireal");
@@ -27,5 +27,5 @@ class TypeInfo_j : TypeInfo_e
         return "ireal"; 
     }
 
-    @property override Type type() nothrow pure { return Type.IReal; }
+    @property override Type type() nothrow pure const { return Type.IReal; }
 }

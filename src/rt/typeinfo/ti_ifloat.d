@@ -19,7 +19,7 @@ private import rt.typeinfo.ti_float;
 
 class TypeInfo_o : TypeInfo_f
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("ifloat");
@@ -27,5 +27,5 @@ class TypeInfo_o : TypeInfo_f
         return "ifloat"; 
     }
 
-    @property override Type type() nothrow pure { return Type.IFloat; }
+    @property override Type type() nothrow pure const { return Type.IFloat; }
 }

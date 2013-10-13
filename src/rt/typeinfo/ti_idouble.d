@@ -19,7 +19,7 @@ private import rt.typeinfo.ti_double;
 
 class TypeInfo_p : TypeInfo_d
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     { 
       version(NOGCSAFE)
         return to_string_t("idouble");
@@ -27,5 +27,5 @@ class TypeInfo_p : TypeInfo_d
         return "idouble"; 
     }
 
-    @property override Type type() nothrow pure { return Type.IDouble; }
+    @property override Type type() nothrow pure const { return Type.IDouble; }
 }

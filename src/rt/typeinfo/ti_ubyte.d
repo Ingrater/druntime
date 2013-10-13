@@ -17,7 +17,7 @@ module rt.typeinfo.ti_ubyte;
 
 class TypeInfo_h : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("ubyte");
@@ -58,12 +58,12 @@ class TypeInfo_h : TypeInfo
         *cast(ubyte *)p2 = t;
     }
 
-    @property override Type type() nothrow pure { return Type.UByte; }
+    @property override Type type() nothrow pure const { return Type.UByte; }
 }
 
 class TypeInfo_b : TypeInfo_h
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("bool");
@@ -71,5 +71,5 @@ class TypeInfo_b : TypeInfo_h
         return "bool"; 
     }
 
-    @property override Type type() nothrow pure { return Type.Bool; }
+    @property override Type type() nothrow pure const { return Type.Bool; }
 }

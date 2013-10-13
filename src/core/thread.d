@@ -1603,9 +1603,9 @@ else
 	version(NOGCSAFE)
 	{
 		version (Windows)
-			static assert(__traits(classInstanceSize, Thread) == 136);
+			static assert(__traits(classInstanceSize, Thread) == 128);
 		else version (OSX)
-			static assert(__traits(classInstanceSize, Thread) == 136);
+			static assert(__traits(classInstanceSize, Thread) == 128);
 		else version (Posix)
 			static assert(__traits(classInstanceSize, Thread) == 100);
 		else

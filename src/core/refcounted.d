@@ -744,8 +744,8 @@ struct RCArray(T,AT = StdAllocator)
 
     auto result = data_t.AllocateArray(this.length + rh.length, allocator, InitializeMemoryWith.NOTHING);
     auto mem = cast(BT[])result[];
-    mem[0..this.length] = this[];
-    mem[this.length..$] = rh[];
+    copy(mem[0..this.length], this[]);
+    copy(mem[this.length..$], rh[]);
 
     return this_t(result);
   }

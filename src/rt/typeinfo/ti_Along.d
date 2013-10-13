@@ -15,6 +15,7 @@ module rt.typeinfo.ti_Along;
 
 private import core.stdc.string;
 private import rt.util.hash;
+version(NOGCSAFE) import core.refcounted : _T;
 
 // long[]
 

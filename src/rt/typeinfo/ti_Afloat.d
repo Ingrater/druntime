@@ -15,6 +15,7 @@ module rt.typeinfo.ti_Afloat;
 
 private import rt.typeinfo.ti_float;
 private import rt.util.hash;
+version(NOGCSAFE) import core.refcounted : _T;
 
 // float[]
 

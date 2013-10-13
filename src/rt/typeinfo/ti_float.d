@@ -17,7 +17,7 @@ module rt.typeinfo.ti_float;
 
 class TypeInfo_f : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("float");
@@ -88,5 +88,5 @@ class TypeInfo_f : TypeInfo
         return (cast(float *)&r)[0 .. 1];
     }
 
-    @property override Type type() nothrow pure { return Type.Float; }
+    @property override Type type() nothrow pure const { return Type.Float; }
 }

@@ -17,7 +17,7 @@ module rt.typeinfo.ti_ushort;
 
 class TypeInfo_t : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     { 
       version(NOGCSAFE)
         return to_string_t("ushort");
@@ -59,5 +59,5 @@ class TypeInfo_t : TypeInfo
         *cast(ushort *)p2 = t;
     }
 
-    @property override Type type() nothrow pure { return Type.UShort; }
+    @property override Type type() nothrow pure const { return Type.UShort; }
 }

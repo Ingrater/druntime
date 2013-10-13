@@ -15,6 +15,7 @@ module rt.typeinfo.ti_Aint;
 
 private import core.stdc.string;
 private import rt.util.hash;
+version(NOGCSAFE) import core.refcounted : _T;
 
 // int[]
 
@@ -129,7 +130,7 @@ class TypeInfo_Aw : TypeInfo_Ak
     override to_string_t toString() const 
 	{
       version(NOGCSAFE)
-        _T("dchar[]");
+        return _T("dchar[]");
       else		
 	    return "dchar[]"; 
 	}

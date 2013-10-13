@@ -464,7 +464,7 @@ class TypeInfo
 
 class TypeInfo_Typedef : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t(name);
@@ -498,7 +498,7 @@ class TypeInfo_Typedef : TypeInfo
         return base.argTypes(arg1, arg2);
     }
 
-      @property override Type type() nothrow pure { return Type.Typedef; }
+    @property override Type type() nothrow pure const { return Type.Typedef; }
 
     override string GetName() nothrow pure const { return name; }
 
@@ -511,12 +511,12 @@ class TypeInfo_Typedef : TypeInfo
 
 class TypeInfo_Enum : TypeInfo_Typedef
 {
-    @property override Type type() nothrow pure { return Type.Enum; }
+    @property override Type type() nothrow pure const { return Type.Enum; }
 }
 
 class TypeInfo_Pointer : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     { 
       return m_next.toString() ~ "*"; 
     }
@@ -564,7 +564,7 @@ class TypeInfo_Pointer : TypeInfo
     override @property inout(TypeInfo) next() nothrow pure inout { return m_next; }
     override @property uint flags() nothrow pure const { return 1; }
 
-      @property override Type type() nothrow pure { return Type.Pointer; }
+    @property override Type type() nothrow pure const { return Type.Pointer; }
 
     TypeInfo m_next;
 }
@@ -646,7 +646,7 @@ class TypeInfo_Array : TypeInfo
         return (void[]).alignof;
     }
 
-      @property override Type type() nothrow pure { return Type.Array; }
+    @property override Type type() nothrow pure const { return Type.Array; }
 
     version (X86_64) override int argTypes(out TypeInfo arg1, out TypeInfo arg2)
     {
@@ -658,10 +658,10 @@ class TypeInfo_Array : TypeInfo
 
 class TypeInfo_StaticArray : TypeInfo
 {
-    override to_string_t toString()
+    override to_string_t toString() const
     {
         char[20] tmp = void;
-        return value.toString() ~ "[" ~ cast(string)tmp.intToString(len) ~ "]";
+        return value.toString() ~ "[" ~ cast(string)tmp.uintToString(len) ~ "]";
     }
 
     override bool opEquals(Object o)
@@ -774,12 +774,12 @@ class TypeInfo_StaticArray : TypeInfo
         return 0;
     }
 
-      @property override Type type() nothrow pure { return Type.StaticArray; }
+    @property override Type type() nothrow pure const { return Type.StaticArray; }
 }
 
 class TypeInfo_AssociativeArray : TypeInfo
 {
-    override to_string_t toString()
+    override to_string_t toString() const
     {
         return (next.toString() ~ "[" ~ key.toString() ~ "]");
     }
@@ -824,7 +824,7 @@ class TypeInfo_AssociativeArray : TypeInfo
         return 0;
     }
 
-      @property override Type type() nothrow pure { return Type.AssociativeArray; }
+    @property override Type type() nothrow pure const { return Type.AssociativeArray; }
 }
 
 class TypeInfo_Vector : TypeInfo
@@ -867,7 +867,7 @@ class TypeInfo_Vector : TypeInfo
 
 class TypeInfo_Function : TypeInfo
 {
-    override to_string_t toString()
+    override to_string_t toString() const
     {
         return base.toString() ~ "()";
     }
@@ -888,7 +888,7 @@ class TypeInfo_Function : TypeInfo
         return 0;       // no size for functions
     }
 
-      @property override Type type() nothrow pure { return Type.Function; }
+    @property override Type type() nothrow pure const { return Type.Function; }
 
     TypeInfo base;
     string deco;
@@ -896,7 +896,7 @@ class TypeInfo_Function : TypeInfo
 
 class TypeInfo_Delegate : TypeInfo
 {
-    override to_string_t toString()
+    override to_string_t toString() const
     {
         return base.toString() ~ " delegate()";
     }
@@ -937,7 +937,7 @@ class TypeInfo_Delegate : TypeInfo
         return 0;
     }
 
-      @property override Type type() nothrow pure { return Type.Delegate; }
+    @property override Type type() nothrow pure const { return Type.Delegate; }
 }
 
 /**
@@ -947,7 +947,7 @@ class TypeInfo_Delegate : TypeInfo
  */
 class TypeInfo_Class : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     { 
       version(NOGCSAFE)
         return to_string_t(info.name);
@@ -1075,7 +1075,7 @@ class TypeInfo_Class : TypeInfo
         return o;
     }
 
-      @property override Type type() nothrow pure { return Type.Class; }
+    @property override Type type() nothrow pure const { return Type.Class; }
 
     override string GetName() nothrow pure const{ return name; }
 }
@@ -1084,7 +1084,7 @@ alias TypeInfo_Class ClassInfo;
 
 class TypeInfo_Interface : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t(info.name);
@@ -1149,7 +1149,7 @@ class TypeInfo_Interface : TypeInfo
 
     override @property uint flags() nothrow pure const { return 1; }
 
-      @property override Type type() nothrow pure { return Type.Interface; }
+    @property override Type type() nothrow pure const { return Type.Interface; }
 
     override string GetName() nothrow pure const { return info.name; }
 
@@ -1158,7 +1158,7 @@ class TypeInfo_Interface : TypeInfo
 
 class TypeInfo_Struct : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     { 
       version(NOGCSAFE)
         return _T(name);
@@ -1276,7 +1276,7 @@ class TypeInfo_Struct : TypeInfo
         TypeInfo m_arg2;
     }
 
-      @property override Type type() nothrow pure { return Type.Struct; }
+    @property override Type type() nothrow pure const { return Type.Struct; }
 
     @property override string GetName() nothrow pure const { return name; }
     immutable(void)* m_RTInfo;                // data for precise GC
@@ -1299,7 +1299,7 @@ class TypeInfo_Tuple : TypeInfo
 {
     TypeInfo[] elements;
 
-    override to_string_t toString()
+    override to_string_t toString() const
     {
         version(NOGCSAFE)
           to_string_t s = to_string_t("(");
@@ -1378,12 +1378,12 @@ class TypeInfo_Tuple : TypeInfo
         assert(0);
     }
 
-      @property override Type type() nothrow pure { return Type.Tuple; }
+    @property override Type type() nothrow pure const { return Type.Tuple; }
 }
 
 class TypeInfo_Const : TypeInfo
 {
-    override to_string_t toString()
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("const(") ~ base.toString() ~ ")";
@@ -1421,14 +1421,14 @@ class TypeInfo_Const : TypeInfo
         return base.argTypes(arg1, arg2);
     }
 
-      @property override Type type() nothrow pure { return Type.Const; }
+    @property override Type type() nothrow pure const { return Type.Const; }
 
     TypeInfo base;
 }
 
 class TypeInfo_Invariant : TypeInfo_Const
 {
-    override to_string_t toString()
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("immutable(") ~ base.toString() ~ ")";
@@ -1436,12 +1436,12 @@ class TypeInfo_Invariant : TypeInfo_Const
         return cast(string) ("immutable(" ~ base.toString() ~ ")");
     }
 
-      @property override Type type() nothrow pure { return Type.Immutable; }
+    @property override Type type() nothrow pure const { return Type.Immutable; }
 }
 
 class TypeInfo_Shared : TypeInfo_Const
 {
-    override to_string_t toString()
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("shared(") ~ base.toString() ~ ")";
@@ -1449,12 +1449,12 @@ class TypeInfo_Shared : TypeInfo_Const
         return cast(string) ("shared(" ~ base.toString() ~ ")");
     }
 
-      @property override Type type() nothrow pure { return Type.Shared; }
+    @property override Type type() nothrow pure const { return Type.Shared; }
 }
 
 class TypeInfo_Inout : TypeInfo_Const
 {
-    override to_string_t toString()
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("inout(") ~ base.toString() ~ ")";
@@ -1462,7 +1462,7 @@ class TypeInfo_Inout : TypeInfo_Const
         return cast(string) ("inout(" ~ base.toString() ~ ")");
     }
 
-      @property override Type type() nothrow pure { return Type.Inout; }
+    @property override Type type() nothrow pure const { return Type.Inout; }
 }
 
 abstract class MemberInfo
@@ -1530,8 +1530,8 @@ class Throwable : Object
 {
     interface TraceInfo
     {
-        int opApply(scope int delegate(ref string));
-        int opApply(scope int delegate(ref size_t, ref string));
+        int opApply(scope int delegate(ref const(char[]))) const;
+        int opApply(scope int delegate(ref size_t, ref const(char[]))) const;
         to_string_t toString();
     }
 
@@ -1591,9 +1591,9 @@ class Throwable : Object
         if (file)
         {
           version(NOGCSAFE)
-            buf ~= to_string_t(this.classinfo.name) ~ "@" ~ file ~ "(" ~ tmp.intToString(line) ~ ")";
+            buf ~= to_string_t(this.classinfo.name) ~ "@" ~ file ~ "(" ~ tmp.uintToString(line) ~ ")";
           else
-            buf ~= this.classinfo.name ~ "@" ~ file ~ "(" ~ tmp.intToString(line) ~ ")";
+            buf ~= this.classinfo.name ~ "@" ~ file ~ "(" ~ tmp.uintToString(line) ~ ")";
         }
         else
         { 

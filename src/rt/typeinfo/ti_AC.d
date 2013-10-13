@@ -96,5 +96,5 @@ class TypeInfo_AC : TypeInfo_Array
         return cast(inout)typeid(Object);
     }
 
-    @property override Type type() nothrow pure { return Type.Array; }
+    @property override Type type() nothrow pure const { return Type.Array; }
 }

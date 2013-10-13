@@ -17,7 +17,7 @@ module rt.typeinfo.ti_char;
 
 class TypeInfo_a : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("char");
@@ -66,5 +66,5 @@ class TypeInfo_a : TypeInfo
         return (cast(char *)&c)[0 .. 1];
     }
 
-    @property override Type type() nothrow pure { return Type.Char; }
+    @property override Type type() nothrow pure const { return Type.Char; }
 }

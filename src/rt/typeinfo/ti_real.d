@@ -19,7 +19,7 @@ private import rt.util.hash;
 
 class TypeInfo_e : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("real");
@@ -94,5 +94,5 @@ class TypeInfo_e : TypeInfo
         return real.alignof;
     }
 
-    @property override Type type() nothrow pure { return Type.Real; }
+    @property override Type type() nothrow pure const { return Type.Real; }
 }

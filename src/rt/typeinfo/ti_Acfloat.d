@@ -15,6 +15,7 @@ module rt.typeinfo.ti_Acfloat;
 
 private import rt.typeinfo.ti_cfloat;
 private import rt.util.hash;
+version(NOGCSAFE) import core.refcounted : _T;
 
 // cfloat[]
 

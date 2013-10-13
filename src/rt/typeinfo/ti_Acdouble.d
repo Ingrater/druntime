@@ -15,6 +15,7 @@ module rt.typeinfo.ti_Acdouble;
 
 private import rt.typeinfo.ti_cdouble;
 private import rt.util.hash;
+version(NOGCSAFE) import core.refcounted : _T;
 
 // cdouble[]
 
@@ -78,5 +79,5 @@ class TypeInfo_Ar : TypeInfo_Array
         return cast(inout)typeid(cdouble);
     }
 
-    @property override Type type() nothrow pure { return Type.Array; }
+    @property override Type type() nothrow pure const { return Type.Array; }
 }

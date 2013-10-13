@@ -55,5 +55,5 @@ class TypeInfo_D : TypeInfo
         return 1;
     }
 
-    @property override Type type() nothrow pure { return Type.Delegate; }
+    @property override Type type() nothrow pure const { return Type.Delegate; }
 }

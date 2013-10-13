@@ -19,7 +19,7 @@ private import rt.util.hash;
 
 class TypeInfo_l : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     { 
       version(NOGCSAFE)
         return to_string_t("long");
@@ -70,5 +70,5 @@ class TypeInfo_l : TypeInfo
         return long.alignof;
     }
 
-    @property override Type type() nothrow pure { return Type.Long; }
+    @property override Type type() nothrow pure const { return Type.Long; }
 }

@@ -30,7 +30,7 @@ extern(Windows) void RtlCaptureContext(CONTEXT* ContextRecord);
 extern(Windows) DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR pBuffer, DWORD nSize);
 
 
-private __gshared immutable bool initialized;
+private __gshared bool initialized = false;
 
 
 class StackTrace : Throwable.TraceInfo
@@ -38,7 +38,7 @@ class StackTrace : Throwable.TraceInfo
 private:
   version(NOGCSAFE)
   {
-    alias char[] line_t
+    alias char[] line_t;
 	alias char[][] trace_t;
   }
   else
@@ -76,10 +76,10 @@ public:
             skip += INTERNALFRAMES;
         }
         if( initialized )
-            m_trace = trace(skip, context);
+            m_trace = trace(m_buffer, skip, context);
     }
 
-    int opApply( scope int delegate(ref const(char[])) dg ) const
+    override int opApply( scope int delegate(ref const(char[])) dg ) const
     {
         return opApply( (ref size_t, ref const(char[]) buf)
                         {
@@ -88,7 +88,7 @@ public:
     }
 
 
-    int opApply( scope int delegate(ref size_t, ref const(char[])) dg ) const
+    override int opApply( scope int delegate(ref size_t, ref const(char[])) dg ) const
     {
         int result;
         foreach( i, e; resolve(m_trace) )
@@ -119,11 +119,11 @@ public:
      * Returns:
      *  A list of addresses that can be passed to resolve at a later point in time.
      */
-    static ulong[] trace(size_t skip = 0, CONTEXT* context = null)
+    static ulong[] trace(ulong buf[], size_t skip = 0, CONTEXT* context = null)
     {
         synchronized( StackTrace.classinfo )
         {
-            return traceNoSync(skip, context);
+            return traceNoSync(buf, skip, context);
         }
     }
 
@@ -144,9 +144,10 @@ public:
 
 private:
     ulong[] m_trace;
+	ulong[32] m_buffer;
 
 
-    static ulong[] traceNoSync(size_t skip, CONTEXT* context)
+    static ulong[] traceNoSync(ulong[] buf, size_t skip, CONTEXT* context)
     {
         auto dbghelp  = DbgHelp.get();
         if(dbghelp is null)
@@ -196,7 +197,6 @@ private:
         else version (X86_64) enum imageType = IMAGE_FILE_MACHINE_AMD64;
         else                  static assert(0, "unimplemented");
 
-        ulong[] result;
         size_t frameNum = 0;
         
         // do ... while so that we don't skip the first stackframe
@@ -209,13 +209,15 @@ private:
             }
             if(frameNum >= skip)
             {
-                result ~= stackframe.AddrPC.Offset;
+				if(frameNum - skip > buf.length)
+					break;
+                buf[frameNum - skip] = stackframe.AddrPC.Offset;
             }
             frameNum++;
         }
         while (dbghelp.StackWalk64(imageType, hProcess, hThread, &stackframe,
                                    &ctxt, null, null, null, null));
-        return result;
+        return buf[0..frameNum - skip];
     }
 
     static trace_t resolveNoSync(const(ulong)[] addresses)
@@ -237,12 +239,12 @@ private:
         symbol.SizeOfStruct = IMAGEHLP_SYMBOL64.sizeof;
         symbol.MaxNameLength = bufSymbol._buf.length;
 
-        char[][] trace;
+        trace_t trace;
         foreach(pc; addresses)
         {
             if( pc != 0 )
             {
-                char[] res;
+                line_t res;
                 if (dbghelp.SymGetSymFromAddr64(hProcess, pc, null, symbol) &&
                     *symbol.Name.ptr)
                 {
@@ -264,7 +266,7 @@ private:
         return trace;
     }
 
-    static char[] formatStackFrame(void* pc)
+    static line_t formatStackFrame(void* pc)
     {
         import core.stdc.stdio : snprintf;
         char[2+2*size_t.sizeof+1] buf=void;
@@ -274,9 +276,10 @@ private:
         return buf[0 .. len].dup;
     }
 
-    static char[] formatStackFrame(void* pc, char* symName)
+    static line_t formatStackFrame(void* pc, char* symName)
     {
-        char[2048] demangleBuf=void;
+        char[2048] demangleBuf = void;
+		char[2048] decodeBuf = void;
 
         auto res = formatStackFrame(pc);
         res ~= " in ";
@@ -285,13 +288,13 @@ private:
         version(DigitalMars) version(Win32)
         {
             size_t decodeIndex = 0;
-            tempSymName = decodeDmdString(tempSymName, decodeIndex);
+            tempSymName = decodeDmdString(tempSymName, decodeIndex, decodeBuf);
         }
         res ~= demangle(tempSymName, demangleBuf);
         return res;
     }
 
-    static char[] formatStackFrame(void* pc, char* symName,
+    static line_t formatStackFrame(void* pc, char* symName,
                                    in char* fileName, uint lineNum)
     {
         import core.stdc.stdio : snprintf;
@@ -360,9 +363,10 @@ private string generateSearchPath()
     return path;
 }
 
-
-shared static this()
+void initializeStackTracing()
 {
+    if(initialized)
+	    return;
     auto dbghelp = DbgHelp.get();
 
     if( dbghelp is null )
@@ -389,5 +393,10 @@ shared static this()
 
     dbghelp.SymRegisterCallback64(hProcess, &FixupDebugHeader, 0);
 
-    initialized = true;
+    initialized = true;		
+}
+
+shared static this()
+{
+	initializeStackTracing();
 }

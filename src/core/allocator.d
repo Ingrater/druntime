@@ -276,12 +276,12 @@ class StdAllocator : IAdvancedAllocator
         leakSum += leak.size;
         if( !traceCache.exists(leak) )
         {
-          long[14] backtrace;
+          ulong[14] backtrace;
           for(int i=0; i<leak.backtraceSize; i++)
           {
             backtrace[i] = leak.backtrace[i];
           }
-          auto trace = StackTrace.resolveAddresses(backtrace[0..leak.backtraceSize]);
+          auto trace = StackTrace.resolve(backtrace[0..leak.backtraceSize]);
           TraceInfo traceinfo;
           traceinfo.count = 1;
           int i=0;
@@ -472,8 +472,8 @@ class StdAllocator : IAdvancedAllocator
           // TODO implement for linux / osx
           version(Windows)
           {
-            long backtrace[14];
-            info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace, false, 3).length;
+            ulong backtrace[14];
+            info.backtraceSize = cast(byte)StackTrace.trace(backtrace, 3).length;
             for(int i=0; i<info.backtraceSize; i++)
             {
               info.backtrace[i] = cast(size_t)backtrace[i];
@@ -533,8 +533,8 @@ class StdAllocator : IAdvancedAllocator
             // TODO implement for linux / osx
             version(Windows)
             {
-              long backtrace[14];
-              info.backtraceSize = cast(byte)StackTrace.traceAddresses(backtrace,false,3).length;
+              ulong backtrace[14];
+              info.backtraceSize = cast(byte)StackTrace.trace(backtrace, 3).length;
               for(int i=0; i<info.backtraceSize; i++)
               {
                 info.backtrace[i] = cast(size_t)backtrace[i];
@@ -677,7 +677,7 @@ auto AllocatorNew(T,AT,ARGS...)(AT allocator, ARGS args)
     auto ti = typeid(StripModifier!T);
     assert(memSize == ti.init().length, "T.sizeof and typeid(T).init.length do not match");
     if(ti.init().ptr is null)
-      memset(mem, 0, mem.length);
+      memset(mem.ptr, 0, mem.length);
     else
       mem[] = (cast(void[])ti.init())[];
     auto result = (cast(T*)mem);

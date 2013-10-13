@@ -16,6 +16,7 @@ module rt.typeinfo.ti_Ag;
 private import core.stdc.string;
 private import rt.util.hash;
 private import rt.util.string;
+version(NOGCSAFE) import core.refcounted : _T;
 
 // byte[]
 

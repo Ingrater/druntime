@@ -17,7 +17,7 @@ module rt.typeinfo.ti_void;
 
 class TypeInfo_v : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     { 
       version(NOGCSAFE)
         return to_string_t("void");
@@ -63,5 +63,5 @@ class TypeInfo_v : TypeInfo
         return 1;
     }
 
-    @property override Type type() nothrow pure { return Type.Void; }
+    @property override Type type() nothrow pure const { return Type.Void; }
 }

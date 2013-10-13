@@ -19,7 +19,7 @@ private import rt.util.hash;
 
 class TypeInfo_r : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     { 
       version(NOGCSAFE)
         return to_string_t("cdouble");
@@ -102,5 +102,5 @@ class TypeInfo_r : TypeInfo
         return 0;
     }
 
-    @property override Type type() nothrow pure { return Type.CDouble; }
+    @property override Type type() nothrow pure const { return Type.CDouble; }
 }

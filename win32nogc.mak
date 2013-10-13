@@ -23,7 +23,7 @@ DRUNTIME_RELEASE=lib\$(DRUNTIME_BASE).lib
 
 DOCFMT=-version=CoreDdoc
 
-target : import copydir copy $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE) doc $(GCSTUB)
+target : import copydir copy $(DRUNTIME_DEBUG) $(DRUNTIME_RELEASE) $(GCSTUB)
 
 MANIFEST= \
 	LICENSE \

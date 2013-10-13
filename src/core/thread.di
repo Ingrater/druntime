@@ -422,8 +422,8 @@ private:
 
 		version(NOGCSAFE)
 		{
-			version (Windows)      enum ThreadSize = 136;
-			else version (OSX)     enum ThreadSize = 136;
+			version (Windows)      enum ThreadSize = 128;
+			else version (OSX)     enum ThreadSize = 128;
 			else version (Posix)   enum ThreadSize =  100;
 			else static assert(0, "Platform not supported.");
 		}

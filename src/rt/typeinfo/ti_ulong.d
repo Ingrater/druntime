@@ -19,7 +19,7 @@ private import rt.util.hash;
 
 class TypeInfo_m : TypeInfo
 {
-    override to_string_t toString() 
+    override to_string_t toString() const
     {
       version(NOGCSAFE)
         return to_string_t("ulong");
@@ -70,5 +70,5 @@ class TypeInfo_m : TypeInfo
         return ulong.alignof;
     }
 
-    @property override Type type() nothrow pure { return Type.ULong; }
+    @property override Type type() nothrow pure const { return Type.ULong; }
 }

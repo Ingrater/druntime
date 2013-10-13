@@ -199,7 +199,7 @@ extern (C) void* gc_malloc( size_t sz, uint ba = 0 )
     if( proxy is null )
     {
         //printf("gcstub malloc %d\n",sz);
-        void* p = StdAllocator.globalInstance.AllocateMemory( sz );
+        void* p = StdAllocator.globalInstance.AllocateMemory( sz ).ptr;
 
         if( sz && p is null )
             onOutOfMemoryError();
@@ -225,7 +225,7 @@ extern (C) void* gc_calloc( size_t sz, uint ba = 0 )
 {
     if( proxy is null )
     {
-        void* p = StdAllocator.globalInstance.AllocateMemory( sz );
+        void* p = StdAllocator.globalInstance.AllocateMemory( sz ).ptr;
         memset(p, 0, sz);
 
         if( sz && p is null )
@@ -239,7 +239,7 @@ extern (C) void* gc_realloc( void* p, size_t sz, uint ba = 0 )
 {
     if( proxy is null )
     {
-        p = StdAllocator.globalInstance.ReallocateMemory( p, sz );
+        p = StdAllocator.globalInstance.ReallocateMemory( p, sz ).ptr;
 
         if( sz && p is null )
             onOutOfMemoryError();
