@@ -227,7 +227,13 @@ class TypeInfo_Aya : TypeInfo_Aa
 
 class TypeInfo_Axa : TypeInfo_Aa
 {
-    override string toString() const { return "const(char)[]"; }
+    override to_string_t toString() const 
+	{ 
+		version(NOGCSAFE)
+			return _T("const(char)[]");
+		else
+			return "const(char)[]"; 
+	}
 
     override @property inout(TypeInfo) next() inout
     {

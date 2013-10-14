@@ -174,7 +174,7 @@ MANIFEST= \
 	src\rt\cover.d \
 	src\rt\critical_.d \
 	src\rt\deh.d \
-	src\rt\deh2.d \
+	src\rt\deh_win32.d \
 	src\rt\dmain2.d \
 	src\rt\dylib_fixes.c \
 	src\rt\image.d \
@@ -309,7 +309,7 @@ SRCS= \
 	src\rt\cover.d \
 	src\rt\critical_.d \
 	src\rt\deh.d \
-	src\rt\deh2.d \
+	src\rt\deh_win32.d \
 	src\rt\dmain2.d \
 	src\rt\invariant.d \
 	src\rt\lifetime.d \

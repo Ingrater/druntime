@@ -63,6 +63,10 @@ extern (C) void rt_moduleTlsDtor();
 extern (C) void thread_joinAll();
 extern (C) bool runModuleUnitTests();
 
+extern(C) void _initStdAllocator(bool allowMemoryTracking);
+extern(C) void _initMemoryTracking();
+extern(C) void _deinitMemoryTracking();
+
 version (OSX)
 {
     // The bottom of the stack
@@ -165,9 +169,11 @@ extern (C) bool rt_init(ExceptionHandler dg = null)
 
     try
     {
+        _initStdAllocator(true);
         initSections();
         gc_init();
         initStaticDataGC();
+        _initMemoryTracking();
         rt_moduleCtor();
         rt_moduleTlsCtor();
         return true;
@@ -218,6 +224,7 @@ extern (C) bool rt_term(ExceptionHandler dg = null)
         rt_moduleTlsDtor();
         rt_moduleDtor();
         gc_term();
+        _deinitMemoryTracking();
         finiSections();
         return true;
     }

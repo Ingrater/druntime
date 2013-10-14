@@ -1550,7 +1550,7 @@ class Throwable : Object
         to_string_t toString();
     }
 
-    to_string_t      msg;    /// A message describing the error.
+    string      msg;    /// A message describing the error.
 
     /**
      * The _file name and line number of the D source code corresponding with
@@ -1574,20 +1574,14 @@ class Throwable : Object
      */
     Throwable   next;
 
-    @safe nothrow this(string msg, Throwable next = null)
+    @safe pure nothrow this(string msg, Throwable next = null)
     {
-      try {
         this.msg = msg;
-      }
-      catch(Exception e)
-      {
-
-      }
         this.next = next;
         //this.info = _d_traceContext();
     }
 
-    @safe nothrow this(string msg, string file, size_t line, Throwable next = null)
+    @safe pure nothrow this(string msg, string file, size_t line, Throwable next = null)
     {
         this(msg, next);
         this.file = file;
@@ -1712,12 +1706,12 @@ class Exception : Throwable
      * This constructor does not automatically throw the newly-created
      * Exception; the $(D throw) statement should be used for that purpose.
      */
-    @safe nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
+    @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
     {
         super(msg, file, line, next);
     }
 
-    @safe nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
+    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__)
     {
         super(msg, file, line, next);
     }
@@ -1753,13 +1747,13 @@ unittest
 
 class Error : Throwable
 {
-    @safe nothrow this(string msg, Throwable next = null)
+    @safe pure nothrow this(string msg, Throwable next = null)
     {
         super(msg, next);
         bypassedException = null;
     }
 
-    @safe nothrow this(string msg, string file, size_t line, Throwable next = null)
+    @safe pure nothrow this(string msg, string file, size_t line, Throwable next = null)
     {
         super(msg, file, line, next);
         bypassedException = null;

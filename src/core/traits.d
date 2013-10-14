@@ -312,7 +312,7 @@ template typeOfFieldImpl(T, string name, size_t i)
   }
   else
   {
- 	static if (T.tupleof[i].stringof[1 + T.stringof.length + 2 .. $] == name)
+ 	static if (T.tupleof[i].stringof == name)
 	{
 	  alias typeof(T.tupleof[i]) typeOfFieldImpl;
 	}
