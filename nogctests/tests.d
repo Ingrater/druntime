@@ -1,3 +1,5 @@
+import core.stdc.stdio;
+
 class Foo
 {
 }
@@ -12,6 +14,7 @@ struct SFoo
 
 void main(string[] args)
 {
+  try {
   assert(typeid(byte).type == TypeInfo.Type.Byte);
   assert(typeid(ubyte).type == TypeInfo.Type.UByte);
   assert(typeid(short).type == TypeInfo.Type.Short);
@@ -23,7 +26,7 @@ void main(string[] args)
   assert(typeid(char).type == TypeInfo.Type.Char);
   assert(typeid(wchar).type == TypeInfo.Type.WChar);
   assert(typeid(dchar).type == TypeInfo.Type.DChar);
-  assert(typeid(Object).type == TypeInfo.Type.Obj);
+  //assert(typeid(Object).type == TypeInfo.Type.Obj);
   assert(typeid(Foo).type == TypeInfo.Type.Class);
   assert(typeid(IFoo).type == TypeInfo.Type.Interface);
   assert(typeid(SFoo).type == TypeInfo.Type.Struct);
@@ -41,4 +44,22 @@ void main(string[] args)
   assert(typeid(int[]).type == TypeInfo.Type.Array);
   assert(typeid(float[]).type == TypeInfo.Type.Array);
   assert(typeid(void*).type == TypeInfo.Type.Pointer);
+  
+  assert(typeid(void*).nextTypeInfo !is null);
+  assert(typeid(void*).nextTypeInfo.type == TypeInfo.Type.Void);
+  assert(typeid(int[]).nextTypeInfo !is null);
+  assert(typeid(int[]).nextTypeInfo.type == TypeInfo.Type.Int);
+  assert(typeid(string).type == TypeInfo.Type.Array);
+  assert(typeid(string).nextTypeInfo !is null);
+  assert(typeid(string).nextTypeInfo.type == TypeInfo.Type.Immutable);
+  assert(typeid(string).nextTypeInfo.nextTypeInfo !is null);
+  assert(typeid(string).nextTypeInfo.nextTypeInfo.type == TypeInfo.Type.Char);
+  printf("All good\n");
+  }
+  catch(Throwable e)
+  {
+	auto msg = e.toString();
+	printf("Tests failed with %.*s\n", msg.length, msg.ptr);
+	Delete(e);
+  }
 }

@@ -281,7 +281,8 @@ class StdAllocator : IAdvancedAllocator
           {
             backtrace[i] = leak.backtrace[i];
           }
-          auto trace = StackTrace.resolve(backtrace[0..leak.backtraceSize]);
+		  rcstring lines[14];
+          auto trace = StackTrace.resolve(backtrace[0..leak.backtraceSize], lines);
           TraceInfo traceinfo;
           traceinfo.count = 1;
           int i=0;
@@ -291,7 +292,7 @@ class StdAllocator : IAdvancedAllocator
             if(i < traceinfo.trace.length)
             {
               traceinfo.trace[i] = AllocatorNewArray!char(g_trackingAllocator, line.length);
-              traceinfo.trace[i][] = line[];
+              traceinfo.trace[i][] = line[][]; // BUG
               i++;
             }
           }

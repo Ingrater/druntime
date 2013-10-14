@@ -13,6 +13,13 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.windows.stacktrace;
+
+version(NOGCSAFE)
+{
+  import core.allocator;
+  import core.refcounted;
+}
+
 version(Windows):
 
 import core.demangle;
@@ -21,6 +28,8 @@ import core.stdc.stdlib;
 import core.stdc.string;
 import core.sys.windows.dbghelp;
 import core.sys.windows.windows;
+
+
 
 //debug=PRINTF;
 debug(PRINTF) import core.stdc.stdio;
@@ -38,14 +47,16 @@ class StackTrace : Throwable.TraceInfo
 private:
   version(NOGCSAFE)
   {
-    alias char[] line_t;
-	alias char[][] trace_t;
+    alias rcstring line_t;
+	alias rcstring[] trace_t;
   }
   else
   {
-    alias rcstring line_t;
-	alias RCArray!line_t trace_t;
+    alias char[] line_t;
+	alias char[][] trace_t;
   }
+  
+  enum size_t MAX_LINE_COUNT = 32;
 
 public:
     /**
@@ -91,9 +102,11 @@ public:
     override int opApply( scope int delegate(ref size_t, ref const(char[])) dg ) const
     {
         int result;
-        foreach( i, e; resolve(m_trace) )
+		rcstring lines[MAX_LINE_COUNT];
+        foreach( i, e; resolve(m_trace, lines) )
         {
-            if( (result = dg( i, e )) != 0 )
+			const(char[]) tmp = e[];
+            if( (result = dg( i, tmp )) != 0 )
                 break;
         }
         return result;
@@ -134,17 +147,17 @@ public:
      * Returns:
      *  An array of strings with the results.
      */
-    static trace_t resolve(const(ulong)[] addresses)
+    static trace_t resolve(const(ulong)[] addresses, trace_t buffer)
     {
         synchronized( StackTrace.classinfo )
         {
-            return resolveNoSync(addresses);
+            return resolveNoSync(addresses, buffer);
         }
     }
 
 private:
     ulong[] m_trace;
-	ulong[32] m_buffer;
+	ulong[MAX_LINE_COUNT] m_buffer;
 
 
     static ulong[] traceNoSync(ulong[] buf, size_t skip, CONTEXT* context)
@@ -209,8 +222,8 @@ private:
             }
             if(frameNum >= skip)
             {
-				if(frameNum - skip > buf.length)
-					break;
+				      if(frameNum - skip >= buf.length)
+					      break;
                 buf[frameNum - skip] = stackframe.AddrPC.Offset;
             }
             frameNum++;
@@ -220,7 +233,7 @@ private:
         return buf[0..frameNum - skip];
     }
 
-    static trace_t resolveNoSync(const(ulong)[] addresses)
+    static trace_t resolveNoSync(const(ulong)[] addresses, trace_t buffer)
     {
         auto dbghelp  = DbgHelp.get();
         if(dbghelp is null)
@@ -239,11 +252,14 @@ private:
         symbol.SizeOfStruct = IMAGEHLP_SYMBOL64.sizeof;
         symbol.MaxNameLength = bufSymbol._buf.length;
 
-        trace_t trace;
+        //trace_t trace;
+		size_t count = 0;
         foreach(pc; addresses)
         {
             if( pc != 0 )
             {
+                if(buffer.length <= count)
+                    break;
                 line_t res;
                 if (dbghelp.SymGetSymFromAddr64(hProcess, pc, null, symbol) &&
                     *symbol.Name.ptr)
@@ -260,10 +276,10 @@ private:
                 }
                 else
                     res = formatStackFrame(cast(void*)pc);
-                trace ~= res;
+                buffer[count++] = res;
             }
         }
-        return trace;
+        return buffer[0..count];
     }
 
     static line_t formatStackFrame(void* pc)
@@ -273,7 +289,7 @@ private:
 
         immutable len = snprintf(buf.ptr, buf.length, "0x%p", pc);
         len < buf.length || assert(0);
-        return buf[0 .. len].dup;
+        return line_t(buf[0 .. len]);
     }
 
     static line_t formatStackFrame(void* pc, char* symName)

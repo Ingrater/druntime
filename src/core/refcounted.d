@@ -134,13 +134,6 @@ struct SmartPtr(T)
     if(ptr !is null)
       ptr.RemoveReference();
   }
-
-  //ugly workaround
-  private mixin template _workaround4424()
-  {
-    @disable void opAssign(typeof(this) );
-  }
-  mixin _workaround4424;
   
   //assignment to null
   void opAssign(U)(U obj) if(is(U == typeof(null)))
@@ -161,7 +154,8 @@ struct SmartPtr(T)
   }
   
   //assignment from another smart ptr
-  void opAssign(U)(auto ref U rh) if(is(U V : SmartPtr!V) && is(SmartPtrType!U : T))
+  // BUG: adding "auto ref" to U will fail compilation
+  void opAssign(U)(U rh) if(is(U V : SmartPtr!V) && is(SmartPtrType!U : T))
   {
     if(ptr !is null)
       ptr.RemoveReference();
@@ -463,8 +457,8 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.RemoveReference();
   }
   
-  // TODO replace this bullshit with a template once it is supported by dmd
-  @trusted void opAssign(T)(auto ref T rh) if(!is(T == this_t) && isRCArray!T && is(RCArrayType!T == RCArrayType!this_t) 
+  // BUG: when adding "auto ref" to rh it fails to compile
+  @trusted void opAssign(T)(T rh) if(!is(T == this_t) && isRCArray!T && is(RCArrayType!T == RCArrayType!this_t) 
                                      && is(typeof( true ? RCAllocatorType!T : AT) == AT))
   {
     static assert(__traits(classInstanceSize, typeof(m_DataObject)) == __traits(classInstanceSize, typeof(rh.m_DataObject)), "can not cast because sizes don't match");
@@ -479,7 +473,7 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.AddReference();
   }
 
-  @trusted void opAssign(T)(auto ref T rh) if(is(T == this_t))
+  @trusted void opAssign(T)(T rh) if(is(T == this_t))
   {
     if(m_DataObject !is null)
       m_DataObject.RemoveReference();
@@ -488,13 +482,6 @@ struct RCArray(T,AT = StdAllocator)
     if(m_DataObject !is null)
       m_DataObject.AddReference();
   }
-
-  //ugly workaround
-  private mixin template _workaround4424()
-  {
-    @disable void opAssign(typeof(this) );
-  }
-  mixin _workaround4424;
 
   /*void opAssign(this_t rh)
   {

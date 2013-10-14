@@ -460,6 +460,7 @@ class TypeInfo
     
     @property Type type() nothrow pure const { return Type.Info; }
     string GetName() nothrow pure const { return ""; } //name, only implemented for structs, interfaces, classes, typedef, enum
+	@property inout(TypeInfo) nextTypeInfo() nothrow pure inout { return next(); }
 }
 
 class TypeInfo_Typedef : TypeInfo
@@ -1422,6 +1423,7 @@ class TypeInfo_Const : TypeInfo
     }
 
     @property override Type type() nothrow pure const { return Type.Const; }
+	@property inout(TypeInfo) nextTypeInfo() nothrow pure inout { return base; }
 
     TypeInfo base;
 }
@@ -1579,6 +1581,11 @@ class Throwable : Object
         this.line = line;
         //this.info = _d_traceContext();
     }
+	
+	~this()
+	{
+	  Delete(this.info);
+	}
 
     override to_string_t toString()
     {

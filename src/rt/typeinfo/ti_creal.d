@@ -103,5 +103,5 @@ class TypeInfo_c : TypeInfo
         return 0;
     }
 
-    @property override Type type() nothrow pure const { return Type.Real; }
+    @property override Type type() nothrow pure const { return Type.CReal; }
 }

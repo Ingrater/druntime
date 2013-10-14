@@ -195,6 +195,8 @@ MANIFEST= \
 	src\rt\tls.S \
 	src\rt\tlsgc.d \
 	src\rt\trace.d \
+	src\rt\sections.d \
+	src\rt\sections_win32.d \
 	\
 	src\rt\typeinfo\ti_AC.d \
 	src\rt\typeinfo\ti_Acdouble.d \
@@ -307,6 +309,7 @@ SRCS= \
 	src\rt\cover.d \
 	src\rt\critical_.d \
 	src\rt\deh.d \
+	src\rt\deh2.d \
 	src\rt\dmain2.d \
 	src\rt\invariant.d \
 	src\rt\lifetime.d \
@@ -320,6 +323,8 @@ SRCS= \
 	src\rt\switch_.d \
 	src\rt\tlsgc.d \
 	src\rt\trace.d \
+	src\rt\sections.d \
+	src\rt\sections_win32.d \
 	\
 	src\rt\util\console.d \
 	src\rt\util\hash.d \
