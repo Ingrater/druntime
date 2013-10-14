@@ -53,8 +53,8 @@ else version (Windows)
  */
 class ThreadException : Exception
 {
-    this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null);
-    this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__);
+    @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null);
+    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__);
 }
 
 
@@ -63,8 +63,8 @@ class ThreadException : Exception
  */
 class FiberException : Exception
 {
-    this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null);
-    this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__);
+    @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null);
+    @safe pure nothrow this(string msg, Throwable next, string file = __FILE__, size_t line = __LINE__);
 }
 
 
@@ -268,10 +268,19 @@ class Thread : ThreadBase
     /**
      * The maximum scheduling priority that may be set for a thread.  On
      * systems where multiple scheduling policies are defined, this value
-     * represents the minimum valid priority for the scheduling policy of
+     * represents the maximum valid priority for the scheduling policy of
      * the process.
      */
     __gshared const int PRIORITY_MAX;
+
+
+    /**
+     * The default scheduling priority that is set for a thread.  On
+     * systems where multiple scheduling policies are defined, this value
+     * represents the default priority for the scheduling policy of
+     * the process.
+     */
+    __gshared const int PRIORITY_DEFAULT;
 
 
     /**
@@ -454,6 +463,13 @@ extern (C) void thread_init();
 
 
 /**
+ * Terminates the thread module. No other thread routine may be called
+ * afterwards.
+ */
+extern (C) void thread_term();
+
+
+/**
  *
  */
 extern (C) bool thread_isMainThread();
@@ -597,12 +613,10 @@ extern (C) void thread_scanAllType( scope ScanAllThreadsTypeFn scan );
 extern (C) void thread_scanAll( scope ScanAllThreadsFn scan );
 
 
-/*
+/**
  * Signals that the code following this call is a critical region. Any code in
  * this region must finish running before the calling thread can be suspended
- * by a call to thread_suspendAll. If the world is stopped while the calling
- * thread is in a critical region, it will be continually suspended and resumed
- * until it is outside a critical region.
+ * by a call to thread_suspendAll.
  *
  * This function is, in particular, meant to help maintain garbage collector
  * invariants when a lock is not used.
@@ -610,10 +624,9 @@ extern (C) void thread_scanAll( scope ScanAllThreadsFn scan );
  * A critical region is exited with thread_exitCriticalRegion.
  *
  * $(RED Warning):
- * Using critical regions is extremely error-prone. For instance, using a lock
- * inside a critical region will most likely result in an application deadlocking
- * because the stop-the-world routine will attempt to suspend and resume the thread
- * forever, to no avail.
+ * Using critical regions is extremely error-prone. For instance, using locks
+ * inside a critical region can easily result in a deadlock when another thread
+ * holding the lock already got suspended.
  *
  * The term and concept of a 'critical region' comes from
  * $(LINK2 https://github.com/mono/mono/blob/521f4a198e442573c400835ef19bbb36b60b0ebb/mono/metadata/sgen-gc.h#L925 Mono's SGen garbage collector).
@@ -624,7 +637,7 @@ extern (C) void thread_scanAll( scope ScanAllThreadsFn scan );
 extern (C) void thread_enterCriticalRegion();
 
 
-/*
+/**
  * Signals that the calling thread is no longer in a critical region. Following
  * a call to this function, the thread can once again be suspended.
  *
@@ -634,7 +647,7 @@ extern (C) void thread_enterCriticalRegion();
 extern (C) void thread_exitCriticalRegion();
 
 
-/*
+/**
  * Returns true if the current thread is in a critical region; otherwise, false.
  *
  * In:
@@ -797,6 +810,50 @@ private:
 // Fiber Platform Detection and Memory Allocation
 ///////////////////////////////////////////////////////////////////////////////
 
+private
+{
+    // These must be kept in sync with core/thread.d
+    version( D_InlineAsm_X86 )
+    {
+        version( Windows )
+            version = NoUcontext;
+        else version( Posix )
+            version = NoUcontext;
+    }
+    else version( D_InlineAsm_X86_64 )
+    {
+        version( Windows )
+            version = NoUcontext;
+        else version( Posix )
+            version = NoUcontext;
+    }
+    else version( PPC )
+    {
+        version( Posix )
+            version = NoUcontext;
+    }
+    else version( PPC64 )
+    {
+        version( Posix )
+        {
+            // uses ucontext_t.
+        }
+    }
+    else version( MIPS_O32 )
+    {
+        version( Posix )
+            version = NoUcontext;
+    }
+
+    version( Posix )
+    {
+        version( NoUcontext )       {} else
+        {
+            import core.sys.posix.ucontext;
+        }
+    }
+}
+
 private extern __gshared const size_t PAGESIZE;
 
 shared static this();
@@ -805,7 +862,6 @@ shared static this();
 ///////////////////////////////////////////////////////////////////////////////
 // Fiber
 ///////////////////////////////////////////////////////////////////////////////
-
 
 /**
  * This class provides a cooperative concurrency mechanism integrated with the
@@ -927,15 +983,12 @@ class Fiber
 
 
     /**
-     * Resets this fiber so that it may be re-used.  This routine may only be
-     * called for fibers that have terminated, as doing otherwise could result
-     * in scope-dependent functionality that is not executed.  Stack-based
-     * classes, for example, may not be cleaned up properly if a fiber is reset
-     * before it has terminated.
-     *
-     * Params:
-     *  fn = The fiber function.
-     *  dg = The fiber function.
+     * Resets this fiber so that it may be re-used, optionally with a
+     * new function/delegate.  This routine may only be called for
+     * fibers that have terminated, as doing otherwise could result in
+     * scope-dependent functionality that is not executed.
+     * Stack-based classes, for example, may not be cleaned up
+     * properly if a fiber is reset before it has terminated.
      *
      * In:
      *  This fiber must be in state TERM.
@@ -1028,13 +1081,18 @@ class Fiber
     }
 
 private:
-
     // These must be kept in sync with core/thread.d
     version (D_LP64)
     {
         version (Windows)      enum FiberSize = 88;
         else version (OSX)     enum FiberSize = 88;
-        else version (Posix)   enum FiberSize = 88;
+        else version (Posix)
+        {
+            static if( __traits( compiles, ucontext_t ) )
+                enum FiberSize = 88 + ucontext_t.sizeof + 8;
+            else
+                enum FiberSize = 88;
+        }
         else static assert(0, "Platform not supported.");
     }
     else
@@ -1043,7 +1101,20 @@ private:
 
         version (Windows)      enum FiberSize = 44;
         else version (OSX)     enum FiberSize = 44;
-        else version (Posix)   enum FiberSize = 44;
+        else version (Posix)
+        {
+            static if( __traits( compiles, ucontext_t ) )
+            {
+                // ucontext_t might have an alignment larger than 4.
+                static roundUp()(size_t n)
+                {
+                    return (n + (ucontext_t.alignof - 1)) & ~(ucontext_t.alignof - 1);
+                }
+                enum FiberSize = roundUp(roundUp(44) + ucontext_t.sizeof + 4);
+            }
+            else
+                enum FiberSize = 44;
+        }
         else static assert(0, "Platform not supported.");
     }
 

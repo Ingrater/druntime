@@ -29,7 +29,7 @@ extern (Windows) nothrow:
     alias char CHAR;
     alias short SHORT;
     alias int LONG;
-    
+
     alias long  LONGLONG;
     alias ulong ULONGLONG;
 
@@ -1183,14 +1183,14 @@ version (Win64)
 
     // Copied from Public Domain w64 mingw-runtime package's winnt.h.
 
-    align(16) struct M128A 
+    align(16) struct M128A
     {
         ULONGLONG Low;
         LONGLONG High;
-    } 
+    }
     alias M128A* PM128A;
 
-    struct XMM_SAVE_AREA32 
+    struct XMM_SAVE_AREA32
     {
         WORD ControlWord;
         WORD StatusWord;
@@ -1208,9 +1208,9 @@ version (Win64)
         M128A FloatRegisters[8];
         M128A XmmRegisters[16];
         BYTE Reserved4[96];
-    } 
+    }
     alias XMM_SAVE_AREA32 PXMM_SAVE_AREA32;
-  
+
     align(16) struct CONTEXT // sizeof(1232)
     {
         DWORD64 P1Home;
@@ -1251,11 +1251,11 @@ version (Win64)
         DWORD64 R14;
         DWORD64 R15;
         DWORD64 Rip;
-        union 
+        union
         {
             XMM_SAVE_AREA32 FltSave;
             XMM_SAVE_AREA32 FloatSave;
-            struct 
+            struct
             {
                 M128A Header[2];
                 M128A Legacy[8];
@@ -1306,8 +1306,8 @@ else // Win32
 
         CONTEXT_FULL = (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS),
 
-        CONTEXT_ALL = (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | 
-                       CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS | 
+        CONTEXT_ALL = (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS |
+                       CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS |
                        CONTEXT_EXTENDED_REGISTERS),
 
         MAXIMUM_SUPPORTED_EXTENSION = 512
@@ -1344,7 +1344,7 @@ else // Win32
         //
         // The context record is never used as an OUT only parameter.
         //
-    
+
         DWORD ContextFlags;
 
         //
@@ -1359,41 +1359,41 @@ else // Win32
         DWORD   Dr3;
         DWORD   Dr6;
         DWORD   Dr7;
-    
+
         //
         // This section is specified/returned if the
         // ContextFlags word contians the flag CONTEXT_FLOATING_POINT.
         //
-    
+
         FLOATING_SAVE_AREA FloatSave;
-    
+
         //
         // This section is specified/returned if the
         // ContextFlags word contians the flag CONTEXT_SEGMENTS.
         //
-    
+
         DWORD   SegGs;
         DWORD   SegFs;
         DWORD   SegEs;
         DWORD   SegDs;
-    
+
         //
         // This section is specified/returned if the
         // ContextFlags word contians the flag CONTEXT_INTEGER.
         //
-    
+
         DWORD   Edi;
         DWORD   Esi;
         DWORD   Ebx;
         DWORD   Edx;
         DWORD   Ecx;
         DWORD   Eax;
-    
+
         //
         // This section is specified/returned if the
         // ContextFlags word contians the flag CONTEXT_CONTROL.
         //
-    
+
         DWORD   Ebp;
         DWORD   Eip;
         DWORD   SegCs;              // MUST BE SANITIZED
@@ -3677,3 +3677,16 @@ HINSTANCE ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR 
 
 UINT_PTR SetTimer(HWND hwnd, UINT_PTR nIDEvent, UINT uElapse, TIMERPROC lpTimerFunc);
 BOOL KillTimer(HWND hwnd, UINT_PTR nIDEvent);
+
+BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags);
+BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags);
+BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
+LPWSTR* CommandLineToArgvW(LPCWSTR lpCmdLine, int* pNumArgs);
+
+enum
+{
+    HANDLE_FLAG_INHERIT = 0x1,
+    HANDLE_FLAG_PROTECT_FROM_CLOSE = 0x2,
+}
+
+enum CREATE_UNICODE_ENVIRONMENT = 0x400;
