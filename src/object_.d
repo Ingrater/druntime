@@ -1423,7 +1423,7 @@ class TypeInfo_Const : TypeInfo
     }
 
     @property override Type type() nothrow pure const { return Type.Const; }
-	@property inout(TypeInfo) nextTypeInfo() nothrow pure inout { return base; }
+	@property override inout(TypeInfo) nextTypeInfo() nothrow pure inout { return base; }
 
     TypeInfo base;
 }

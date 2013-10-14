@@ -401,7 +401,7 @@ private:
     {
       version(NOGCSAFE)
       {
-        version (Windows)      enum ThreadSize = 328;
+        version (Windows)      enum ThreadSize = 312;
         else version (OSX)     enum ThreadSize = 336;
         else version (Solaris) enum ThreadSize = 192;
         else version (Posix)   enum ThreadSize = 200;

@@ -1572,7 +1572,7 @@ version (D_LP64)
   version(NOGCSAFE)
 	{
     version (Windows)
-      static assert(__traits(classInstanceSize, Thread) == 328);
+      static assert(__traits(classInstanceSize, Thread) == 312);
     else version (OSX)
       static assert(__traits(classInstanceSize, Thread) == 336);
     else version (Solaris)
