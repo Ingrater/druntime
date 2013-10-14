@@ -38,6 +38,8 @@ debug(PRINTF) import core.stdc.stdio;
 extern(Windows) void RtlCaptureContext(CONTEXT* ContextRecord);
 extern(Windows) DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR pBuffer, DWORD nSize);
 
+extern(Windows) USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID *BackTrace, PULONG BackTraceHash);
+
 
 private __gshared bool initialized = false;
 
@@ -165,6 +167,15 @@ private:
         auto dbghelp  = DbgHelp.get();
         if(dbghelp is null)
             return []; // dbghelp.dll not available
+
+        version(Win64)
+        {
+          auto backtraceLength = RtlCaptureStackBackTrace(cast(uint)skip, cast(uint)buf.length, cast(void**)buf.ptr, null);
+          if(backtraceLength > 1)
+          {
+            return buf[0..backtraceLength];
+          }
+        }
 
         HANDLE       hThread  = GetCurrentThread();
         HANDLE       hProcess = GetCurrentProcess();
