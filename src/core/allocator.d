@@ -30,7 +30,7 @@ version(DUMA)
   }
 }
 
-extern (C) void rt_finalize(void *data, bool det=true);
+extern (C) void rt_finalize2(void* p, bool det = true, bool resetMemory = true);
 
 version(Windows)
 {
@@ -714,7 +714,7 @@ void Free(T)(T mem)
 
 void Destruct(Object obj)
 {
-  rt_finalize(cast(void*)obj);
+  rt_finalize2(cast(void*)obj, false, false);
 }
 
 struct DefaultCtor {}; //call default ctor type
@@ -808,7 +808,7 @@ void AllocatorDelete(T,AT)(AT allocator, T obj)
   {
     if(obj is null)
       return;
-    rt_finalize(cast(void*)obj);
+    rt_finalize2(cast(void*)obj, false, false);
     allocator.FreeMemory(cast(void*)obj);
   }
   else static if(is(T == interface))
@@ -818,7 +818,7 @@ void AllocatorDelete(T,AT)(AT allocator, T obj)
     Object realObj = cast(Object)obj;
     if(realObj is null)
       return;
-    rt_finalize(cast(void*)realObj);
+    rt_finalize2(cast(void*)realObj, false, false);
     allocator.FreeMemory(cast(void*)realObj);
   }
   else static if(is(T P == U*, U))
