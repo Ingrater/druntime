@@ -154,8 +154,7 @@ struct SmartPtr(T)
   }
   
   //assignment from another smart ptr
-  // BUG: adding "auto ref" to U will fail compilation
-  void opAssign(U)(U rh) if(is(U V : SmartPtr!V) && is(SmartPtrType!U : T))
+  void opAssign(U)(auto ref U rh) if(is(U V : SmartPtr!V) && is(SmartPtrType!U : T))
   {
     if(ptr !is null)
       ptr.RemoveReference();
@@ -457,8 +456,7 @@ struct RCArray(T,AT = StdAllocator)
       m_DataObject.RemoveReference();
   }
   
-  // BUG: when adding "auto ref" to rh it fails to compile
-  @trusted void opAssign(T)(T rh) if(!is(T == this_t) && isRCArray!T && is(RCArrayType!T == RCArrayType!this_t) 
+  @trusted void opAssign(T)(auto ref T rh) if(!is(T == this_t) && isRCArray!T && is(RCArrayType!T == RCArrayType!this_t) 
                                      && is(typeof( true ? RCAllocatorType!T : AT) == AT))
   {
     static assert(__traits(classInstanceSize, typeof(m_DataObject)) == __traits(classInstanceSize, typeof(rh.m_DataObject)), "can not cast because sizes don't match");
@@ -482,46 +480,6 @@ struct RCArray(T,AT = StdAllocator)
     if(m_DataObject !is null)
       m_DataObject.AddReference();
   }
-
-  /*void opAssign(this_t rh)
-  {
-    if(m_DataObject !is null)
-      m_DataObject.RemoveReference();
-    m_DataObject = rh.m_DataObject;
-    m_Data = rh.m_Data;
-    if(m_DataObject !is null)
-      m_DataObject.AddReference();
-  }
-  
-  static if(is(typeof(AT.globalInstance)))
-  {
-    void opAssign(T[] rh)
-    {
-      if(m_DataObject !is null)
-        m_DataObject.RemoveReference();
-      auto newData = data_t.AllocateArray(rh.length, AT.globalInstance, InitializeMemoryWith.NOTHING);
-      auto mem = cast(BT[])newData.data;
-      mem[] = rh[];
-      m_DataObject = newData;
-      m_DataObject.AddReference();
-      m_Data = newData.data;
-    }
-  
-    static if(IsPOD!(BT) && !is(T == BT))
-    {
-      void opAssign(BT[] rh)
-      {
-        if(m_DataObject !is null)
-          m_DataObject.RemoveReference();
-        auto newData = data_t.AllocateArray(rh.length, AT.globalInstance, InitializeMemoryWith.NOTHING);
-        auto mem = cast(BT[])newData.data;
-        uninitializedCopy(mem[],rh[]);
-        m_DataObject = newData;
-        m_DataObject.AddReference();
-        m_Data = newData.data;      
-      }
-    }
-  }*/
   
   static if(is(typeof(AT.globalInstance)))
   {
