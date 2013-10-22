@@ -158,7 +158,7 @@ class TypeInfo
 	
 	@property Type type() nothrow pure const;
 	string GetName() nothrow pure const;
-	@property inout(TypeInfo) nextTypeInfo() nothrow pure inout { return base; }
+	@property inout(TypeInfo) nextTypeInfo() nothrow pure inout;
 }
 
 class TypeInfo_Typedef : TypeInfo
