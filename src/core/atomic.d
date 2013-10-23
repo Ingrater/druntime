@@ -152,6 +152,220 @@ version( CoreDdoc )
      */
     void atomicFence() nothrow;
 }
+else version( LDC )
+{
+    import ldc.intrinsics;
+
+    HeadUnshared!(T) atomicOp(string op, T, V1)( ref shared T val, V1 mod )
+        if( __traits( compiles, mixin( "val" ~ op ~ "mod" ) ) )
+    {
+        // binary operators
+        //
+        // +    -   *   /   %   ^^  &
+        // |    ^   <<  >>  >>> ~   in
+        // ==   !=  <   <=  >   >=
+        static if( op == "+"  || op == "-"  || op == "*"  || op == "/"   ||
+                   op == "%"  || op == "^^" || op == "&"  || op == "|"   ||
+                   op == "^"  || op == "<<" || op == ">>" || op == ">>>" ||
+                   op == "~"  || // skip "in"
+                   op == "==" || op == "!=" || op == "<"  || op == "<="  ||
+                   op == ">"  || op == ">=" )
+        {
+            HeadUnshared!(T) get = atomicLoad!(MemoryOrder.raw)( val );
+            mixin( "return get " ~ op ~ " mod;" );
+        }
+        else
+        // assignment operators
+        //
+        // +=   -=  *=  /=  %=  ^^= &=
+        // |=   ^=  <<= >>= >>>=    ~=
+        static if( op == "+=" || op == "-="  || op == "*="  || op == "/=" ||
+                   op == "%=" || op == "^^=" || op == "&="  || op == "|=" ||
+                   op == "^=" || op == "<<=" || op == ">>=" || op == ">>>=" ) // skip "~="
+        {
+            HeadUnshared!(T) get, set;
+
+            do
+            {
+                get = set = atomicLoad!(MemoryOrder.raw)( val );
+                mixin( "set " ~ op ~ " mod;" );
+            } while( !cas( &val, get, set ) );
+            return set;
+        }
+        else
+        {
+            static assert( false, "Operation not supported." );
+        }
+    }
+
+    bool cas(T,V1,V2)( shared(T)* here, const V1 ifThis, const V2 writeThis )
+        if( !is(T == class) && !is(T U : U*) && __traits( compiles, { *here = writeThis; } ) )
+    {
+        return casImpl(here, ifThis, writeThis);
+    }
+
+    bool cas(T,V1,V2)( shared(T)* here, const shared(V1) ifThis, shared(V2) writeThis )
+        if( is(T == class) && __traits( compiles, { *here = writeThis; } ) )
+    {
+        return casImpl(here, ifThis, writeThis);
+    }
+
+    bool cas(T,V1,V2)( shared(T)* here, const shared(V1)* ifThis, shared(V2)* writeThis )
+        if( is(T U : U*) && __traits( compiles, { *here = writeThis; } ) )
+    {
+        return casImpl(here, ifThis, writeThis);
+    }
+
+    private bool casImpl(T,V1,V2)( shared(T)* here, V1 ifThis, V2 writeThis )
+    {
+        T res = void;
+        static if (__traits(isFloating, T))
+        {
+            static if(T.sizeof == int.sizeof)
+            {
+                static assert(is(T : float));
+                int rawRes = llvm_atomic_cmp_swap!int(
+                    cast(shared int*)here, *cast(int*)&ifThis, *cast(int*)&writeThis);
+                res = *(cast(T*)&rawRes);
+            }
+            else static if(T.sizeof == long.sizeof)
+            {
+                static assert(is(T : double));
+                long rawRes = cast(T)llvm_atomic_cmp_swap!long(
+                    cast(shared long*)here, *cast(long*)&ifThis, *cast(long*)&writeThis);
+                res = *(cast(T*)&rawRes);
+            }
+            else
+            {
+                static assert(0, "Cannot atomically store 80-bit reals.");
+            }
+        }
+        else static if (is(T P == U*, U) || is(T == class) || is(T == interface))
+        {
+            res = cast(T)cast(void*)llvm_atomic_cmp_swap!(size_t)(
+                cast(shared size_t*)cast(void**)here,
+                cast(size_t)cast(void*)ifThis,
+                cast(size_t)cast(void*)writeThis
+            );
+        }
+        else static if (T.sizeof == bool.sizeof)
+        {
+            res = llvm_atomic_cmp_swap!(ubyte)(cast(shared ubyte*)here, ifThis ? 1 : 0, writeThis ? 1 : 0) ? 1 : 0;
+        }
+        else
+        {
+            res = llvm_atomic_cmp_swap!(T)(here, cast(T)ifThis, cast(T)writeThis);
+        }
+        return res is cast(T)ifThis;
+    }
+
+
+    enum MemoryOrder
+    {
+        raw,
+        acq,
+        rel,
+        seq,
+    }
+
+    deprecated alias MemoryOrder msync;
+
+    template _ordering(MemoryOrder ms)
+    {
+        static if (ms == MemoryOrder.acq)
+            enum _ordering = AtomicOrdering.Acquire;
+        else static if (ms == MemoryOrder.rel)
+            enum _ordering = AtomicOrdering.Release;
+        else static if (ms == MemoryOrder.seq)
+            enum _ordering = AtomicOrdering.SequentiallyConsistent;
+        else static if (ms == MemoryOrder.raw)
+            enum _ordering = AtomicOrdering.NotAtomic;
+        else
+            static assert(0);
+    }
+
+    template _passAsSizeT(T)
+    {
+        // LLVM currently does not support atomic load/store for pointers, thus
+        // we have to manually cast them to size_t.
+        static if (is(T P == U*, U)) // pointer
+        {
+            enum _passAsSizeT = true;
+        }
+        else static if (is(T == interface) || is (T == class))
+        {
+            enum _passAsSizeT = true;
+        }
+        else
+        {
+            enum _passAsSizeT = false;
+        }
+    }
+
+    HeadUnshared!(T) atomicLoad(MemoryOrder ms = MemoryOrder.seq, T)( ref const shared T val )
+        if(!__traits(isFloating, T))
+    {
+        enum ordering = _ordering!(ms == MemoryOrder.acq ? MemoryOrder.seq : ms);
+        static if (_passAsSizeT!T)
+        {
+            return cast(HeadUnshared!(T))cast(void*)llvm_atomic_load!(size_t)(cast(shared(size_t)*)&val, ordering);
+        }
+        else static if (T.sizeof == bool.sizeof)
+        {
+            return cast(HeadUnshared!(T))llvm_atomic_load!(ubyte)(cast(shared(ubyte)*)&val, ordering);
+        }
+        else
+        {
+            return cast(HeadUnshared!(T))llvm_atomic_load!(T)(&val, ordering);
+        }
+    }
+
+    void atomicStore(MemoryOrder ms = MemoryOrder.seq, T, V1)( ref shared T val, V1 newval )
+        if(__traits(isFloating, T))
+    {
+        static if(T.sizeof == int.sizeof)
+        {
+            static assert(is(T : float));
+            auto ptrVal = cast(shared int*)&val;
+            auto ptrNewval = cast(int*)&newval;
+            atomicStore!(ms)(*ptrVal, *ptrNewval);
+        }
+        else static if(T.sizeof == long.sizeof)
+        {
+            static assert(is(T : double));
+            auto ptrVal = cast(shared long*)&val;
+            auto ptrNewval = cast(long*)&newval;
+            atomicStore!(ms)(*ptrVal, *ptrNewval);
+        }
+        else
+        {
+            static assert(0, "Cannot atomically store 80-bit reals.");
+        }
+    }
+
+    void atomicStore(MemoryOrder ms = MemoryOrder.seq, T, V1)( ref shared T val, V1 newval )
+        if(!__traits(isFloating, T) && __traits(compiles, mixin("val = newval")))
+    {
+        enum ordering = _ordering!(ms == MemoryOrder.rel ? MemoryOrder.seq : ms);
+        static if (_passAsSizeT!T)
+        {
+            llvm_atomic_store!(size_t)(cast(size_t)newval, cast(shared(size_t)*)&val, ordering);
+        }
+        else static if (T.sizeof == bool.sizeof)
+        {
+            llvm_atomic_store!(ubyte)(newval, cast(shared(ubyte)*)&val, ordering);
+        }
+        else
+        {
+            llvm_atomic_store!(T)(cast(T)newval, &val, ordering);
+        }
+    }
+
+    void atomicFence() nothrow
+    {
+        llvm_memory_fence();
+    }
+}
 else version( AsmX86_32 )
 {
     HeadUnshared!(T) atomicOp(string op, T, V1)( ref shared T val, V1 mod ) nothrow

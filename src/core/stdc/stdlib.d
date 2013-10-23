@@ -141,3 +141,8 @@ version (Win64)
     long  _wcstoi64(in wchar *,wchar **,int);
 }
 
+version( LDC )
+{
+    pragma(LDC_alloca)
+        void* alloca(size_t size);
+}

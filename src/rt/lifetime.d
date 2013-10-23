@@ -80,6 +80,20 @@ extern (C) void* _d_allocmemory(size_t sz)
 }
 
 
+version (LDC)
+{
+
+/**
+ * for allocating a single POD value
+ */
+extern (C) void* _d_allocmemoryT(TypeInfo ti)
+{
+    return gc_malloc(ti.tsize(), !(ti.flags() & 1) ? BlkAttr.NO_SCAN : 0);
+}
+
+} // version (LDC)
+
+
 /**
  *
  */
@@ -824,6 +838,67 @@ Loverflow:
     assert(0);
 }
 
+
+/**
+ * Allocate a new array of length elements.
+ * ti is the type of the resulting array, or pointer to element.
+ * (The array is not initialized)
+ */
+extern (C) void[] _d_newarrayvT(const TypeInfo ti, size_t length)
+{
+    void[] result;
+    auto size = ti.next.tsize;                  // array element size
+
+    debug(PRINTF) printf("_d_newarrayvT(length = x%x, size = %d)\n", length, size);
+    if (length == 0 || size == 0)
+        result = null;
+    else
+    {
+        version (D_InlineAsm_X86)
+        {
+            asm
+            {
+                mov     EAX,size        ;
+                mul     EAX,length      ;
+                mov     size,EAX        ;
+                jc      Loverflow       ;
+            }
+        }
+        else version(D_InlineAsm_X86_64)
+        {
+            asm
+            {
+                mov     RAX,size        ;
+                mul     RAX,length      ;
+                mov     size,RAX        ;
+                jc      Loverflow       ;
+            }
+        }
+        else
+        {
+            auto newsize = size * length;
+            if (newsize / length != size)
+                goto Loverflow;
+
+            size = newsize;
+        }
+
+        // increase the size by the array pad.
+        auto info = gc_qalloc(size + __arrayPad(size), !(ti.next.flags & 1) ? BlkAttr.NO_SCAN | BlkAttr.APPENDABLE : BlkAttr.APPENDABLE);
+        debug(PRINTF) printf(" p = %p\n", info.base);
+        // update the length of the array
+        auto arrstart = __arrayStart(info);
+        auto isshared = ti.classinfo is TypeInfo_Shared.classinfo;
+        __setArrayAllocLength(info, size, isshared);
+        result = arrstart[0..length];
+    }
+    return result;
+
+Loverflow:
+    onOutOfMemoryError();
+    assert(0);
+}
+
 /**
  * For when the array has a non-zero initializer.
  */
@@ -937,7 +1012,22 @@ void[] _d_newarrayOpT(alias op)(const TypeInfo ti, size_t ndims, va_list q)
                     va_list ap2;
                     va_copy(ap2, ap);
                 }
+                else version(PPC)
+                {
+                    va_list ap2;
+                    va_copy(ap2, ap);
+                }
+                else version(PPC64)
+                {
+                    va_list ap2;
+                    va_copy(ap2, ap);
+                }
                 else version(Win64)
+                {
+                    va_list ap2;
+                    va_copy(ap2, ap);
+                }
+                else version(ARM)
                 {
                     va_list ap2;
                     va_copy(ap2, ap);
@@ -949,8 +1039,16 @@ void[] _d_newarrayOpT(alias op)(const TypeInfo ti, size_t ndims, va_list q)
                     }
                     else version(X86_64)
                     {
-                        __va_list argsave = *cast(__va_list*)ap;
-                        va_list ap2 = &argsave;
+                        version(LDC)
+                        {
+                            va_list ap2;
+                            va_copy(ap2, ap);
+                        }
+                        else
+                        {
+                            __va_list argsave = *cast(__va_list*)ap;
+                            va_list ap2 = &argsave;
+                        }
                     }
                     (cast(void[]*)p.ptr)[i] = foo(ti.next, ap2, ndims - 1);
                 }
@@ -990,7 +1088,9 @@ extern (C) void[] _d_newarraymT(const TypeInfo ti, size_t ndims, ...)
     else
     {
         va_list q;
-        version(X86)
+        version(LDC)
+            va_start(q, ndims);
+        else version(X86)
             va_start(q, ndims);
         else version(Win64)
             va_start(q, ndims);
@@ -1015,7 +1115,9 @@ extern (C) void[] _d_newarraymiT(const TypeInfo ti, size_t ndims, ...)
     else
     {
         va_list q;
-        version(X86)
+        version(LDC)
+            va_start(q, ndims);
+        else version(X86)
             va_start(q, ndims);
         else version(Win64)
             va_start(q, ndims);
@@ -1738,6 +1840,7 @@ size_t newCapacity(size_t newlength, size_t size)
 /**
  * Obsolete, replaced with _d_arrayappendcTX()
  */
+version(LDC) {} else
 extern (C) void[] _d_arrayappendcT(const TypeInfo ti, ref byte[] x, ...)
 {
     version(X86)
@@ -2030,7 +2133,19 @@ extern (C) void[] _d_arraycatnT(const TypeInfo ti, uint n, ...)
     size_t length;
     auto size = ti.next.tsize;   // array element size
 
-    version(X86)
+    version(LDC)
+    {
+        va_list ap;
+        va_start(ap, n);
+        for (auto i = 0; i < n; i++)
+        {
+            byte[] *b;
+            va_arg(ap, b);
+            length += b.length;
+        }
+        va_end(ap);
+    }
+    else version(X86)
     {
         byte[]* p = cast(byte[]*)(&n + 1);
 
@@ -2072,7 +2187,24 @@ extern (C) void[] _d_arraycatnT(const TypeInfo ti, uint n, ...)
     __setArrayAllocLength(info, allocsize, isshared);
     void *a = __arrayStart (info);
 
-    version(X86)
+    version(LDC)
+    {
+        va_list ap2;
+		va_start(ap2, n);
+        size_t j = 0;
+        for (auto i = 0; i < n; i++)
+        {
+            byte[] *b;
+            va_arg(ap2, b);
+            if (b.length)
+            {
+                memcpy(a + j, b.ptr, b.length * size);
+                j += b.length * size;
+            }
+        }
+        va_end(ap2);
+    }
+    else version(X86)
     {
         p = cast(byte[]*)(&n + 1);
 
@@ -2203,7 +2335,10 @@ extern (C) void* _d_arrayliteralT(const TypeInfo ti, size_t length, ...)
         else
         {
             va_list q;
-            va_start(q, __va_argsave);
+            version(LDC)
+                va_start(q, length);
+            else
+                va_start(q, __va_argsave);
             for (size_t i = 0; i < length; i++)
             {
                 va_arg(q, cast()ti.next, result + i * sizeelem);

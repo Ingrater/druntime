@@ -12,353 +12,17 @@
  *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
-
-/* NOTE: This file has been patched from the original DMD distribution to
-   work with the GDC compiler.
- */
 module core.stdc.stdarg;
 
 @system:
 
-version( GNU )
+version ( PPC ) version = AnyPPC;
+version ( PPC64 ) version = AnyPPC;
+
+version( X86_64 )
 {
-    import gcc.builtins;
-    alias __builtin_va_list __gnuc_va_list;
+    version( LDC ) version = LDC_X86_64;
 
-
-    /*********************
-     * The argument pointer type.
-     */
-    alias __gnuc_va_list va_list;
-
-
-    /**********
-     * Initialize ap.
-     * parmn should be the last named parameter.
-     */
-    void va_start(T)(out va_list ap, ref T parmn);
-
-
-    /************
-     * Retrieve and return the next value that is type T.
-     */
-    T va_arg(T)(ref va_list ap);
-
-
-    /*************
-     * Retrieve and store through parmn the next value that is of type T.
-     */
-    void va_arg(T)(ref va_list ap, ref T parmn);
-
-
-    /*************
-     * Retrieve and store through parmn the next value that is of TypeInfo ti.
-     * Used when the static type is not known.
-     */
-  version( X86_64 )
-  {
-    // Layout of this struct must match __gnuc_va_list for C ABI compatibility
-    struct __va_list
-    {
-        uint offset_regs = 6 * 8;            // no regs
-        uint offset_fpregs = 6 * 8 + 8 * 16; // no fp regs
-        void* stack_args;
-        void* reg_args;
-    }
-
-    void va_arg()(ref va_list apx, TypeInfo ti, void* parmn)
-    {
-        __va_list* ap = cast(__va_list*)apx;
-        TypeInfo arg1, arg2;
-        if (!ti.argTypes(arg1, arg2))
-        {
-            bool inXMMregister(TypeInfo arg)
-            {
-                auto s = arg.toString();
-                return (s == "double" || s == "float" || s == "idouble" || s == "ifloat");
-            }
-
-            TypeInfo_Vector v1 = arg1 ? cast(TypeInfo_Vector)arg1 : null;
-            if (arg1 && (arg1.tsize() <= 8 || v1))
-            {   // Arg is passed in one register
-                auto tsize = arg1.tsize();
-                void* p;
-                bool stack = false;
-                auto offset_fpregs_save = ap.offset_fpregs;
-                auto offset_regs_save = ap.offset_regs;
-            L1:
-                if (inXMMregister(arg1) || v1)
-                {   // Passed in XMM register
-                    if (ap.offset_fpregs < (6 * 8 + 16 * 8) && !stack)
-                    {
-                        p = ap.reg_args + ap.offset_fpregs;
-                        ap.offset_fpregs += 16;
-                    }
-                    else
-                    {
-                        p = ap.stack_args;
-                        ap.stack_args += (tsize + size_t.sizeof - 1) & ~(size_t.sizeof - 1);
-                        stack = true;
-                    }
-                }
-                else
-                {   // Passed in regular register
-                    if (ap.offset_regs < 6 * 8 && !stack)
-                    {
-                        p = ap.reg_args + ap.offset_regs;
-                        ap.offset_regs += 8;
-                    }
-                    else
-                    {
-                        p = ap.stack_args;
-                        ap.stack_args += 8;
-                        stack = true;
-                    }
-                }
-                parmn[0..tsize] = p[0..tsize];
-
-                if (arg2)
-                {
-                    if (inXMMregister(arg2))
-                    {   // Passed in XMM register
-                        if (ap.offset_fpregs < (6 * 8 + 16 * 8) && !stack)
-                        {
-                            p = ap.reg_args + ap.offset_fpregs;
-                            ap.offset_fpregs += 16;
-                        }
-                        else
-                        {
-                            if (!stack)
-                            {   // arg1 is really on the stack, so rewind and redo
-                                ap.offset_fpregs = offset_fpregs_save;
-                                ap.offset_regs = offset_regs_save;
-                                stack = true;
-                                goto L1;
-                            }
-                            p = ap.stack_args;
-                            ap.stack_args += (arg2.tsize() + size_t.sizeof - 1) & ~(size_t.sizeof - 1);
-                        }
-                    }
-                    else
-                    {   // Passed in regular register
-                        if (ap.offset_regs < 6 * 8 && !stack)
-                        {
-                            p = ap.reg_args + ap.offset_regs;
-                            ap.offset_regs += 8;
-                        }
-                        else
-                        {
-                            if (!stack)
-                            {   // arg1 is really on the stack, so rewind and redo
-                                ap.offset_fpregs = offset_fpregs_save;
-                                ap.offset_regs = offset_regs_save;
-                                stack = true;
-                                goto L1;
-                            }
-                            p = ap.stack_args;
-                            ap.stack_args += 8;
-                        }
-                    }
-                    auto sz = ti.tsize() - 8;
-                    (parmn + 8)[0..sz] = p[0..sz];
-                }
-            }
-            else
-            {   // Always passed in memory
-                // The arg may have more strict alignment than the stack
-                auto talign = ti.talign();
-                auto tsize = ti.tsize();
-                auto p = cast(void*)((cast(size_t)ap.stack_args + talign - 1) & ~(talign - 1));
-                ap.stack_args = cast(void*)(cast(size_t)p + ((tsize + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
-                parmn[0..tsize] = p[0..tsize];
-            }
-        }
-        else
-        {
-            assert(false, "not a valid argument type for va_arg");
-        }
-    }
-  }
-  else version( ARM )
-  {
-    void va_arg()(ref va_list ap, TypeInfo ti, void* parmn)
-    {
-        auto p = *cast(void**) &ap;
-        auto tsize = ti.tsize();
-        *cast(void**) &ap += ( tsize + size_t.sizeof - 1 ) & ~( size_t.sizeof - 1 );
-        parmn[0..tsize] = p[0..tsize];
-    }
-  }
-  else
-  {
-    void va_arg()(ref va_list ap, TypeInfo ti, void* parmn)
-    {
-        version( X86 ) { } else
-        {
-            // The standard definition of va_list is void*
-            static assert(is(va_list == void*), "Unsupported platform");
-        }
-        auto p = ap;
-        auto tsize = ti.tsize();
-        ap = cast(va_list)( cast(void*) p + ( ( tsize + size_t.sizeof - 1 ) & ~( size_t.sizeof - 1 ) ) );
-        parmn[0..tsize] = p[0..tsize];
-    }
-  }
-
-
-  /***********************
-   * End use of ap.
-   */
-  alias __builtin_va_end va_end;
-
-
-    /***********************
-     * Make a copy of ap.
-     */
-    alias __builtin_va_copy va_copy;
-
-}
-else version( X86 )
-{
-    /*********************
-     * The argument pointer type.
-     */
-    alias void* va_list;
-
-    /**********
-     * Initialize ap.
-     * For 32 bit code, parmn should be the last named parameter.
-     * For 64 bit code, parmn should be __va_argsave.
-     */
-    void va_start(T)(out va_list ap, ref T parmn)
-    {
-        ap = cast(va_list)( cast(void*) &parmn + ( ( T.sizeof + int.sizeof - 1 ) & ~( int.sizeof - 1 ) ) );
-    }
-
-    /************
-     * Retrieve and return the next value that is type T.
-     * Should use the other va_arg instead, as this won't work for 64 bit code.
-     */
-    T va_arg(T)(ref va_list ap)
-    {
-        T arg = *cast(T*) ap;
-        ap = cast(va_list)( cast(void*) ap + ( ( T.sizeof + int.sizeof - 1 ) & ~( int.sizeof - 1 ) ) );
-        return arg;
-    }
-
-    /************
-     * Retrieve and return the next value that is type T.
-     * This is the preferred version.
-     */
-    void va_arg(T)(ref va_list ap, ref T parmn)
-    {
-        parmn = *cast(T*)ap;
-        ap = cast(va_list)(cast(void*)ap + ((T.sizeof + int.sizeof - 1) & ~(int.sizeof - 1)));
-    }
-
-    /*************
-     * Retrieve and store through parmn the next value that is of TypeInfo ti.
-     * Used when the static type is not known.
-     */
-    void va_arg()(ref va_list ap, TypeInfo ti, void* parmn)
-    {
-        // Wait until everyone updates to get TypeInfo.talign
-        //auto talign = ti.talign;
-        //auto p = cast(void*)(cast(size_t)ap + talign - 1) & ~(talign - 1);
-        auto p = ap;
-        auto tsize = ti.tsize;
-        ap = cast(void*)(cast(size_t)p + ((tsize + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
-        parmn[0..tsize] = p[0..tsize];
-    }
-
-    /***********************
-     * End use of ap.
-     */
-    void va_end(va_list ap)
-    {
-    }
-
-    void va_copy(out va_list dest, va_list src)
-    {
-        dest = src;
-    }
-}
-else version (Windows) // Win64
-{   /* Win64 is characterized by all arguments fitting into a register size.
-     * Smaller ones are padded out to register size, and larger ones are passed by
-     * reference.
-     */
-
-    /*********************
-     * The argument pointer type.
-     */
-    alias void* va_list;
-
-    /**********
-     * Initialize ap.
-     * parmn should be the last named parameter.
-     */
-    void va_start(T)(out va_list ap, ref T parmn)
-    {
-        ap = cast(va_list)(cast(void*)&parmn + ((size_t.sizeof + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
-    }
-
-    /************
-     * Retrieve and return the next value that is type T.
-     */
-    T va_arg(T)(ref va_list ap)
-    {
-        static if (T.sizeof > size_t.sizeof)
-            T arg = **cast(T**)ap;
-        else
-            T arg = *cast(T*)ap;
-        ap = cast(va_list)(cast(void*)ap + ((size_t.sizeof + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
-        return arg;
-    }
-
-    /************
-     * Retrieve and return the next value that is type T.
-     * This is the preferred version.
-     */
-    void va_arg(T)(ref va_list ap, ref T parmn)
-    {
-        static if (T.sizeof > size_t.sizeof)
-            parmn = **cast(T**)ap;
-        else
-            parmn = *cast(T*)ap;
-        ap = cast(va_list)(cast(void*)ap + ((size_t.sizeof + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
-    }
-
-    /*************
-     * Retrieve and store through parmn the next value that is of TypeInfo ti.
-     * Used when the static type is not known.
-     */
-    void va_arg()(ref va_list ap, TypeInfo ti, void* parmn)
-    {
-        // Wait until everyone updates to get TypeInfo.talign
-        //auto talign = ti.talign;
-        //auto p = cast(void*)(cast(size_t)ap + talign - 1) & ~(talign - 1);
-        auto p = ap;
-        auto tsize = ti.tsize;
-        ap = cast(void*)(cast(size_t)p + ((size_t.sizeof + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
-        void* q = (tsize > size_t.sizeof) ? *cast(void**)p : p;
-        parmn[0..tsize] = q[0..tsize];
-    }
-
-    /***********************
-     * End use of ap.
-     */
-    void va_end(va_list ap)
-    {
-    }
-
-    void va_copy(out va_list dest, va_list src)
-    {
-        dest = src;
-    }
-}
-else version (X86_64)
-{
     // Determine if type is a vector type
     template isVectorType(T)
     {
@@ -379,33 +43,8 @@ else version (X86_64)
         void* reg_args;
     }
 
-    align(16) struct __va_argsave_t
+    void va_arg_x86_64(T)(__va_list *ap, ref T parmn)
     {
-        size_t[6] regs;   // RDI,RSI,RDX,RCX,R8,R9
-        real[8] fpregs;   // XMM0..XMM7
-        __va_list va;
-    }
-
-    /*
-     * Making it an array of 1 causes va_list to be passed as a pointer in
-     * function argument lists
-     */
-    alias void* va_list;
-
-    void va_start(T)(out va_list ap, ref T parmn)
-    {
-        ap = &parmn.va;
-    }
-
-    T va_arg(T)(va_list ap)
-    {   T a;
-        va_arg(ap, a);
-        return a;
-    }
-
-    void va_arg(T)(va_list apx, ref T parmn)
-    {
-        __va_list* ap = cast(__va_list*)apx;
         static if (is(T U == __argTypes))
         {
             static if (U.length == 0 || T.sizeof > 16 || (U[0].sizeof > 8 && !isVectorType!(U[0])))
@@ -544,9 +183,8 @@ else version (X86_64)
         }
     }
 
-    void va_arg()(va_list apx, TypeInfo ti, void* parmn)
+    void va_arg_x86_64()(__va_list *ap, TypeInfo ti, void* parmn)
     {
-        __va_list* ap = cast(__va_list*)apx;
         TypeInfo arg1, arg2;
         if (!ti.argTypes(arg1, arg2))
         {
@@ -656,6 +294,274 @@ else version (X86_64)
             assert(false, "not a valid argument type for va_arg");
         }
     }
+}
+
+version( X86 )
+{
+    /*********************
+     * The argument pointer type.
+     */
+    alias void* va_list;
+
+    /**********
+     * Initialize ap.
+     * For 32 bit code, parmn should be the last named parameter.
+     * For 64 bit code, parmn should be __va_argsave.
+     */
+    version(LDC)
+    {
+        pragma(LDC_va_start)
+            void va_start(T)(va_list ap, ref T);
+    }
+    else
+    {
+        void va_start(T)(out va_list ap, ref T parmn)
+        {
+            ap = cast(va_list)( cast(void*) &parmn + ( ( T.sizeof + int.sizeof - 1 ) & ~( int.sizeof - 1 ) ) );
+        }
+    }
+
+    /************
+     * Retrieve and return the next value that is type T.
+     * Should use the other va_arg instead, as this won't work for 64 bit code.
+     */
+    T va_arg(T)(ref va_list ap)
+    {
+        T arg = *cast(T*) ap;
+        ap = cast(va_list)( cast(void*) ap + ( ( T.sizeof + int.sizeof - 1 ) & ~( int.sizeof - 1 ) ) );
+        return arg;
+    }
+
+    /************
+     * Retrieve and return the next value that is type T.
+     * This is the preferred version.
+     */
+    void va_arg(T)(ref va_list ap, ref T parmn)
+    {
+        parmn = *cast(T*)ap;
+        ap = cast(va_list)(cast(void*)ap + ((T.sizeof + int.sizeof - 1) & ~(int.sizeof - 1)));
+    }
+
+    /*************
+     * Retrieve and store through parmn the next value that is of TypeInfo ti.
+     * Used when the static type is not known.
+     */
+    void va_arg()(ref va_list ap, TypeInfo ti, void* parmn)
+    {
+        // Wait until everyone updates to get TypeInfo.talign
+        //auto talign = ti.talign;
+        //auto p = cast(void*)(cast(size_t)ap + talign - 1) & ~(talign - 1);
+        auto p = ap;
+        auto tsize = ti.tsize;
+        ap = cast(void*)(cast(size_t)p + ((tsize + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
+        parmn[0..tsize] = p[0..tsize];
+    }
+
+    /***********************
+     * End use of ap.
+     */
+    void va_end(va_list ap)
+    {
+    }
+
+    void va_copy(out va_list dest, va_list src)
+    {
+        dest = src;
+    }
+}
+else version( ARM )
+{
+    // FIXME: This isn't actually tested at all.
+    // Really struct va_list { void* ptr; }, but for compatibility with
+    // x86-style code that uses void*, we just define it as the raw pointer.
+    alias va_list = void*;
+
+    version(LDC)
+    {
+        pragma(LDC_va_start)
+            void va_start(T)(va_list ap, ref T);
+    }
+    else static assert("Unsupported platform.");
+
+    /**
+     * Retrieve and return the next value that is type T.
+     * This is the preferred version.
+     */
+    void va_arg(T)(ref va_list ap, ref T parmn)
+    {
+        parmn = *cast(T*)ap;
+        ap = cast(va_list)(cast(void*)ap + ((T.sizeof + int.sizeof - 1) & ~(int.sizeof - 1)));
+    }
+
+    /**
+     * Retrieve and store through parmn the next value that is of TypeInfo ti.
+     * Used when the static type is not known.
+     */
+    void va_arg()(ref va_list ap, TypeInfo ti, void* parmn)
+    {
+        // Wait until everyone updates to get TypeInfo.talign
+        //auto talign = ti.talign;
+        //auto p = cast(void*)(cast(size_t)ap + talign - 1) & ~(talign - 1);
+        auto p = ap;
+        auto tsize = ti.tsize;
+        ap = cast(void*)(cast(size_t)p + ((tsize + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
+        parmn[0..tsize] = p[0..tsize];
+    }
+
+    /**
+     * End use of ap.
+     */
+    void va_end(va_list ap)
+    {
+    }
+
+    void va_copy(out va_list dest, va_list src)
+    {
+        dest = src;
+    }
+}
+else version ( LDC_X86_64 )
+{
+    alias __va_list *va_list;
+
+    pragma(LDC_va_start)
+        void va_start(T)(va_list ap, ref T);
+
+    T va_arg(T)(va_list ap)
+    {   T a;
+        va_arg(ap, a);
+        return a;
+    }
+
+    void va_arg(T)(va_list apx, ref T parmn)
+    {
+        __va_list* ap = cast(__va_list*)apx;
+        va_arg_x86_64(ap, parmn);
+    }
+
+    void va_arg()(va_list apx, TypeInfo ti, void* parmn)
+    {
+        __va_list* ap = cast(__va_list*)apx;
+        va_arg_x86_64(ap, ti, parmn);
+    }
+
+    pragma(LDC_va_end)
+        void va_end(va_list ap);
+
+    pragma(LDC_va_copy)
+        void va_copy(out va_list dest, va_list src);
+}
+else version (Windows) // Win64
+{   /* Win64 is characterized by all arguments fitting into a register size.
+     * Smaller ones are padded out to register size, and larger ones are passed by
+     * reference.
+     */
+
+    /*********************
+     * The argument pointer type.
+     */
+    alias void* va_list;
+
+    /**********
+     * Initialize ap.
+     * parmn should be the last named parameter.
+     */
+    void va_start(T)(out va_list ap, ref T parmn)
+    {
+        ap = cast(va_list)(cast(void*)&parmn + ((size_t.sizeof + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
+    }
+
+    /************
+     * Retrieve and return the next value that is type T.
+     */
+    T va_arg(T)(ref va_list ap)
+    {
+        static if (T.sizeof > size_t.sizeof)
+            T arg = **cast(T**)ap;
+        else
+            T arg = *cast(T*)ap;
+        ap = cast(va_list)(cast(void*)ap + ((size_t.sizeof + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
+        return arg;
+    }
+
+    /************
+     * Retrieve and return the next value that is type T.
+     * This is the preferred version.
+     */
+    void va_arg(T)(ref va_list ap, ref T parmn)
+    {
+        static if (T.sizeof > size_t.sizeof)
+            parmn = **cast(T**)ap;
+        else
+            parmn = *cast(T*)ap;
+        ap = cast(va_list)(cast(void*)ap + ((size_t.sizeof + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
+    }
+
+    /*************
+     * Retrieve and store through parmn the next value that is of TypeInfo ti.
+     * Used when the static type is not known.
+     */
+    void va_arg()(ref va_list ap, TypeInfo ti, void* parmn)
+    {
+        // Wait until everyone updates to get TypeInfo.talign
+        //auto talign = ti.talign;
+        //auto p = cast(void*)(cast(size_t)ap + talign - 1) & ~(talign - 1);
+        auto p = ap;
+        auto tsize = ti.tsize;
+        ap = cast(void*)(cast(size_t)p + ((size_t.sizeof + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
+        void* q = (tsize > size_t.sizeof) ? *cast(void**)p : p;
+        parmn[0..tsize] = q[0..tsize];
+    }
+
+    /***********************
+     * End use of ap.
+     */
+    void va_end(va_list ap)
+    {
+    }
+
+    void va_copy(out va_list dest, va_list src)
+    {
+        dest = src;
+    }
+}
+else version ( X86_64 )
+{
+    align(16) struct __va_argsave_t
+    {
+        size_t[6] regs;   // RDI,RSI,RDX,RCX,R8,R9
+        real[8] fpregs;   // XMM0..XMM7
+        __va_list va;
+    }
+
+    /*
+     * Making it an array of 1 causes va_list to be passed as a pointer in
+     * function argument lists
+     */
+    alias void* va_list;
+
+    void va_start(T)(out va_list ap, ref T parmn)
+    {
+        ap = &parmn.va;
+    }
+
+    T va_arg(T)(va_list ap)
+    {   T a;
+        va_arg(ap, a);
+        return a;
+    }
+
+    void va_arg(T)(va_list apx, ref T parmn)
+    {
+        __va_list* ap = cast(__va_list*)apx;
+        va_arg_x86_64(ap, parmn);
+    }
+
+    void va_arg()(va_list apx, TypeInfo ti, void* parmn)
+    {
+        __va_list* ap = cast(__va_list*)apx;
+        va_arg_x86_64(ap, ti, parmn);
+    }
 
     void va_end(va_list ap)
     {
@@ -664,6 +570,51 @@ else version (X86_64)
     void va_copy(out va_list dest, va_list src)
     {
         dest = src;
+    }
+}
+else version ( AnyPPC )
+{
+    version ( LDC )
+    {
+        /*
+         * The rules are described in the 64bit PowerPC ELF ABI Supplement 1.9,
+         * available here:
+         * http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi-1.9.html#PARAM-PASS
+         */
+
+        alias void *va_list;
+
+        pragma(LDC_va_start)
+            void va_start(T)(va_list ap, ref T);
+
+        private pragma(LDC_va_arg)
+            T va_arg_impl(T)(va_list ap);
+
+        T va_arg(T)(ref va_list ap)
+        {
+            return va_arg_impl!T(ap);
+        }
+
+        void va_arg(T)(ref va_list ap, ref T parmn)
+        {
+            parmn = va_arg!T(ap);
+        }
+
+        void va_arg()(ref va_list ap, TypeInfo ti, void* parmn)
+        {
+            // This works for all types because only the rules for non-floating,
+            // non-vector types are used.
+            auto tsize = ti.tsize();
+            auto p = tsize < size_t.sizeof ? cast(void*)(cast(void*)ap + (size_t.sizeof - tsize)) : ap;
+            ap = cast(va_list)(cast(void*)ap + ((tsize + size_t.sizeof - 1) & ~(size_t.sizeof - 1)));
+            parmn[0..tsize] = p[0..tsize];
+        }
+
+        pragma(LDC_va_end)
+            void va_end(va_list ap);
+
+        pragma(LDC_va_copy)
+            void va_copy(out va_list dest, va_list src);
     }
 }
 else

@@ -25,6 +25,12 @@
  */
 module core.math;
 
+version (LDC)
+{
+    import stdc = core.stdc.math;
+    import ldc.intrinsics;
+}
+
 public:
 
 /***********************************
@@ -39,6 +45,9 @@ public:
  *      Results are undefined if |x| >= $(POWER 2,64).
  */
 
+version (LDC)
+    real cos(real x) @safe pure nothrow { return llvm_cos(x); }
+else
 real cos(real x) @safe pure nothrow;       /* intrinsic */
 
 /***********************************
@@ -54,6 +63,9 @@ real cos(real x) @safe pure nothrow;       /* intrinsic */
  *      Results are undefined if |x| >= $(POWER 2,64).
  */
 
+version (LDC)
+    real sin(real x) @safe pure nothrow { return llvm_sin(x); }
+else
 real sin(real x) @safe pure nothrow;       /* intrinsic */
 
 /*****************************************
@@ -62,6 +74,13 @@ real sin(real x) @safe pure nothrow;       /* intrinsic */
  * greater than long.max, the result is
  * indeterminate.
  */
+version (LDC)
+{
+    // FIXME: stdc.llroundl not available under Windows
+    version (Windows) long rndtol(real x) @safe pure nothrow { assert(0); }
+    else              long rndtol(real x) @safe pure nothrow { return stdc.llroundl(x); }
+}
+else
 long rndtol(real x) @safe pure nothrow;    /* intrinsic */
 
 
@@ -86,9 +105,18 @@ extern (C) real rndtonl(real x);
 
 @safe pure nothrow
 {
+  version (LDC)
+  {
+    extern(D) float  sqrt(float x)  { return llvm_sqrt(x); }
+    extern(D) double sqrt(double x) { return llvm_sqrt(x); }
+    extern(D) real   sqrt(real x)   { return llvm_sqrt(x); }
+  }
+  else
+  {
     float sqrt(float x);    /* intrinsic */
     double sqrt(double x);  /* intrinsic */ /// ditto
     real sqrt(real x);      /* intrinsic */ /// ditto
+  }
 }
 
 /*******************************************
@@ -96,6 +124,35 @@ extern (C) real rndtonl(real x);
  * References: frexp
  */
 
+version (LDC)
+{
+    real ldexp(real n, int exp) @trusted pure nothrow
+    {
+        version (MinGW)
+        {
+            // The MinGW runtime only provides a double precision ldexp, and
+            // it doesn't seem to reliably possible to express the fscale
+            // semantics (two FP stack inputs/returns) in an inline asm
+            // expression clobber list.
+            asm
+            {
+                naked;
+                push EAX;
+                fild int ptr [ESP];
+                fld real ptr [ESP+8];
+                fscale;
+                fstp ST(1);
+                pop EAX;
+                ret 12;
+            }
+        }
+        else
+        {
+            return stdc.ldexpl(n, exp);
+        }
+    }
+}
+else
 real ldexp(real n, int exp) @safe pure nothrow;    /* intrinsic */
 
 unittest {
@@ -112,6 +169,25 @@ unittest {
  *      $(TR $(TD $(PLUSMN)$(INFIN)) $(TD +$(INFIN)) )
  *      )
  */
+version (LDC)
+{
+    @trusted pure nothrow real fabs(real x)
+    {
+        version (D_InlineAsm_X86)
+        {
+            asm
+            {
+                fld x;
+                fabs;
+            }
+        }
+        else
+        {
+            return stdc.fabsl(x);
+        }
+    }
+}
+else
 real fabs(real x) @safe pure nothrow;      /* intrinsic */
 
 /**********************************
@@ -122,6 +198,19 @@ real fabs(real x) @safe pure nothrow;      /* intrinsic */
  * $(B nearbyint) performs
  * the same operation, but does not set the FE_INEXACT exception.
  */
+version (LDC)
+{
+  version(LDC_LLVM_303) version = HAS_INTRINSIC_RINT;
+  version(LDC_LLVM_304) version = HAS_INTRINSIC_RINT;
+
+  version(HAS_INTRINSIC_RINT)
+    real rint(real x) @safe pure nothrow { return llvm_rint(x); }
+  else version (Windows) // FIXME: stdc.rintl not available under Windows
+    real rint(real x) @safe pure nothrow { assert(0); }
+  else
+    real rint(real x) @safe pure nothrow { return stdc.rintl(x); }
+}
+else
 real rint(real x) @safe pure nothrow;      /* intrinsic */
 
 /***********************************

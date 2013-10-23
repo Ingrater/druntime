@@ -1554,7 +1554,7 @@ private:
     {
         assert( t );
         assert( !t.next && !t.prev );
-        assert( t.isRunning );
+        //assert( t.isRunning );
     }
     body
     {
@@ -2125,6 +2125,25 @@ else
 
                 mov sp[RBP], RSP;
             }
+        }
+        else version (ARM)
+        {
+            import ldc.llvmasm;
+
+            // Callee-save registers, according to AAPCS, section 5.1.1.
+            // FIXME: As loads/stores are explicit on ARM, the code generated for
+            // this is horrible. Better write the entire function in ASM.
+            size_t[8] regs = void;
+            __asm("str  r4, $0", "=*m", regs.ptr + 0);
+            __asm("str  r5, $0", "=*m", regs.ptr + 1);
+            __asm("str  r6, $0", "=*m", regs.ptr + 2);
+            __asm("str  r7, $0", "=*m", regs.ptr + 3);
+            __asm("str  r8, $0", "=*m", regs.ptr + 4);
+            __asm("str  r9, $0", "=*m", regs.ptr + 5);
+            __asm("str r10, $0", "=*m", regs.ptr + 6);
+            __asm("str r11, $0", "=*m", regs.ptr + 7);
+
+            __asm("str sp, $0", "=*m", &sp);
         }
         else
         {
@@ -2724,7 +2743,34 @@ extern (C)
 
 private void* getStackTop()
 {
-    version (D_InlineAsm_X86)
+    version (LDC)
+    {
+        /* The inline assembler is written in a style that the code can be
+         * inlined.
+         * The use of intrinsic llvm_frameaddress is a reasonable default for
+         * cpu architectures without assembler support from LLVM. Because of
+         * the slightly different meaning the code must not be inlined.
+         */
+        version (D_InlineAsm_X86)
+        {
+            import ldc.llvmasm;
+            pragma(LDC_allow_inline);
+            return __asm!(void *)("movl %esp, $0", "=r");
+        }
+        else version (D_InlineAsm_X86_64)
+        {
+            import ldc.llvmasm;
+            pragma(LDC_allow_inline);
+            return __asm!(void *)("movq %rsp, $0", "=r");
+        }
+        else
+        {
+            import ldc.intrinsics;
+            pragma(LDC_never_inline);
+            return llvm_frameaddress(0);
+        }
+    }
+    else version (D_InlineAsm_X86)
         asm { naked; mov EAX, ESP; ret; }
     else version (D_InlineAsm_X86_64)
         asm { naked; mov RAX, RSP; ret; }

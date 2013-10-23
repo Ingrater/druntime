@@ -842,8 +842,20 @@ bool hasCPUID()
 {
     version(D_InlineAsm_X86_64)
         return true;
-    else
-    {
+    else version(LDC) {
+        size_t flags;
+        asm {
+            pushf;
+            pop EAX;
+            mov flags, EAX;
+            xor EAX, 0x0020_0000;
+            push EAX;
+            popf;
+            pushf;
+            pop EAX;
+            xor flags, EAX;
+        }
+    } else {
         uint flags;
         asm {
             pushfd;
