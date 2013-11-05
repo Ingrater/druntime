@@ -292,7 +292,7 @@ class StdAllocator : IAdvancedAllocator
             if(i < traceinfo.trace.length)
             {
               traceinfo.trace[i] = AllocatorNewArray!char(g_trackingAllocator, line.length);
-              traceinfo.trace[i][] = line[][]; // BUG
+              traceinfo.trace[i][] = line[];
               i++;
             }
           }

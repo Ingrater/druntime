@@ -50,12 +50,12 @@ private:
   version(NOGCSAFE)
   {
     alias rcstring line_t;
-	alias rcstring[] trace_t;
+    alias rcstring[] trace_t;
   }
   else
   {
     alias char[] line_t;
-	alias char[][] trace_t;
+    alias char[][] trace_t;
   }
   
   enum size_t MAX_LINE_COUNT = 32;
@@ -104,10 +104,10 @@ public:
     override int opApply( scope int delegate(ref size_t, ref const(char[])) dg ) const
     {
         int result;
-		rcstring lines[MAX_LINE_COUNT];
+        rcstring lines[MAX_LINE_COUNT];
         foreach( i, e; resolve(m_trace, lines) )
         {
-			const(char[]) tmp = e[];
+            const(char[]) tmp = e[];
             if( (result = dg( i, tmp )) != 0 )
                 break;
         }
@@ -159,7 +159,7 @@ public:
 
 private:
     ulong[] m_trace;
-	ulong[MAX_LINE_COUNT] m_buffer;
+    ulong[MAX_LINE_COUNT] m_buffer;
 
 
     static ulong[] traceNoSync(ulong[] buf, size_t skip, CONTEXT* context)
@@ -170,10 +170,13 @@ private:
 
         version(Win64)
         {
-          auto backtraceLength = RtlCaptureStackBackTrace(cast(uint)skip, cast(uint)buf.length, cast(void**)buf.ptr, null);
-          if(backtraceLength > 1)
+          if(context is null)
           {
-            return buf[0..backtraceLength];
+            auto backtraceLength = RtlCaptureStackBackTrace(cast(uint)skip, cast(uint)buf.length, cast(void**)buf.ptr, null);
+            if(backtraceLength > 1)
+            {
+              return buf[0..backtraceLength];
+            }
           }
         }
 
@@ -233,8 +236,8 @@ private:
             }
             if(frameNum >= skip)
             {
-				      if(frameNum - skip >= buf.length)
-					      break;
+                      if(frameNum - skip >= buf.length)
+                          break;
                 buf[frameNum - skip] = stackframe.AddrPC.Offset;
             }
             frameNum++;
@@ -264,7 +267,7 @@ private:
         symbol.MaxNameLength = bufSymbol._buf.length;
 
         //trace_t trace;
-		size_t count = 0;
+        size_t count = 0;
         foreach(pc; addresses)
         {
             if( pc != 0 )
@@ -306,7 +309,7 @@ private:
     static line_t formatStackFrame(void* pc, char* symName)
     {
         char[2048] demangleBuf = void;
-		char[2048] decodeBuf = void;
+        char[2048] decodeBuf = void;
 
         auto res = formatStackFrame(pc);
         res ~= " in ";
@@ -393,7 +396,7 @@ private string generateSearchPath()
 void initializeStackTracing()
 {
     if(initialized)
-	    return;
+        return;
     auto dbghelp = DbgHelp.get();
 
     if( dbghelp is null )
@@ -420,10 +423,10 @@ void initializeStackTracing()
 
     dbghelp.SymRegisterCallback64(hProcess, &FixupDebugHeader, 0);
 
-    initialized = true;		
+    initialized = true;        
 }
 
 shared static this()
 {
-	initializeStackTracing();
+    initializeStackTracing();
 }
