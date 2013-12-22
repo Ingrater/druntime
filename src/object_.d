@@ -660,8 +660,8 @@ class TypeInfo_StaticArray : TypeInfo
 {
     override to_string_t toString() const
     {
-        char[20] tmp = void;
-        return value.toString() ~ "[" ~ cast(string)tmp.uintToString(len) ~ "]";
+        SizeStringBuff tmpBuff = void;
+        return value.toString() ~ "[" ~ cast(string)len.sizeToTempString(tmpBuff) ~ "]";
     }
 
     override bool opEquals(Object o)
