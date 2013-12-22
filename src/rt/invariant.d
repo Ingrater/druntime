@@ -34,7 +34,7 @@ void _d_invariant(Object o)
     void** vptr = cast(void**)o;
     assert(*vptr !is null);
 
-    c = o.classinfo;
+    c = typeid(o);
     do
     {
         if (c.classInvariant)

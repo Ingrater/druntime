@@ -225,9 +225,9 @@ class OutOfMemoryError : Error
     override to_string_t toString()
     {
       version(NOGCSAFE)
-        return msg ? super.toString() : to_string_t("Memory allocation failed");
+        return msg.ptr ? super.toString() : to_string_t("Memory allocation failed");
       else
-        return msg ? super.toString() : "Memory allocation failed";
+        return msg.ptr ? super.toString() : "Memory allocation failed";
     }
 }
 
@@ -269,9 +269,9 @@ class InvalidMemoryOperationError : Error
     override to_string_t toString()
     {
       version(NOGCSAFE)
-        return msg ? super.toString() : to_string_t("Invalid memory operation");
+        return msg.ptr ? super.toString() : to_string_t("Invalid memory operation");
       else
-        return msg ? super.toString() : "Invalid memory operation";
+        return msg.ptr ? super.toString() : "Invalid memory operation";
     }
 }
 
@@ -507,7 +507,7 @@ extern (C) void onFinalizeError( ClassInfo info, Exception e, string file = __FI
  */
 extern (C) void onHiddenFuncError( Object o ) @safe pure nothrow
 {
-    throw new HiddenFuncError( o.classinfo );
+    throw new HiddenFuncError( typeid(o) );
 }
 
 
@@ -522,7 +522,7 @@ extern (C) void onOutOfMemoryError() @trusted pure nothrow
 {
     // NOTE: Since an out of memory condition exists, no allocation must occur
     //       while generating this object.
-    throw cast(OutOfMemoryError) cast(void*) OutOfMemoryError.classinfo.init;
+    throw cast(OutOfMemoryError) cast(void*) typeid(OutOfMemoryError).init;
 }
 
 
@@ -538,7 +538,7 @@ extern (C) void onInvalidMemoryOperationError() @trusted pure nothrow
     // The same restriction applies as for onOutOfMemoryError. The GC is in an
     // undefined state, thus no allocation must occur while generating this object.
     throw cast(InvalidMemoryOperationError)
-        cast(void*) InvalidMemoryOperationError.classinfo.init;
+        cast(void*) typeid(InvalidMemoryOperationError).init;
 }
 
 

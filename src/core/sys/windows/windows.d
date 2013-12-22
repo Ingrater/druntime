@@ -507,6 +507,8 @@ BOOL   MoveFileA(in char *from, in char *to);
 BOOL   MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName);
 BOOL   ReadFile(HANDLE hFile, void *lpBuffer, DWORD nNumberOfBytesToRead,
     DWORD *lpNumberOfBytesRead, OVERLAPPED *lpOverlapped);
+BOOL   SetFileAttributesA(in LPCSTR lpFileName, DWORD dwFileAttributes);
+BOOL   SetFileAttributesW(in LPCWSTR lpFileName, DWORD dwFileAttributes);
 DWORD  SetFilePointer(HANDLE hFile, LONG lDistanceToMove,
     LONG *lpDistanceToMoveHigh, DWORD dwMoveMethod);
 BOOL   WriteFile(HANDLE hFile, in void *lpBuffer, DWORD nNumberOfBytesToWrite,
@@ -1579,11 +1581,11 @@ export BOOL SwitchToThread();
 
 export
 {
-LONG  InterlockedIncrement(LPLONG lpAddend);
-LONG  InterlockedDecrement(LPLONG lpAddend);
-LONG  InterlockedExchange(LPLONG Target, LONG Value);
-LONG  InterlockedExchangeAdd(LPLONG Addend, LONG Value);
-PVOID InterlockedCompareExchange(PVOID *Destination, PVOID Exchange, PVOID Comperand);
+LONG InterlockedIncrement(LPLONG lpAddend);
+LONG InterlockedDecrement(LPLONG lpAddend);
+LONG InterlockedExchange(LPLONG Target, LONG Value);
+LONG InterlockedExchangeAdd(LPLONG Addend, LONG Value);
+LONG InterlockedCompareExchange(LONG *Destination, LONG Exchange, LONG Comperand);
 
 void InitializeCriticalSection(CRITICAL_SECTION * lpCriticalSection);
 void EnterCriticalSection(CRITICAL_SECTION * lpCriticalSection);

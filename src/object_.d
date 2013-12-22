@@ -27,7 +27,6 @@ private
     import core.memory;
     import rt.util.hash;
     import rt.util.string;
-    import rt.util.console;
     import rt.minfo;
     debug(PRINTF) import core.stdc.stdio;
     version(NOGCSAFE)
@@ -40,7 +39,7 @@ private
       import rtti;
     }
 
-    extern (C) void onOutOfMemoryError();
+    extern (C) void onOutOfMemoryError() @trusted /* pure dmd @@@BUG11461@@@ */ nothrow;
     extern (C) Object _d_newclass(const TypeInfo_Class ci);
     extern (C) void _d_arrayshrinkfit(const TypeInfo ti, void[] arr);
     extern (C) size_t _d_arraysetcapacity(const TypeInfo ti, size_t newcapacity, void *arrptr) pure nothrow;
@@ -103,9 +102,9 @@ class Object
     to_string_t toString()
     {
       version(NOGCSAFE)
-        return rcstring(this.classinfo.name);
+        return rcstring(typeid(this).name);
       else
-        return this.classinfo.name;
+        return typeid(this).name;
     }
 
     /**
@@ -131,7 +130,7 @@ class Object
         // BUG: this prevents a compacting GC from working, needs to be fixed
         //return cast(int)cast(void*)this - cast(int)cast(void*)o;
 
-        throw new Exception("need opCmp for class " ~ this.classinfo.name);
+        throw new Exception("need opCmp for class " ~ typeid(this).name);
         //return this !is o;
     }
 
@@ -1107,7 +1106,7 @@ class TypeInfo_Interface : TypeInfo
         if (this is o)
             return true;
         auto c = cast(const TypeInfo_Interface)o;
-        return c && this.info.name == c.classinfo.name;
+        return c && this.info.name == typeid(c).name;
     }
 
     override size_t getHash(in void* p) @trusted const
@@ -1594,41 +1593,47 @@ class Throwable : Object
 	  Delete(this.info);
 	}
 
+    /**
+     * Overrides $(D Object.toString) and returns the error message.
+     * Internally this forwards to the $(D toString) overload that
+     * takes a $(PARAM sink) delegate.
+     */
     override to_string_t toString()
     {
-        char[20] tmp = void;
-        version(NOGCSAFE)
-          to_string_t buf;
-        else
-          char[]   buf;
+        to_string_t s;
+        toString((buf) { s ~= buf; });
+        return s;
+    }
 
-        if (file)
+    /**
+     * The Throwable hierarchy uses a toString overload that takes a
+     * $(PARAM sink) delegate to avoid GC allocations, which cannot be
+     * performed in certain error situations.  Override this $(D
+     * toString) method to customize the error message.
+     */
+    void toString(scope void delegate(in char[]) sink) const
+    {
+        SizeStringBuff tmpBuff = void;
+
+        sink(typeid(this).name);
+        if (file.ptr)
         {
-          version(NOGCSAFE)
-            buf ~= to_string_t(this.classinfo.name) ~ "@" ~ file ~ "(" ~ tmp.uintToString(line) ~ ")";
-          else
-            buf ~= this.classinfo.name ~ "@" ~ file ~ "(" ~ tmp.uintToString(line) ~ ")";
+            sink("@"); sink(file);
+            sink("("); sink(line.sizeToTempString(tmpBuff)); sink(")");
         }
-        else
-        { 
-           buf ~= this.classinfo.name;
-        }
-        if (msg)
+
+        if (msg.ptr)
         {
-          version(NOGCSAFE)
-            buf ~= to_string_t(": ") ~ msg;
-          else
-            buf ~= ": " ~ msg;
+            sink(": "), sink(msg);
         }
         if (info)
         {
             try
             {
-                buf ~= "\n----------------";
+                sink("\n----------------");
                 foreach (t; info)
                 {
-                    buf ~= "\n";
-                    buf ~= t;
+                    sink("\n"); sink(t);
                 }
             }
             catch (Throwable)
@@ -1636,10 +1641,6 @@ class Throwable : Object
                 // ignore more errors
             }
         }
-        version(NOGCSAFE)
-          return buf;
-        else
-          return cast(string) buf;
     }
 }
 
@@ -1990,17 +1991,17 @@ struct Monitor
     /* stuff */
 }
 
-Monitor* getMonitor(Object h)
+Monitor* getMonitor(Object h) pure nothrow
 {
     return cast(Monitor*) h.__monitor;
 }
 
-void setMonitor(Object h, Monitor* m)
+void setMonitor(Object h, Monitor* m) pure nothrow
 {
     h.__monitor = m;
 }
 
-void setSameMutex(shared Object ownee, shared Object owner)
+void setSameMutex(shared Object ownee, shared Object owner) nothrow
 in
 {
     assert(ownee.__monitor is null);
@@ -2027,10 +2028,10 @@ body
     ownee.__monitor = owner.__monitor;
 }
 
-extern (C) void _d_monitor_create(Object);
-extern (C) void _d_monitor_destroy(Object);
-extern (C) void _d_monitor_lock(Object);
-extern (C) int  _d_monitor_unlock(Object);
+extern (C) void _d_monitor_create(Object) nothrow;
+extern (C) void _d_monitor_destroy(Object) nothrow;
+extern (C) void _d_monitor_lock(Object) nothrow;
+extern (C) int  _d_monitor_unlock(Object) nothrow;
 
 extern (C) void _d_monitordelete(Object h, bool det)
 {
@@ -2169,13 +2170,11 @@ extern (C) void rt_detachDisposeEvent(Object h, DEvent e)
 
 extern (C)
 {
-    // from druntime/src/compiler/dmd/aaA.d
+    // from druntime/src/rt/aaA.d
 
     size_t _aaLen(in void* p) pure nothrow;
     void* _aaGetX(void** pp, const TypeInfo keyti, in size_t valuesize, in void* pkey);
     inout(void)* _aaGetRvalueX(inout void* p, in TypeInfo keyti, in size_t valuesize, in void* pkey);
-    inout(void)* _aaIn(inout void* p, in TypeInfo keyti);
-    void _aaDel(void* p, in TypeInfo keyti, ...);
     inout(void)[] _aaValues(inout void* p, in size_t keysize, in size_t valuesize) pure nothrow;
     inout(void)[] _aaKeys(inout void* p, in size_t keysize) pure nothrow;
     void* _aaRehash(void** pp, in TypeInfo keyti) pure nothrow;
@@ -2193,19 +2192,8 @@ extern (C)
     void* _aaRangeFrontValue(AARange r);
     void _aaRangePopFront(ref AARange r);
 
-    void* _d_assocarrayliteralT(TypeInfo_AssociativeArray ti, in size_t length, ...);
     int _aaEqual(in TypeInfo tiRaw, in void* e1, in void* e2);
     hash_t _aaGetHash(in void* aa, in TypeInfo tiRaw) nothrow;
-}
-
-private template _Unqual(T)
-{
-         static if (is(T U == shared(const U))) alias U _Unqual;
-    else static if (is(T U ==        const U )) alias U _Unqual;
-    else static if (is(T U ==    immutable U )) alias U _Unqual;
-    else static if (is(T U ==        inout U )) alias U _Unqual;
-    else static if (is(T U ==       shared U )) alias U _Unqual;
-    else                                        alias T _Unqual;
 }
 
 struct AssociativeArray(Key, Value)
