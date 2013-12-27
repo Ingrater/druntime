@@ -201,6 +201,28 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       }
       memcpy(m_Data.ptr + index, &data, Pair.sizeof);
     }
+	
+	void reserve(size_t count)
+	{
+        if(count > ((m_Data.length * 3) / 4) || count >= m_Data.length)
+        {
+          Pair[] oldData = m_Data;
+		  auto newLength = (count / 3) * 4;
+          m_Data = (cast(Pair*)m_allocator.AllocateMemory(newLength * Pair.sizeof))[0..newLength];
+          foreach(ref entry; m_Data)
+          {
+            entry.state = State.Free;
+          }
+        
+          //rehash all values
+          foreach(ref entry; oldData)
+          {
+            if(entry.state == State.Data)
+              move(entry);
+          }
+          m_allocator.FreeMemory(oldData.ptr);			
+		}		
+	}
     
     void opIndexAssign(V value, K key)
     {
