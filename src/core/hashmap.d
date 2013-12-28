@@ -137,7 +137,25 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     AT m_allocator;
     //debug shared(uint) m_iterationCount = 0;
     
-    enum uint INITIAL_SIZE = 4;
+    enum uint INITIAL_SIZE = 5;
+    // the following fraction controls the amount of always free entries in the hashmap
+    enum size_t numerator = 3;
+    enum size_t denominator = 4;
+    
+    __gshared immutable(uint[]) sizes = [13, 29, 61, 127, 257, 521, 1049, 2111, 4229, 8461, 16927, 
+                                         33857, 67723, 135449, 270913, 541831, 1083689, 2167393, 
+                                         4334791, 8669593, 17339197, 34678421, 69356857, 138713717, 
+                                         277427441, 554854889, 1109709791, 2219419597];
+                                         
+    static size_t findNextSize(size_t currentSize) pure
+    {
+      foreach(s; sizes)
+      {
+        if(s > currentSize)
+          return s;
+      }
+      return currentSize * 2;
+    }
   
   public:
     
@@ -204,10 +222,10 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     
     void reserve(size_t count)
     {
-      if(count > ((m_Data.length * 3) / 4) || count >= m_Data.length)
+      if(count > ((m_Data.length * numerator) / denominator) || count >= m_Data.length)
       {
         Pair[] oldData = m_Data;
-        auto newLength = (count / 3) * 4;
+        auto newLength = findNextSize((count / numerator) * denominator);
         m_Data = (cast(Pair*)m_allocator.AllocateMemory(newLength * Pair.sizeof))[0..newLength];
         foreach(ref entry; m_Data)
         {
@@ -230,10 +248,11 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       if(index == size_t.max) //not in the hashmap yet
       {
         m_FullCount++;
-        if(m_FullCount > ((m_Data.length * 3) / 4) || m_FullCount >= m_Data.length)
+        if(m_FullCount > ((m_Data.length * numerator) / denominator) || m_FullCount >= m_Data.length)
         {
           Pair[] oldData = m_Data;
-          m_Data = (cast(Pair*)m_allocator.AllocateMemory(oldData.length * 2 * Pair.sizeof))[0..oldData.length*2];
+          size_t newSize = findNextSize(oldData.length);
+          m_Data = (cast(Pair*)m_allocator.AllocateMemory(newSize * Pair.sizeof))[0..newSize];
           foreach(ref entry; m_Data)
           {
             entry.state = State.Free;
