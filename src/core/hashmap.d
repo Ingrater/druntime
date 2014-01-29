@@ -112,6 +112,13 @@ struct StdHashPolicy
 
 final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
 {
+  public:
+    struct Init
+    {
+      uint hash;
+      K key;
+      V value;
+    }
   private:
     enum State {
       Free, // 0
@@ -168,6 +175,13 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       {
         entry.state = State.Free;
       }
+    }
+    
+    this(Init[] init, AT allocator, size_t len)
+    {
+      assert(allocator !is null);
+      m_allocator = allocator;
+      m_Data = (cast(Pair*)allocator.AllocateMemory(Pair.sizeof * len))[0..len];
     }
 
     static if(is(AT == StdAllocator))
