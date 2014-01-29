@@ -52,6 +52,9 @@ MANIFEST= \
 	src\core\refcounted.d \
 	src\core\hashmap.d \
 	\
+	src\core\internal\convert.d \
+	src\core\internal\hash.d \
+	\
 	src\core\stdc\complex.d \
 	src\core\stdc\config.d \
 	src\core\stdc\ctype.d \
@@ -234,7 +237,7 @@ MANIFEST= \
 	src\rt\typeinfo\ti_void.d \
 	src\rt\typeinfo\ti_wchar.d \
 	\
-	src\rt\util\console.d \
+	src\rt\util\array.d \
 	src\rt\util\hash.d \
 	src\rt\util\string.d \
 	src\rt\util\utf.d \
@@ -261,6 +264,9 @@ SRCS= \
 	src\core\refcounted.d \
 	src\core\hashmap.d \
 	src\core\traits.d \
+	\
+	src\core\internal\convert.d \
+	src\core\internal\hash.d \
 	\
 	src\core\stdc\config.d \
 	src\core\stdc\ctype.d \
@@ -326,7 +332,7 @@ SRCS= \
 	src\rt\sections.d \
 	src\rt\sections_win32.d \
 	\
-	src\rt\util\console.d \
+	src\rt\util\array.d \
 	src\rt\util\hash.d \
 	src\rt\util\string.d \
 	src\rt\util\utf.d \
