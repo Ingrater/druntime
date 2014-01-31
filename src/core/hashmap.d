@@ -141,6 +141,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
   
     Pair[] m_Data;
     size_t m_FullCount = 0;
+    size_t m_NumDeletedEntries = 0;
     AT m_allocator;
     //debug shared(uint) m_iterationCount = 0;
     
@@ -214,8 +215,13 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t index = HP.Hash(key) % m_Data.length;
       while(m_Data[index].state == State.Data)
       {
-        index = (index + 1) % m_Data.length;
+        //index = (index + 1) % m_Data.length;
+        index++;
+        if(index == m_Data.length)
+          index = 0;
       }
+      if(m_Data[index].state == State.Deleted)
+        m_NumDeletedEntries--;
       const(void[]) initMem = typeid(Pair).init();
       if(initMem.ptr !is null)
         (cast(void*)&m_Data[index])[0..Pair.sizeof] = initMem[];
@@ -229,30 +235,39 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       size_t index = HP.Hash(data.key) % m_Data.length;
       while(m_Data[index].state == State.Data)
       {
-        index = (index + 1) % m_Data.length;
+        //index = (index + 1) % m_Data.length;
+        index++;
+        if(index == m_Data.length)
+          index = 0;
       }
       memcpy(m_Data.ptr + index, &data, Pair.sizeof);
+    }
+
+    private void rehash(size_t newLength)
+    {
+      Pair[] oldData = m_Data;
+      m_Data = (cast(Pair*)m_allocator.AllocateMemory(newLength * Pair.sizeof))[0..newLength];
+      m_NumDeletedEntries = 0;
+      foreach(ref entry; m_Data)
+      {
+        entry.state = State.Free;
+      }
+
+      //rehash all values
+      foreach(ref entry; oldData)
+      {
+        if(entry.state == State.Data)
+          move(entry);
+      }
+      m_allocator.FreeMemory(oldData.ptr);          
     }
     
     void reserve(size_t count)
     {
       if(count > ((m_Data.length * numerator) / denominator) || count >= m_Data.length)
       {
-        Pair[] oldData = m_Data;
         auto newLength = findNextSize((count / numerator) * denominator);
-        m_Data = (cast(Pair*)m_allocator.AllocateMemory(newLength * Pair.sizeof))[0..newLength];
-        foreach(ref entry; m_Data)
-        {
-          entry.state = State.Free;
-        }
-        
-        //rehash all values
-        foreach(ref entry; oldData)
-        {
-          if(entry.state == State.Data)
-            move(entry);
-        }
-        m_allocator.FreeMemory(oldData.ptr);            
+        rehash(newLength);
       }        
     }
     
@@ -262,25 +277,20 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       if(index == size_t.max) //not in the hashmap yet
       {
         m_FullCount++;
-        if(m_FullCount > ((m_Data.length * numerator) / denominator) || m_FullCount >= m_Data.length)
+        auto pseudoFullCount = m_FullCount + m_NumDeletedEntries;
+        if(pseudoFullCount > ((m_Data.length * numerator) / denominator) || pseudoFullCount >= m_Data.length)
         {
-          Pair[] oldData = m_Data;
-          size_t newSize = findNextSize(oldData.length);
-          m_Data = (cast(Pair*)m_allocator.AllocateMemory(newSize * Pair.sizeof))[0..newSize];
-          foreach(ref entry; m_Data)
+          if(m_FullCount > ((m_Data.length * numerator) / denominator) || m_FullCount >= m_Data.length)
           {
-            entry.state = State.Free;
+            size_t newSize = findNextSize(m_Data.length);
+            rehash(newSize);
           }
-        
-          //rehash all values
-          foreach(ref entry; oldData)
+          else
           {
-            if(entry.state == State.Data)
-              move(entry);
+            rehash(m_Data.length); //rehash with same size to get rid of deleted entries
           }
-          m_allocator.FreeMemory(oldData.ptr);
         }
-        insert(key,value);
+        insert(key, value);
       }
       else //already in hashmap
       {
@@ -295,7 +305,10 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       {
         if(m_Data[index].state == State.Data && HP.equals(m_Data[index].key, key))
           return m_Data[index].value;
-        index = (index + 1) % m_Data.length;
+        //index = (index + 1) % m_Data.length;
+        index++;
+        if(index == m_Data.length)
+          index = 0;
       }
       
       assert(0,"not found");
@@ -331,7 +344,10 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       {
         if(m_Data[index].state == State.Data && HP.equals(m_Data[index].key, key))
           return index;
-        index = (index + 1) % m_Data.length;
+        //index = (index + 1) % m_Data.length;
+        index++;
+        if(index == m_Data.length)
+          index = 0;
         searched++;
       }
       return size_t.max;
@@ -341,9 +357,27 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     {
       size_t nextIndex = (index + 1) % m_Data.length;
       if(m_Data[nextIndex].state != State.Free)
+      {
         m_Data[index].state = State.Deleted;
+        m_NumDeletedEntries++;
+      }
       else
+      {
         m_Data[index].state = State.Free;
+        size_t prevIndex = index;
+        for(size_t i=0; i<m_Data.length; i++)
+        {
+          if(prevIndex == 0)
+            prevIndex = m_Data.length - 1;
+          else
+            prevIndex--;
+
+          if(m_Data[prevIndex].state == State.Deleted)
+            m_Data[prevIndex].state = State.Free;
+          else
+            break;
+        }
+      }
 
       //TODO remove when compiler no longer allocates on K.init
       static if(is(K == struct))
@@ -394,18 +428,8 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     bool remove(K key)
     {
       //debug { assert(m_iterationCount == 0, "can't modify hashmap while iterating"); }
-      size_t index = HP.Hash(key) % m_Data.length;
-      bool found = false;
-      while(m_Data[index].state != State.Free)
-      {
-        if(m_Data[index].state == State.Data && HP.equals(m_Data[index].key, key))
-        {
-          found = true;
-          break;
-        }
-        index = (index + 1) % m_Data.length;
-      }
-      if(!found)
+      size_t index = getIndex(key);
+      if(index == size_t.max)
         return false;
       
       doRemove(index);
@@ -610,5 +634,16 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     size_t count() @property
     {
       return m_FullCount;
+    }
+
+    // For testing
+    bool isPseudoFull() @property
+    {
+      foreach(ref e; m_Data)
+      {
+        if(e.state == State.Free)
+          return false;
+      }
+      return true;
     }
 }
