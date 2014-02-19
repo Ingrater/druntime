@@ -335,6 +335,16 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       if(index != size_t.max)
         doIfTrue(m_Data[index].value);
     }   
+    
+    bool tryGet(K key, ref V dstValue)
+    {
+      auto index = getIndex(key);
+      if(index != size_t.max)
+      {
+        dstValue = m_Data[index].value;
+      }
+      return false;
+    }
 
     size_t getIndex(K key)
     {
