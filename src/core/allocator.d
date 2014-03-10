@@ -759,7 +759,7 @@ struct composite(T)
   this(DefaultCtor c){ 
   };
 
-  void construct(ARGS...)(ARGS args) //TODO fix: workaround because constructor can not be a template BUG 4749
+  this(ARGS...)(ARGS args)
   {
     _classMemory[] = typeid(T).init[];
     T result = (cast(T)_classMemory.ptr);
