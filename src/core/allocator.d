@@ -757,6 +757,13 @@ struct composite(T)
   @disable this(this); //prevent evil stuff from happening
 
   this(DefaultCtor c){ 
+    _classMemory[] = typeid(T).init[];
+    T result = (cast(T)_classMemory.ptr);
+    static if(is(typeof(result.__ctor())))
+    {
+      result.__ctor();
+    }
+    debug _instance = result;
   };
 
   this(ARGS...)(ARGS args)
