@@ -931,4 +931,6 @@ class RCException : Exception
   }
 
   protected RCArray!(immutable(char)) rcmsg;
+  
+  RCArray!(immutable(char)) getMessage() { return rcmsg; }
 }
