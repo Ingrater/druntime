@@ -1030,7 +1030,7 @@ void callDtor(T)(T subject)
 void uninitializedCopy(DT,ST)(DT dest, ST source) if(!is(DT == struct))
 {
   static assert(is(DT DBT == DBT[]), "Destination Type (DT) '" ~ DT.stringof ~ "' is not an array");
-  static assert(is(ST SBT == SBT[]), "Source Type (ST) '" ~ ST.stringof ~ "' is not an array");
+  static assert(is(ST SBT == SBT[]) || is(ST SBT == SBT[N], size_t N), "Source Type (ST) '" ~ ST.stringof ~ "' is not an array");
   static assert(is(StripModifier!(arrayType!DT) == StripModifier!(arrayType!ST)),
                 "Array Types are not copy compatible " ~ arrayType!DT.stringof ~ " and " ~ arrayType!ST.stringof);
   assert(dest.length == source.length, "array lengths do not match");
