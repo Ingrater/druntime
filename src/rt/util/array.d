@@ -43,6 +43,7 @@ private void _enforceSameLength(in char[] action,
     msg ~= length1.sizeToTempString(tmpBuff);
     msg ~= " != ";
     msg ~= length2.sizeToTempString(tmpBuff);
+
     throw new Error(msg);
 }
 

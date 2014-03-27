@@ -474,9 +474,11 @@ extern (C) void onUnittestErrorMsg( string file, size_t line, string msg ) nothr
  * Throws:
  *  RangeError.
  */
-extern (C) void onRangeError( string file = __FILE__, size_t line = __LINE__ ) @safe pure nothrow
+extern (C) void onRangeError( string file = __FILE__, size_t line = __LINE__ ) nothrow
 {
-    throw new RangeError( file, line, null );
+    if( _assertHandler is null )
+      throw new RangeError( file, line, null );
+    _assertHandler( file, line, "out of bounds access");
 }
 
 
@@ -505,9 +507,11 @@ extern (C) void onFinalizeError( ClassInfo info, Exception e, string file = __FI
  * Throws:
  *  HiddenFuncError.
  */
-extern (C) void onHiddenFuncError( Object o ) @safe pure nothrow
+extern (C) void onHiddenFuncError( Object o ) nothrow
 {
-    throw new HiddenFuncError( typeid(o) );
+    if( _assertHandler is null)
+      throw new HiddenFuncError( typeid(o) );
+    _assertHandler( "", 0, "hidden func error");
 }
 
 
@@ -552,9 +556,11 @@ extern (C) void onInvalidMemoryOperationError() @trusted pure nothrow
  * Throws:
  *  SwitchError.
  */
-extern (C) void onSwitchError( string file = __FILE__, size_t line = __LINE__ ) @safe pure nothrow
+extern (C) void onSwitchError( string file = __FILE__, size_t line = __LINE__ ) nothrow
 {
-    throw new SwitchError( file, line, null );
+    if( _assertHandler is null)
+      throw new SwitchError( file, line, null );
+    _assertHandler( file, line, "switch error" );
 }
 
 
