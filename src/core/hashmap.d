@@ -342,6 +342,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       if(index != size_t.max)
       {
         dstValue = m_Data[index].value;
+        return true;
       }
       return false;
     }
