@@ -205,14 +205,11 @@ public:
     super(allocator);
   }
 
-  static if(is(T == struct) && is(typeof(T.__dtor())))
+  static if(is(T == struct))
   {
     ~this()
     {
-      foreach(ref e; data)
-      {
-        e.__dtor();
-      }
+      callDtor(data);
     }
   }
   

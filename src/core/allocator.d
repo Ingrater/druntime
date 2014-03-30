@@ -407,6 +407,12 @@ class StdAllocator : IAdvancedAllocator
               {
                 printf("Reference counted object: ref-count = %d\n", refCounted.refcount);
                 if(log !is null) fprintf(log, "Reference counted object: ref-count = %d\n", refCounted.refcount);
+                auto str = cast(RCArrayData!(immutable(char))) refCounted;
+                if(str !is null)
+                {
+                  printf("string with contents: \"%.*s\"\n", str[].length, str[].ptr);
+                  if(log !is null) fprintf(log, "string with contents \"%.*s\"\n", str[].length, str[].ptr);
+                }
               }
             }
           }
