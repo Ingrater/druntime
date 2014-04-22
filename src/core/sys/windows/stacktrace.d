@@ -38,7 +38,15 @@ debug(PRINTF) import core.stdc.stdio;
 extern(Windows) void RtlCaptureContext(CONTEXT* ContextRecord);
 extern(Windows) DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR pBuffer, DWORD nSize);
 
-extern(Windows) USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID *BackTrace, PULONG BackTraceHash);
+version(Win64)
+{
+  extern(Windows) USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID *BackTrace, PULONG BackTraceHash);
+}
+else
+{
+  alias extern(Windows) USHORT function(ULONG FramesToSkip, ULONG FramesToCapture, PVOID *BackTrace, PULONG BackTraceHash) RtlCaptureStackBackTrace_t;
+  __gshared RtlCaptureStackBackTrace_t RtlCaptureStackBackTrace;
+}
 
 
 private __gshared bool initialized = false;
@@ -168,14 +176,26 @@ private:
         if(dbghelp is null)
             return []; // dbghelp.dll not available
 
-        version(Win64)
+
+        if(context is null)
         {
-          if(context is null)
+          version(Win64)
           {
             auto backtraceLength = RtlCaptureStackBackTrace(cast(uint)skip, cast(uint)buf.length, cast(void**)buf.ptr, null);
             if(backtraceLength > 1)
             {
               return buf[0..backtraceLength];
+            }
+          }
+          version(Win32)
+          {
+            if(RtlCaptureStackBackTrace !is null)
+            {
+              auto backtraceLength = RtlCaptureStackBackTrace(cast(uint)skip, cast(uint)buf.length, cast(void**)buf.ptr, null);
+              if(backtraceLength > 1)
+              {
+                return buf[0..backtraceLength];
+              }
             }
           }
         }
@@ -401,6 +421,15 @@ void initializeStackTracing()
 
     if( dbghelp is null )
         return; // dbghelp.dll not available
+    
+    version(Win32)
+    {
+      HMODULE hMod = LoadLibraryA("ntdll.dll");
+      if(hMod != null)
+      {
+        RtlCaptureStackBackTrace = cast(RtlCaptureStackBackTrace_t)GetProcAddress(hMod, "RtlCaptureStackBackTrace");
+      }
+    }
 
     debug(PRINTF) 
     {
