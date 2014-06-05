@@ -164,6 +164,22 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       }
       return currentSize * 2;
     }
+    
+    void destroy()
+    {
+      if(m_Data.ptr !is null)
+      {
+        foreach(ref p; m_Data)
+        {
+          if(p.state == State.Data)
+          {
+            callDtor(&p);
+          }
+        }
+        m_allocator.FreeMemory(m_Data.ptr);
+        m_Data = [];
+      } 
+    }
   
   public:
     
@@ -195,18 +211,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
   
     ~this()
     {
-      if(m_Data.ptr !is null)
-      {
-        foreach(ref p; m_Data)
-        {
-          if(p.state == State.Data)
-          {
-            callDtor(&p);
-          }
-        }
-        m_allocator.FreeMemory(m_Data.ptr);
-        m_Data = [];
-      }
+      destroy();
     }
     
     private void insert(ref K key, ref V value)
@@ -645,6 +650,15 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     size_t count() @property
     {
       return m_FullCount;
+    }
+    
+    void copyFrom(this other)
+    {
+      destroy();
+      m_Data = (cast(Pair*)m_allocator.AllocateMemory(other.m_Data.length * Pair.sizeof))[0..other.m_Data.length];
+      uninitializedCopy(m_Data, other.m_Data);
+      m_FullCount = other.m_FullCount;
+      m_NumDeletedEntries = other.m_NumDeletedEntries;
     }
 
     // For testing
