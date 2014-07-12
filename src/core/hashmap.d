@@ -117,7 +117,8 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     {
       uint hash;
       K key;
-      V value;
+      static if(!is(V == void))
+        V value;
     }
   private:
     enum State {
@@ -128,14 +129,26 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     
     struct Pair {
       K key;
-      V value;
+      static if(!is(V == void))
+        V value;
       State state;
-
-      this(ref K key, ref V value, State state)
+      
+      static if(is(V == void))
       {
-        this.key = key;
-        this.value = value;
-        this.state = state;
+        this(ref K key, State state)
+        {
+          this.key = key;
+          this.state = state;
+        }
+      }
+      else
+      {
+        this(ref K key, ref V value, State state)
+        {
+          this.key = key;
+          this.value = value;
+          this.state = state;
+        }
       }
     }
   
@@ -200,6 +213,11 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       m_allocator = allocator;
       m_Data = (cast(Pair*)allocator.AllocateMemory(Pair.sizeof * len))[0..len];
     }
+    
+    this(this other)
+    {
+      doCopy(other);
+    }
 
     static if(is(AT == StdAllocator))
     {
@@ -214,9 +232,8 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       destroy();
     }
     
-    private void insert(ref K key, ref V value)
+    private size_t genericInsert(ref K key)
     {
-      //debug { assert(m_iterationCount == 0, "can't modify hashmap while iterating"); }
       size_t index = HP.Hash(key) % m_Data.length;
       while(m_Data[index].state == State.Data)
       {
@@ -231,8 +248,27 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       if(initMem.ptr !is null)
         (cast(void*)&m_Data[index])[0..Pair.sizeof] = initMem[];
       else
-        memset(&m_Data[index], 0, Pair.sizeof);
-      m_Data[index].__ctor(key, value, State.Data);
+        memset(&m_Data[index], 0, Pair.sizeof);    
+      return index;
+    }
+    
+    static if(is(V == void))
+    {
+       private void insert(ref K key)
+      {
+        //debug { assert(m_iterationCount == 0, "can't modify hashmap while iterating"); }
+        auto index = genericInsert(key);
+        m_Data[index].__ctor(key, State.Data);
+      }   
+    }
+    else
+    {
+      private void insert(ref K key, ref V value)
+      {
+        //debug { assert(m_iterationCount == 0, "can't modify hashmap while iterating"); }
+        auto index = genericInsert(key);
+        m_Data[index].__ctor(key, value, State.Data);
+      }
     }
 
     private void move(ref Pair data)
@@ -276,80 +312,129 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       }        
     }
     
-    void opIndexAssign(V value, K key)
+    static if(!is(V == void))
     {
-      size_t index = getIndex(key);
-      if(index == size_t.max) //not in the hashmap yet
+      void opIndexAssign(V value, K key)
       {
-        m_FullCount++;
-        auto pseudoFullCount = m_FullCount + m_NumDeletedEntries;
-        if(pseudoFullCount > ((m_Data.length * numerator) / denominator) || pseudoFullCount >= m_Data.length)
+        size_t index = getIndex(key);
+        if(index == size_t.max) //not in the hashmap yet
         {
-          if(m_FullCount > ((m_Data.length * numerator) / denominator) || m_FullCount >= m_Data.length)
+          m_FullCount++;
+          auto pseudoFullCount = m_FullCount + m_NumDeletedEntries;
+          if(pseudoFullCount > ((m_Data.length * numerator) / denominator) || pseudoFullCount >= m_Data.length)
           {
-            size_t newSize = findNextSize(m_Data.length);
-            rehash(newSize);
+            if(m_FullCount > ((m_Data.length * numerator) / denominator) || m_FullCount >= m_Data.length)
+            {
+              size_t newSize = findNextSize(m_Data.length);
+              rehash(newSize);
+            }
+            else
+            {
+              rehash(m_Data.length); //rehash with same size to get rid of deleted entries
+            }
           }
-          else
-          {
-            rehash(m_Data.length); //rehash with same size to get rid of deleted entries
-          }
+          insert(key, value);
         }
-        insert(key, value);
+        else //already in hashmap
+        {
+          m_Data[index].value = value; 
+        }
       }
-      else //already in hashmap
+    }
+    else
+    {
+      void add(K key)
       {
-        m_Data[index].value = value; 
+        size_t index = getIndex(key);
+        if(index == size_t.max) //not in the hashmap yet
+        {
+          m_FullCount++;
+          auto pseudoFullCount = m_FullCount + m_NumDeletedEntries;
+          if(pseudoFullCount > ((m_Data.length * numerator) / denominator) || pseudoFullCount >= m_Data.length)
+          {
+            if(m_FullCount > ((m_Data.length * numerator) / denominator) || m_FullCount >= m_Data.length)
+            {
+              size_t newSize = findNextSize(m_Data.length);
+              rehash(newSize);
+            }
+            else
+            {
+              rehash(m_Data.length); //rehash with same size to get rid of deleted entries
+            }
+          }
+          insert(key);
+        }    
       }
     }
     
-    ref V opIndex(K key)
+    static if(!is(V == void))
     {
-      size_t index = HP.Hash(key) % m_Data.length;
-      while(m_Data[index].state != State.Free)
+      ref V opIndex(K key)
       {
-        if(m_Data[index].state == State.Data && HP.equals(m_Data[index].key, key))
-          return m_Data[index].value;
-        //index = (index + 1) % m_Data.length;
-        index++;
-        if(index == m_Data.length)
-          index = 0;
+        size_t index = HP.Hash(key) % m_Data.length;
+        while(m_Data[index].state != State.Free)
+        {
+          if(m_Data[index].state == State.Data && HP.equals(m_Data[index].key, key))
+            return m_Data[index].value;
+          //index = (index + 1) % m_Data.length;
+          index++;
+          if(index == m_Data.length)
+            index = 0;
+        }
+        
+        assert(0,"not found");
+        //TODO implement to work in relase also
       }
-      
-      assert(0,"not found");
-      //TODO implement to work in relase also
     }
     
     bool exists(K key)
     {
       return getIndex(key) != size_t.max;
     }
-
-    void ifExists(K key, scope void delegate(ref V) doIfTrue, scope void delegate() doIfFalse)
-    {
-      auto index = getIndex(key);
-      if(index != size_t.max)
-        doIfTrue(m_Data[index].value);
-      else
-        doIfFalse();
-    }
-
-    void ifExists(K key, scope void delegate(ref V) doIfTrue)
-    {
-      auto index = getIndex(key);
-      if(index != size_t.max)
-        doIfTrue(m_Data[index].value);
-    }   
     
-    bool tryGet(K key, ref V dstValue)
+    static if(is(V == void))
+      alias void delegate() valueDelegate;
+    else
+      alias void delegate(ref V) valueDelegate;
+
+    void ifExists(K key, scope valueDelegate doIfTrue, scope void delegate() doIfFalse)
     {
       auto index = getIndex(key);
       if(index != size_t.max)
       {
-        dstValue = m_Data[index].value;
-        return true;
+        static if(is(V == void))
+          doIfTrue();
+        else
+          doIfTrue(m_Data[index].value);
       }
-      return false;
+      else
+        doIfFalse();
+    }
+
+    void ifExists(K key, scope valueDelegate doIfTrue)
+    {
+      auto index = getIndex(key);
+      if(index != size_t.max)
+      {
+        static if(is(V == void))
+          doIfTrue();
+        else
+          doIfTrue(m_Data[index].value);
+      }
+    }   
+    
+    static if(!is(V == void))
+    {
+      bool tryGet(K key, ref V dstValue)
+      {
+        auto index = getIndex(key);
+        if(index != size_t.max)
+        {
+          dstValue = m_Data[index].value;
+          return true;
+        }
+        return false;
+      }
     }
 
     size_t getIndex(K key)
@@ -418,26 +503,30 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
         m_Data[index].key = K.init;
 
       //TODO remove when compiler no longer allocates on V.init
-      static if(is(V == struct))
+      static if(!is(V == void))
       {
-        static if(__traits(compiles, (){ V constructTest; return constructTest; }))
+        static if(is(V == struct))
         {
-          V valueTemp;
-          m_Data[index].value = valueTemp;
+          static if(__traits(compiles, (){ V constructTest; return constructTest; }))
+          {
+            V valueTemp;
+            m_Data[index].value = valueTemp;
+          }
+          else
+          {
+            void[V.sizeof] valueTemp;
+            void[] initMem = typeid(V).init();
+            if(initMem.ptr is null)
+              memset(valueTemp.ptr, 0, valueTemp.length);
+            else
+              valueTemp[] = initMem[];
+            m_Data[index].value = *cast(V*)valueTemp.ptr; 
+          }
         }
         else
-        {
-          void[V.sizeof] valueTemp;
-          void[] initMem = typeid(V).init();
-          if(initMem.ptr is null)
-            memset(valueTemp.ptr, 0, valueTemp.length);
-          else
-            valueTemp[] = initMem[];
-          m_Data[index].value = *cast(V*)valueTemp.ptr; 
-        }
+          m_Data[index].value = V.init;
       }
-      else
-        m_Data[index].value = V.init;
+        
       m_FullCount--;
     }
     
@@ -451,49 +540,85 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       doRemove(index);
       return true;
     }
+    
+    static if(is(V == void))
+      alias bool delegate(ref K) removeDelegate;
+    else
+      alias bool delegate(ref K, ref V) removeDelegate;
 
-    size_t removeWhere(scope bool delegate(ref K, ref V) condition)
+    size_t removeWhere(scope removeDelegate condition)
     {
       size_t removed = 0;
       foreach(size_t index, ref entry; m_Data)
       {
-        if( entry.state == State.Data && condition(entry.key, entry.value) )
+        static if(is(V == void))
         {
-          doRemove(index);
-          removed++;
+          if( entry.state == State.Data && condition(entry.key) )
+          {
+            doRemove(index);
+            removed++;
+          }
+        }
+        else
+        {
+          if( entry.state == State.Data && condition(entry.key, entry.value) )
+          {
+            doRemove(index);
+            removed++;
+          }
         }
       }
       return removed;
     }
     
-    int opApply( scope int delegate(ref V) dg )
+    static if(!is(V == void))
     {
-      int result = void;
-      /*debug {
-        atomicOp!"+="(m_iterationCount, 1);
-        scope(exit) atomicOp!"-="(m_iterationCount, 1);
-      }*/
-      foreach(ref entry; m_Data)
+      int opApply( scope int delegate(ref V) dg )
       {
-        if( entry.state == State.Data && (result = dg(entry.value)) != 0)
-          break;
+        int result = void;
+        /*debug {
+          atomicOp!"+="(m_iterationCount, 1);
+          scope(exit) atomicOp!"-="(m_iterationCount, 1);
+        }*/
+        foreach(ref entry; m_Data)
+        {
+          if( entry.state == State.Data && (result = dg(entry.value)) != 0)
+            break;
+        }
+        return result;
       }
-      return result;
-    }
 
-    int opApply( scope int delegate(ref K, ref V) dg )
-    {
-      int result = void;
-      /*debug {
-        atomicOp!"+="(m_iterationCount, 1);
-        scope(exit) atomicOp!"-="(m_iterationCount, 1);
-      }*/
-      foreach(ref entry; m_Data)
+      int opApply( scope int delegate(ref K, ref V) dg )
       {
-        if( entry.state == State.Data && (result = dg(entry.key, entry.value)) != 0)
-          break;
+        int result = void;
+        /*debug {
+          atomicOp!"+="(m_iterationCount, 1);
+          scope(exit) atomicOp!"-="(m_iterationCount, 1);
+        }*/
+        foreach(ref entry; m_Data)
+        {
+          if( entry.state == State.Data && (result = dg(entry.key, entry.value)) != 0)
+            break;
+        }
+        return result;
       }
-      return result;
+    }
+    else
+    {
+      int opApply( scope int delegate(ref K) dg )
+      {
+        int result = void;
+        /*debug {
+          atomicOp!"+="(m_iterationCount, 1);
+          scope(exit) atomicOp!"-="(m_iterationCount, 1);
+        }*/
+        foreach(ref entry; m_Data)
+        {
+          if( entry.state == State.Data && (result = dg(entry.key)) != 0)
+            break;
+        }
+        return result;
+      }
     }
 
     /**
@@ -506,13 +631,16 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       {
         if(p.state == State.Data)
         {
-          static if(is(V == struct))
+          static if(!is(V == void))
           {
-            p.value = V();
-          }
-          else
-          {
-            p.value = V.init;
+            static if(is(V == struct))
+            {
+              p.value = V();
+            }
+            else
+            {
+              p.value = V.init;
+            }
           }
 
           static if(is(K == struct))
@@ -577,56 +705,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
         return m_start > m_end;
       }
     }
-
-    static struct ValueRange
-    {
-      private Hashmap!(K,V,HP,AT).Pair* m_start;
-      private Hashmap!(K,V,HP,AT).Pair* m_end;
-
-      ref V front()
-      {
-        return m_start.value;
-      }
-
-      ref V back()
-      {
-        return m_end.value;
-      }
-
-      private void validateFront()
-      {
-        while(m_start <= m_end && m_start.state != State.Data)
-        {
-          m_start++;
-        }
-      }
-
-      void popFront()
-      {
-        m_start++;
-        validateFront();
-      }
-
-      private void validateBack()
-      {
-        while(m_end >= m_start && m_end.state != State.Data)
-        {
-          m_end--;
-        }
-      }
-
-      void popBack()
-      {
-        m_end--;
-        validateBack();
-      }
-
-      @property bool empty()
-      {
-        return m_start > m_end;
-      }
-    }
-
+    
     @property KeyRange keys()
     {
       KeyRange r;
@@ -637,14 +716,66 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       return r;
     }
 
-    @property ValueRange values()
+    static if(!is(V == void))
     {
-      ValueRange r;
-      r.m_start = &m_Data[0];
-      r.m_end = &m_Data[$-1];
-      r.validateFront();
-      r.validateBack();
-      return r;
+      static struct ValueRange
+      {
+        private Hashmap!(K,V,HP,AT).Pair* m_start;
+        private Hashmap!(K,V,HP,AT).Pair* m_end;
+
+        ref V front()
+        {
+          return m_start.value;
+        }
+
+        ref V back()
+        {
+          return m_end.value;
+        }
+
+        private void validateFront()
+        {
+          while(m_start <= m_end && m_start.state != State.Data)
+          {
+            m_start++;
+          }
+        }
+
+        void popFront()
+        {
+          m_start++;
+          validateFront();
+        }
+
+        private void validateBack()
+        {
+          while(m_end >= m_start && m_end.state != State.Data)
+          {
+            m_end--;
+          }
+        }
+
+        void popBack()
+        {
+          m_end--;
+          validateBack();
+        }
+
+        @property bool empty()
+        {
+          return m_start > m_end;
+        }
+      }
+
+      @property ValueRange values()
+      {
+        ValueRange r;
+        r.m_start = &m_Data[0];
+        r.m_end = &m_Data[$-1];
+        r.validateFront();
+        r.validateBack();
+        return r;
+      }
     }
     
     size_t count() @property
@@ -652,13 +783,19 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
       return m_FullCount;
     }
     
+    private void doCopy(this other)
+    {
+      auto oldData = other.m_Data;
+      m_Data = (cast(Pair*)m_allocator.AllocateMemory(oldData.length * Pair.sizeof))[0..oldData.length];
+      uninitializedCopy(m_Data, oldData);
+      m_FullCount = other.m_FullCount;
+      m_NumDeletedEntries = other.m_NumDeletedEntries;
+    }
+    
     void copyFrom(this other)
     {
       destroy();
-      m_Data = (cast(Pair*)m_allocator.AllocateMemory(other.m_Data.length * Pair.sizeof))[0..other.m_Data.length];
-      uninitializedCopy(m_Data, other.m_Data);
-      m_FullCount = other.m_FullCount;
-      m_NumDeletedEntries = other.m_NumDeletedEntries;
+      doCopy(other);
     }
 
     // For testing

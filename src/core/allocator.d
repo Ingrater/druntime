@@ -796,6 +796,14 @@ struct composite(T)
     debug _instance = null;
     m_destructed = true;
   }
+  
+  static if(!__traits(hasMember, T, "clear"))
+  {
+    void clear(T = int)()
+    {
+      static assert(false, "clearing a composite is not supported!");
+    }
+  }
 
   ~this()
   {
