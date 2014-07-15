@@ -216,6 +216,7 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     
     this(this other)
     {
+      m_allocator = other.m_allocator;
       doCopy(other);
     }
 
