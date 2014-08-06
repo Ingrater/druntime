@@ -46,7 +46,7 @@ enum InitializeMemoryWith
 
 struct PointerHashPolicy
 {
-  static uint Hash(void* ptr)
+  static uint Hash(const(void)* ptr)
   {
     //Usually pointers are at least 4 byte aligned if they come out of a allocator
     static if(size_t.sizeof <= uint.sizeof)
@@ -55,7 +55,7 @@ struct PointerHashPolicy
       return cast(uint)((cast(size_t)ptr / 8) % uint.max);
   }
   
-  static bool equals(void* lhs, void* rhs)
+  static bool equals(const(void)* lhs, const(void)* rhs)
   {
     return (lhs is rhs);
   }
