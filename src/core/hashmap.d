@@ -788,7 +788,17 @@ final class Hashmap(K,V,HP = StdHashPolicy, AT = StdAllocator)
     {
       auto oldData = other.m_Data;
       m_Data = (cast(Pair*)m_allocator.AllocateMemory(oldData.length * Pair.sizeof))[0..oldData.length];
-      uninitializedCopy(m_Data, oldData);
+      foreach(size_t i, ref src; oldData)
+      {
+        if(src.state == State.Data)
+        {
+          uninitializedCopy(m_Data[i], src);
+        }
+        else
+        {
+          m_Data[i].state = src.state;
+        }
+      }
       m_FullCount = other.m_FullCount;
       m_NumDeletedEntries = other.m_NumDeletedEntries;
     }
