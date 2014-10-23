@@ -746,14 +746,9 @@ struct composite(T)
   }
   else
   {
-    @property T _instance()
+    @property inout(T) _instance() inout
     {
-      return cast(T)_classMemory.ptr;
-    }
-
-    @property const(T) _instance() const
-    {
-      return cast(const(T))_classMemory.ptr;
+      return cast(inout(T))_classMemory.ptr;
     }
   }
 
