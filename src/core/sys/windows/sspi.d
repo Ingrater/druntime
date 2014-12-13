@@ -8,6 +8,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_sspi.d)
  */
 module core.sys.windows.sspi;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;

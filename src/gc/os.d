@@ -12,6 +12,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module gc.os;
+pragma(sharedlibrary, "std");
 
 
 version (Windows)

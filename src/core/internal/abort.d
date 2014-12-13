@@ -1,4 +1,5 @@
 module core.internal.abort;
+pragma(sharedlibrary, "std");
 
 /*
  * Use instead of assert(0, msg), since this does not print a message for -release compiled

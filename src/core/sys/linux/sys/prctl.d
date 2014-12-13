@@ -5,6 +5,7 @@
  * Authors:   Arun Chandrasekaran <aruncxy@gmail.com>
  */
 module core.sys.linux.sys.prctl;
+pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

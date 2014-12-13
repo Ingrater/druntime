@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ole2ver.d)
  */
 module core.sys.windows.ole2ver;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 // These are apparently not documented on the MSDN site

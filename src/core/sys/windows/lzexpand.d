@@ -7,12 +7,15 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lzexpand.d)
  */
 module core.sys.windows.lzexpand;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 pragma(lib, "lz32");
 
 private import core.sys.windows.winbase, core.sys.windows.windef;
+
+export:
 
 enum : LONG {
     LZERROR_BADINHANDLE  = -1,

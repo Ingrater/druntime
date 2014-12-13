@@ -8,11 +8,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_cpl.d)
  */
 module core.sys.windows.cpl;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.windef, core.sys.windows.winuser;
+
+export:
 
 enum : uint {
     WM_CPL_LAUNCH = WM_USER + 1000,

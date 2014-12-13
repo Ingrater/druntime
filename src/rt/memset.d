@@ -12,6 +12,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.memset;
+pragma(sharedlibrary, "std");
 
 extern (C)
 {
@@ -20,6 +21,7 @@ extern (C)
 }
 
 extern (C):
+export:
 
 short *_memset16(short *p, short value, size_t count)
 {

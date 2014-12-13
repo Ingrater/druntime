@@ -8,9 +8,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ntdef.d)
  */
 module core.sys.windows.ntdef;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.basetsd, core.sys.windows.subauth, core.sys.windows.windef, core.sys.windows.winnt;
+
+export:
 
 enum uint
     OBJ_INHERIT          = 0x0002,

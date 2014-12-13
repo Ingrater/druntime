@@ -21,6 +21,7 @@
  * See_Also:  $(WEB pubs.opengroup.org/onlinepubs/9699919799/basedefs/mqueue.h.html, Standard)
  */
 module core.sys.posix.mqueue;
+pragma(sharedlibrary, "std");
 
 import core.sys.posix.config;
 import core.sys.posix.signal;

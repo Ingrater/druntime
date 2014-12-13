@@ -7,9 +7,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_basetyps.d)
  */
 module core.sys.windows.basetyps;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.windef, core.sys.windows.basetsd;
+
+export:
 
 align(1) struct GUID {  // size is 16
     align(1):

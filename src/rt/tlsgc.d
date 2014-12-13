@@ -11,6 +11,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.tlsgc;
+pragma(sharedlibrary, "std");
 
 import core.stdc.stdlib;
 

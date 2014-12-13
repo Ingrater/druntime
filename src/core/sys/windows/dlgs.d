@@ -8,9 +8,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_dlgs.d)
  */
 module core.sys.windows.dlgs;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.windef;
+
+export:
 
 enum : ushort {
     FILEOPENORD      = 1536,

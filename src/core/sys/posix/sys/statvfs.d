@@ -8,6 +8,7 @@
  */
 
 module core.sys.posix.sys.statvfs;
+pragma(sharedlibrary, "std");
 private import core.stdc.config;
 private import core.sys.posix.config;
 public import core.sys.posix.sys.types;

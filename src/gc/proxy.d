@@ -12,6 +12,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module gc.proxy;
+pragma(sharedlibrary, "std");
 
 import gc.impl.conservative.gc;
 import gc.impl.manual.gc;

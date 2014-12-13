@@ -13,6 +13,7 @@
  */
 
 module core.stdc.limits;
+pragma(sharedlibrary, "std");
 
 private import core.stdc.config;
 

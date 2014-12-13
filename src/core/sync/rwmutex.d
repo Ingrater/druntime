@@ -14,6 +14,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.rwmutex;
+pragma(sharedlibrary, "std");
 
 
 public import core.sync.exception;
@@ -48,7 +49,7 @@ version( Posix )
  * an issue however, because it is uncommon to call deeply into unknown code
  * while holding a lock that simply protects data.
  */
-class ReadWriteMutex
+export class ReadWriteMutex
 {
     /**
      * Defines the policy used by this mutex.  Currently, two policies are

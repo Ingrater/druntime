@@ -10,6 +10,7 @@
  */
 
 module rt.alloca;
+pragma(sharedlibrary, "std");
 
 version (Posix)
 {
@@ -55,7 +56,7 @@ extern size_t _pastdata;
  *      EAX     allocated data, null if stack overflows
  */
 
-extern (C) void* __alloca(int nbytes)
+export extern (C) void* __alloca(int nbytes)
 {
   version (D_InlineAsm_X86)
   {

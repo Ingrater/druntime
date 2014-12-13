@@ -7,6 +7,7 @@
  * Source:    $(DRUNTIMESRC core/sys/freebsd/_execinfo.d)
  */
 module core.sys.freebsd.execinfo;
+pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C):

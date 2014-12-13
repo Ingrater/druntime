@@ -12,6 +12,9 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_ptr;
+pragma(sharedlibrary, "std");
+
+export:
 
 // internal typeinfo for any pointer type
 // please keep in sync with TypeInfo_Pointer

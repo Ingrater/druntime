@@ -12,8 +12,11 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_Acdouble;
+pragma(sharedlibrary, "std");
 
 private import rt.util.typeinfo;
+
+export:
 
 // cdouble[]
 

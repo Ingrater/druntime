@@ -8,6 +8,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_w32api.d)
  */
 module core.sys.windows.w32api;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;

@@ -7,12 +7,15 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmcons.d)
  */
 module core.sys.windows.lmcons;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.windef;
 private import core.sys.windows.lmerr; // for NERR_BASE
+
+export:
 
 const TCHAR[]
     MESSAGE_FILENAME = "NETMSG",

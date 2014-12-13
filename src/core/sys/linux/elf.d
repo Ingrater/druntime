@@ -4,6 +4,7 @@
  * $(LINK2 http://sourceware.org/git/?p=glibc.git;a=blob;f=elf/elf.h, glibc elf/elf.h)
  */
 module core.sys.linux.elf;
+pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

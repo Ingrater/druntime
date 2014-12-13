@@ -7,9 +7,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmsname.d)
  */
 module core.sys.windows.lmsname;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.windef;
+
+export:
 
 const TCHAR[]
     SERVICE_WORKSTATION      = "LanmanWorkstation",

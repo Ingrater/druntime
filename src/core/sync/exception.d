@@ -13,12 +13,13 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.exception;
+pragma(sharedlibrary, "std");
 
 
 /**
  * Base class for synchronization errors.
  */
-class SyncError : Error
+export class SyncError : Error
 {
     @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
     {

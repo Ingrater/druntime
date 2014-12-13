@@ -10,6 +10,7 @@
  */
 
 module rt.trace;
+pragma(sharedlibrary, "std");
 
 private
 {

@@ -13,6 +13,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.qsort;
+pragma(sharedlibrary, "std");
 
 //debug=qsort;
 
@@ -76,7 +77,7 @@ else
 {
     private TypeInfo tiglobal;
 
-    extern (C) void[] _adSort(return scope void[] a, TypeInfo ti)
+    extern (C) export void[] _adSort(return scope void[] a, TypeInfo ti)
     {
         extern (C) int cmp(scope const void* p1, scope const void* p2)
         {

@@ -11,6 +11,7 @@
  */
 
 module core.demangle;
+pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;
@@ -2020,7 +2021,7 @@ pure @safe:
  *  The demangled name or the original string if the name is not a mangled D
  *  name.
  */
-char[] demangle( const(char)[] buf, char[] dst = null ) nothrow pure @safe
+export char[] demangle( const(char)[] buf, char[] dst = null ) nothrow pure @safe
 {
     //return Demangle(buf, dst)();
     auto d = Demangle!()(buf, dst);
@@ -2039,7 +2040,7 @@ char[] demangle( const(char)[] buf, char[] dst = null ) nothrow pure @safe
  *  The demangled type name or the original string if the name is not a
  *  mangled D type.
 */
-char[] demangleType( const(char)[] buf, char[] dst = null ) nothrow pure @safe
+export char[] demangleType( const(char)[] buf, char[] dst = null ) nothrow pure @safe
 {
     auto d = Demangle!()(buf, dst);
     return d.demangleType();
@@ -2226,7 +2227,7 @@ char[] reencodeMangled(const(char)[] mangled) nothrow pure @safe
  *  The mangled name for a symbols of type T and the given fully
  *  qualified name.
  */
-char[] mangle(T)(const(char)[] fqn, char[] dst = null) @safe pure nothrow
+char[] mangle(T)(const(char)[] fqn, char[] dst = null) @safe pure nothrow export
 {
     import core.internal.string : numDigits, unsignedToTempString;
 
@@ -2316,7 +2317,7 @@ char[] mangle(T)(const(char)[] fqn, char[] dst = null) @safe pure nothrow
  *  The mangled name for a function with function pointer type T and
  *  the given fully qualified name.
  */
-char[] mangleFunc(T:FT*, FT)(const(char)[] fqn, char[] dst = null) @safe pure nothrow if (is(FT == function))
+char[] mangleFunc(T:FT*, FT)(const(char)[] fqn, char[] dst = null) @safe pure nothrow export if (is(FT == function))
 {
     static if (isExternD!FT)
     {
@@ -2569,7 +2570,7 @@ version(unittest)
 /*
  *
  */
-string decodeDmdString( const(char)[] ln, ref size_t p ) nothrow pure @safe
+export string decodeDmdString( const(char)[] ln, ref size_t p ) nothrow pure @safe
 {
     string s;
     uint zlen, zpos;

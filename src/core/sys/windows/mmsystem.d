@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_mmsystem.d)
  */
 module core.sys.windows.mmsystem;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
@@ -17,6 +18,8 @@ pragma(lib, "winmm");
  */
 
 private import core.sys.windows.w32api, core.sys.windows.windef, core.sys.windows.winver;
+
+export:
 
 align(1):
 

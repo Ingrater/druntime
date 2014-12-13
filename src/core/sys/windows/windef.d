@@ -8,6 +8,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_windef.d)
  */
 module core.sys.windows.windef;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 public import core.sys.windows.winnt;

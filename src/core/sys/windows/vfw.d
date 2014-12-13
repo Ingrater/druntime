@@ -8,6 +8,7 @@
  */
 
 module core.sys.windows.vfw;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;

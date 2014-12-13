@@ -76,6 +76,7 @@
     NBSP=&nbsp;
  +/
 module core.time;
+pragma(sharedlibrary, "std");
 
 import core.exception;
 import core.stdc.time;
@@ -462,7 +463,7 @@ assert(std.datetime.Date(2010, 9, 7) - std.datetime.Date(2010, 10, 3) ==
        days(-26));
 --------------------
  +/
-struct Duration
+export struct Duration
 {
 @safe pure:
 
@@ -1674,7 +1675,7 @@ private:
         Params:
             hnsecs = The total number of hecto-nanoseconds in this $(D Duration).
       +/
-    this(long hnsecs) nothrow @nogc
+    this(long hnsecs) nothrow @nogc export
     {
         _hnsecs = hnsecs;
     }
@@ -1846,7 +1847,7 @@ unittest
         units  = The time units of the $(D Duration) (e.g. $(D "days")).
         length = The number of units in the $(D Duration).
   +/
-Duration dur(string units)(long length) @safe pure nothrow @nogc
+Duration dur(string units)(long length) @safe pure nothrow @nogc export
     if(units == "weeks" ||
        units == "days" ||
        units == "hours" ||
@@ -1923,7 +1924,7 @@ unittest
 }
 
 // used in MonoTimeImpl
-private string _clockTypeName(ClockType clockType)
+private export string _clockTypeName(ClockType clockType)
 {
     final switch(clockType)
     {
@@ -1937,7 +1938,7 @@ private string _clockTypeName(ClockType clockType)
 }
 
 // used in MonoTimeImpl
-private size_t _clockTypeIdx(ClockType clockType)
+private export size_t _clockTypeIdx(ClockType clockType)
 {
     final switch(clockType)
     {
@@ -2006,7 +2007,7 @@ alias MonoTime = MonoTimeImpl!(ClockType.normal);
     See_Also:
         $(LREF ClockType)
   +/
-struct MonoTimeImpl(ClockType clockType)
+export struct MonoTimeImpl(ClockType clockType)
 {
     private enum _clockIdx = _clockTypeIdx(clockType);
     private enum _clockName = _clockTypeName(clockType);
@@ -2410,7 +2411,7 @@ private:
 // prevents that from working. However, moving it back to a static ctor will
 // reraise issues with other systems using MonoTime, so we should leave this
 // here even when that bug is fixed.
-private immutable long[__traits(allMembers, ClockType).length] _ticksPerSecond;
+private export immutable long[__traits(allMembers, ClockType).length] _ticksPerSecond;
 
 // This is called directly from the runtime initilization function (rt_init),
 // instead of using a static constructor. Other subsystems inside the runtime
@@ -2557,7 +2558,7 @@ unittest
     See_Also:
         $(LREF ticksToNSecs)
   +/
-long convClockFreq(long ticks, long srcTicksPerSecond, long dstTicksPerSecond) @safe pure nothrow @nogc
+long convClockFreq(long ticks, long srcTicksPerSecond, long dstTicksPerSecond) @safe pure nothrow @nogc export
 {
     // This would be more straightforward with floating point arithmetic,
     // but we avoid it here in order to avoid the rounding errors that that
@@ -2705,7 +2706,7 @@ unittest
    The system clock ticks are the ticks of the system clock at the highest
    precision that the system provides.
   +/
-struct TickDuration
+export struct TickDuration
 {
     /++
        The number of ticks that the system clock has in one second.
@@ -2715,14 +2716,14 @@ struct TickDuration
        $(D TickDuration) is not going to work. That would be highly abnormal
        though.
       +/
-    static immutable long ticksPerSec;
+    __gshared immutable long ticksPerSec;
 
 
     /++
         The tick of the system clock (as a $(D TickDuration)) when the
         application started.
       +/
-    static immutable TickDuration appOrigin;
+    __gshared immutable TickDuration appOrigin;
 
 
     static @property @safe pure nothrow @nogc
@@ -3376,7 +3377,7 @@ struct TickDuration
         to    = The units of time to convert to.
         value = The value to convert.
   +/
-long convert(string from, string to)(long value) @safe pure nothrow @nogc
+long convert(string from, string to)(long value) @safe pure nothrow @nogc export
     if(((from == "weeks" ||
          from == "days" ||
          from == "hours" ||
@@ -3541,7 +3542,7 @@ unittest
     truncating division when converting to smaller units).
   +/
 deprecated("FracSec has been deprecated in favor of just using Duration for the sake of simplicity")
-struct FracSec
+export struct FracSec
 {
 @safe pure:
 
@@ -4087,7 +4088,7 @@ private:
         Params:
             hnsecs = The number of hnsecs.
       +/
-    static bool _valid(int hnsecs) nothrow @nogc
+    static bool _valid(int hnsecs) nothrow @nogc export
     {
         immutable second = convert!("seconds", "hnsecs")(1);
         return hnsecs > -second && hnsecs < second;
@@ -4098,7 +4099,7 @@ private:
         Throws:
             $(D TimeException) if $(D valid(hnsecs)) is $(D false).
       +/
-    static void _enforceValid(int hnsecs)
+    static void _enforceValid(int hnsecs) export
     {
         if(!_valid(hnsecs))
             throw new TimeException("FracSec must be greater than equal to 0 and less than 1 second.");
@@ -4109,7 +4110,7 @@ private:
         Params:
             hnsecs = The number of hnsecs passed the second.
       +/
-    this(int hnsecs) nothrow @nogc
+    this(int hnsecs) nothrow @nogc export
     {
         _hnsecs = hnsecs;
     }
@@ -4125,11 +4126,10 @@ private:
     int _hnsecs;
 }
 
-
 /++
     Exception type used by core.time.
   +/
-class TimeException : Exception
+export class TimeException : Exception
 {
     /++
         Params:
@@ -4181,13 +4181,13 @@ unittest
 /++
     Returns the absolute value of a duration.
   +/
-Duration abs(Duration duration) @safe pure nothrow @nogc
+export Duration abs(Duration duration) @safe pure nothrow @nogc
 {
     return Duration(_abs(duration._hnsecs));
 }
 
 /++ Ditto +/
-TickDuration abs(TickDuration duration) @safe pure nothrow @nogc
+export TickDuration abs(TickDuration duration) @safe pure nothrow @nogc
 {
     return TickDuration(_abs(duration.length));
 }

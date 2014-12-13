@@ -8,10 +8,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_iphlpapi.d)
  */
 module core.sys.windows.iphlpapi;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.ipexport, core.sys.windows.iprtrmib, core.sys.windows.iptypes;
 private import core.sys.windows.winbase, core.sys.windows.windef;
+
+export:
 
 extern (Windows) {
     DWORD AddIPAddress(IPAddr, IPMask, DWORD, PULONG, PULONG);

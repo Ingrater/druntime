@@ -4,6 +4,7 @@
  * $(LINK2 http://sourceware.org/git/?p=glibc.git;a=blob;f=elf/link.h, glibc elf/link.h)
  */
 module core.sys.linux.link;
+pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

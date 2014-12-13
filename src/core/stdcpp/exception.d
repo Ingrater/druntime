@@ -10,6 +10,7 @@
  */
 
 module core.stdcpp.exception;
+pragma(sharedlibrary, "std");
 
 version (CRuntime_DigitalMars)
 {

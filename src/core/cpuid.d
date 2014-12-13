@@ -50,11 +50,13 @@
  *
  * Copyright: Copyright Don Clugston 2007 - 2009.
  * License:   $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
- * Authors:   Don Clugston, Tomas Lindquist Olsen &lt;tomas@famolsen.dk&gt;
+ * Authors:   Don Clugston, Tomas Lindquist Olsen &lt;
+pragma(sharedlibrary, "std");tomas@famolsen.dk&gt;
  * Source:    $(DRUNTIMESRC core/_cpuid.d)
  */
 
 module core.cpuid;
+pragma(sharedlibrary, "std");
 
 @trusted:
 nothrow:
@@ -90,7 +92,7 @@ nothrow:
 public:
 
 /// Cache size and behaviour
-struct CacheInfo
+export struct CacheInfo
 {
     /// Size of the cache, in kilobytes, per CPU.
     /// For L1 unified (data + code) caches, this size is half the physical size.
@@ -112,9 +114,9 @@ struct CacheInfo
 public:
     /// $(RED Scheduled for deprecation. Please use $(D dataCaches) instead.)
     // Note: When we deprecate it, we simply make it private.
-    __gshared CacheInfo[5] datacache;
+    export __gshared CacheInfo[5] datacache;
 
-@property pure
+@property pure export
 {
     /// The data caches. If there are fewer than 5 physical caches levels,
     /// the remaining levels are set to size_t.max (== entire memory space)
@@ -308,11 +310,11 @@ public:
     ///
     /// Processor type (vendor-dependent).
     /// This should be visible ONLY for display purposes.
-    uint stepping, model, family;
+    export uint stepping, model, family;
     /// $(RED This field has been deprecated. Please use $(D cacheLevels) instead.)
-    uint numCacheLevels = 1;
+    export uint numCacheLevels = 1;
     /// The number of cache levels in the CPU.
-    @property uint cacheLevels() { return numCacheLevels; }
+    export @property uint cacheLevels() { return numCacheLevels; }
 private:
 
 struct CpuFeatures

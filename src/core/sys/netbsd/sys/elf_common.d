@@ -4,6 +4,7 @@
  * http://cvsweb.netbsd.org/bsdweb.cgi/~checkout~/src/sys/sys/exec_elf.h
  */
 module core.sys.netbsd.sys.elf_common;
+pragma(sharedlibrary, "std");
 
 version (NetBSD):
 extern (C):

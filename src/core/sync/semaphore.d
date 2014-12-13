@@ -13,6 +13,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.semaphore;
+pragma(sharedlibrary, "std");
 
 
 public import core.sync.exception;
@@ -66,7 +67,7 @@ else
  * with "notify" to indicate that control is not transferred to the waiter when
  * a notification is sent.
  */
-class Semaphore
+export class Semaphore
 {
     ////////////////////////////////////////////////////////////////////////////
     // Initialization

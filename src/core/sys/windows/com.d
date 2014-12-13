@@ -1,4 +1,5 @@
 module core.sys.windows.com;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 pragma(lib,"uuid");
@@ -59,7 +60,7 @@ public import core.sys.windows.uuid;
 extern (System)
 {
 
-class ComObject : IUnknown
+export class ComObject : IUnknown
 {
 extern (System):
     HRESULT QueryInterface(const(IID)* riid, void** ppv)

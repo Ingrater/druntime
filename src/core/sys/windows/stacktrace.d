@@ -10,6 +10,7 @@
  */
 
 module core.sys.windows.stacktrace;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.demangle;
@@ -32,7 +33,7 @@ private __gshared RtlCaptureStackBackTraceFunc RtlCaptureStackBackTrace;
 private __gshared immutable bool initialized;
 
 
-class StackTrace : Throwable.TraceInfo
+export class StackTrace : Throwable.TraceInfo
 {
 public:
     /**

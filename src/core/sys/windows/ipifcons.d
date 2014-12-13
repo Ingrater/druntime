@@ -8,9 +8,11 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ipifcons.d)
  */
 module core.sys.windows.ipifcons;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 // FIXME: check types of constants
+export:
 
 enum {
     MIB_IF_ADMIN_STATUS_UP = 1,

@@ -12,11 +12,14 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_Aint;
+pragma(sharedlibrary, "std");
 
 private import core.stdc.string;
 private import rt.util.hash;
 
 extern (C) void[] _adSort(void[] a, TypeInfo ti);
+
+export:
 
 // int[]
 

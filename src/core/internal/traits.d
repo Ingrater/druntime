@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC core/internal/_traits.d)
  */
 module core.internal.traits;
+pragma(sharedlibrary, "std");
 
 /// taken from std.typetuple.TypeTuple
 template TypeTuple(TList...)

@@ -12,11 +12,12 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 
+pragma(sharedlibrary, "std");
 
 /**
  *
  */
-void _d_invariant(Object o)
+export void _d_invariant(Object o)
 {   ClassInfo c;
 
     //printf("__d_invariant(%p)\n", o);

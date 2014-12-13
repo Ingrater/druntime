@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmsvc.d)
  */
 module core.sys.windows.lmsvc;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 // FIXME: Is this file deprecated? All of the functions are only for Win16.
@@ -19,6 +20,8 @@ version (Windows):
 private import core.sys.windows.lmcons, core.sys.windows.lmsname, core.sys.windows.windef;
 
 const TCHAR[] SERVICE_DOS_ENCRYPTION = "ENCRYPT";
+
+export:
 
 enum SERVICE_UNINSTALLED=0;
 enum SERVICE_INSTALL_PENDING=1;

@@ -8,11 +8,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_nddeapi.d)
  */
 module core.sys.windows.nddeapi;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.windef;
+
+export:
 
 // FIXME: check types and grouping of constants
 

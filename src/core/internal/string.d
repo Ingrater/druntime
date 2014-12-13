@@ -8,6 +8,7 @@
  */
 
 module core.internal.string;
+pragma(sharedlibrary, "std");
 
 pure:
 nothrow:
@@ -15,7 +16,7 @@ nothrow:
 
 alias UnsignedStringBuf = char[20];
 
-char[] unsignedToTempString(ulong value, return char[] buf, uint radix = 10) @safe
+export char[] unsignedToTempString(ulong value, return char[] buf, uint radix = 10) @safe
 {
     size_t i = buf.length;
     do

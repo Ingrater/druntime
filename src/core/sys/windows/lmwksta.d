@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmwksta.d)
  */
 module core.sys.windows.lmwksta;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 
@@ -14,6 +15,8 @@ import core.sys.windows.lmuseflg;
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
 pragma(lib, "Netapi32");
+
+export:
 
 enum {
     WKSTA_COMPUTERNAME_PARMNUM     = 1,

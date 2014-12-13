@@ -13,6 +13,7 @@
  */
 
 module core.stdc.complex;
+pragma(sharedlibrary, "std");
 
 extern (C):
 @trusted: // All of these operate on floating point values only.

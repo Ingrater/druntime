@@ -11,6 +11,7 @@
 // rather than in objfwd ?
 // # do we need the proxies that are defined in this file?
 module core.sys.windows.objidl;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.unknwn;

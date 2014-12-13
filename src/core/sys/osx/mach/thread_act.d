@@ -15,5 +15,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.osx.mach.thread_act;
+pragma(sharedlibrary, "std");
 
 public import core.sys.darwin.mach.thread_act;

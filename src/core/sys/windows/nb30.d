@@ -8,9 +8,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_nb30.d)
  */
 module core.sys.windows.nb30;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.windef;
+
+export:
 
 enum size_t
     NCBNAMSZ =  16,

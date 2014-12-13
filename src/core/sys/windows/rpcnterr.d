@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_rpcnterr.d)
  */
 module core.sys.windows.rpcnterr;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.winerror;

@@ -14,6 +14,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.posix.config;
+pragma(sharedlibrary, "std");
 
 public import core.stdc.config;
 

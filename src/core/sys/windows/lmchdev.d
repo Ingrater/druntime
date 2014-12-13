@@ -7,11 +7,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmchdev.d)
  */
 module core.sys.windows.lmchdev;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 // COMMENT: This file might be deprecated.
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 enum CHARDEVQ_NO_REQUESTS  = -1;
 enum CHARDEV_CLOSE         = 0;

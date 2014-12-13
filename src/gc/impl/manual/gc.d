@@ -24,6 +24,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module gc.impl.manual.gc;
+pragma(sharedlibrary, "std");
 
 import gc.config;
 import gc.gcinterface;

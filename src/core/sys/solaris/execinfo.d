@@ -6,6 +6,7 @@
  * Authors:   Martin Nowak
  */
 module core.sys.solaris.execinfo;
+pragma(sharedlibrary, "std");
 
 // The interface is exactly the same as linux, so copied from linux's execinfo.d
 

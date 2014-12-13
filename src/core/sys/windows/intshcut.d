@@ -8,11 +8,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_intshcut.d)
  */
 module core.sys.windows.intshcut;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.unknwn, core.sys.windows.windef;
+
+export:
 
 enum : SCODE {
     E_FLAGS                     = 0x80041000,

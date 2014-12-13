@@ -12,6 +12,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.obj;
+pragma(sharedlibrary, "std");
 
 extern (C):
 

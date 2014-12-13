@@ -14,6 +14,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.condition;
+pragma(sharedlibrary, "std");
 
 
 public import core.sync.exception;
@@ -53,7 +54,7 @@ else
  * indicate that control is not transferred to the waiter when a notification
  * is sent.
  */
-class Condition
+export class Condition
 {
     ////////////////////////////////////////////////////////////////////////////
     // Initialization

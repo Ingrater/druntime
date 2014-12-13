@@ -4,6 +4,7 @@
  * $(LINK2 http://src.illumos.org/source/xref/illumos-gate/usr/src/uts/common/sys/elftypes.h, illumos sys/elftypes.h)
  */
 module core.sys.solaris.sys.elftypes;
+pragma(sharedlibrary, "std");
 
 version (Solaris):
 extern (C):

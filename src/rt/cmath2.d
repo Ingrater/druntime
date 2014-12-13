@@ -12,6 +12,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.cmath2;
+pragma(sharedlibrary, "std");
 
 private import core.stdc.math;
 

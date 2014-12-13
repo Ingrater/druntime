@@ -2,6 +2,7 @@
 // Interface to <sys/utsname.h>
 
 module core.sys.posix.sys.utsname;
+pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

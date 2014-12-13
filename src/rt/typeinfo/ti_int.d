@@ -12,6 +12,9 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_int;
+pragma(sharedlibrary, "std");
+
+export:
 
 // int
 

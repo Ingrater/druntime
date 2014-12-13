@@ -5,6 +5,7 @@
  * Authors:   Kai Nacke
  */
 module core.sys.linux.sys.auxv;
+pragma(sharedlibrary, "std");
 
 import core.stdc.config;
 

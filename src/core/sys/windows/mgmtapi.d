@@ -8,10 +8,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_mgmtapi.d)
  */
 module core.sys.windows.mgmtapi;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.snmp;
 private import core.sys.windows.windef;
+
+export:
 
 enum {
     SNMP_MGMTAPI_TIMEOUT = 40,

@@ -11,6 +11,7 @@
  */
 
 module rt.memory;
+pragma(sharedlibrary, "std");
 
 
 import core.memory;

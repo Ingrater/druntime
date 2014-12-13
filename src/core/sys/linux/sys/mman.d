@@ -4,6 +4,7 @@
  * Authors: Martin Nowak
  */
 module core.sys.linux.sys.mman;
+pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

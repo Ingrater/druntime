@@ -11,6 +11,7 @@
  */
 
 module rt.deh_win64_posix;
+pragma(sharedlibrary, "std");
 
 version (Win64)
     version = Win64_Posix;
@@ -219,7 +220,7 @@ size_t __eh_find_caller(size_t regbp, size_t *pretaddr)
  * Throw a D object.
  */
 
-extern (C) void _d_throwc(Throwable h)
+extern (C) export void _d_throwc(Throwable h)
 {
     size_t regebp;
 

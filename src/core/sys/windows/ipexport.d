@@ -8,9 +8,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ipexport.d)
  */
 module core.sys.windows.ipexport;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.windef;
+
+export:
 
 enum size_t MAX_ADAPTER_NAME = 128;
 

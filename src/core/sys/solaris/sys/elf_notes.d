@@ -4,6 +4,7 @@
  * $(LINK2 http://src.illumos.org/source/xref/illumos-gate/usr/src/uts/common/sys/elf_notes.h, illumos sys/elf_notes.h)
  */
 module core.sys.solaris.sys.elf_notes;
+pragma(sharedlibrary, "std");
 
 version (Solaris):
 extern (C):

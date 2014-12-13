@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_subauth.d)
  */
 module core.sys.windows.subauth;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.ntdef, core.sys.windows.windef;

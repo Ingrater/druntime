@@ -6,6 +6,7 @@
  * Authors:   Walter Bright, David Friedman, Sean Kelly, Martin Nowak
  */
 module gc.pooltable;
+pragma(sharedlibrary, "std");
 
 static import cstdlib=core.stdc.stdlib;
 

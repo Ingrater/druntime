@@ -7,10 +7,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmmsg.d)
  */
 module core.sys.windows.lmmsg;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef, core.sys.windows.w32api;
+
+export:
 
 static assert (_WIN32_WINNT >= 0x501,
     "core.sys.windows.lmmsg is available only if version WindowsXP, Windows2003 "

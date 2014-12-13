@@ -14,6 +14,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.mutex;
+pragma(sharedlibrary, "std");
 
 
 public import core.sync.exception;
@@ -46,7 +47,7 @@ else
  * Implemented using `pthread_mutex` on Posix and `CRITICAL_SECTION`
  * on Windows.
  */
-class Mutex :
+export class Mutex :
     Object.Monitor
 {
     ////////////////////////////////////////////////////////////////////////////

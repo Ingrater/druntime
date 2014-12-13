@@ -12,6 +12,7 @@
  */
 
 module core.sys.windows.psapi;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;

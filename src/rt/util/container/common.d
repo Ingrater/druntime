@@ -6,6 +6,7 @@
  * Authors:   Martin Nowak
  */
 module rt.util.container.common;
+pragma(sharedlibrary, "std");
 
 import core.stdc.stdlib : malloc, realloc;
 public import core.stdc.stdlib : free;

@@ -4,6 +4,7 @@
  * $(LINK2 http://svnweb.freebsd.org/base/head/sys/sys/elf64.h?view=markup, sys/elf64.h)
  */
 module core.sys.freebsd.sys.elf64;
+pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C):

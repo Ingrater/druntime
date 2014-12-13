@@ -10,6 +10,7 @@
  */
 
 module rt.dmain2;
+pragma(sharedlibrary, "std");
 
 private
 {
@@ -27,6 +28,8 @@ version (Windows)
 {
     private import core.stdc.wchar_;
     private import core.sys.windows.windows;
+    
+    version(Shared) extern(C) void _d_dll_registry_unregister(void* hModule);
 
     pragma(lib, "shell32.lib"); // needed for CommandLineToArgvW
 }
@@ -99,28 +102,14 @@ version (Windows)
      *      opaque handle to the DLL if successfully loaded
      *      null if failure
      */
-    extern (C) void* rt_loadLibrary(const char* name)
+    export extern (C) void* rt_loadLibrary(const char* name)
     {
-        return initLibrary(.LoadLibraryA(name));
+        return .LoadLibraryA(name);
     }
 
-    extern (C) void* rt_loadLibraryW(const wchar_t* name)
+    export extern (C) void* rt_loadLibraryW(const wchar_t* name)
     {
-        return initLibrary(.LoadLibraryW(name));
-    }
-
-    void* initLibrary(void* mod)
-    {
-        // BUG: LoadLibrary() call calls rt_init(), which fails if proxy is not set!
-        // (What? LoadLibrary() is a Windows API call, it shouldn't call rt_init().)
-        if (mod is null)
-            return mod;
-        gcSetFn gcSet = cast(gcSetFn) GetProcAddress(mod, "gc_setProxy");
-        if (gcSet !is null)
-        {   // BUG: Set proxy, but too late
-            gcSet(gc_getProxy());
-        }
-        return mod;
+        return .LoadLibraryW(name);
     }
 
     /*************************************
@@ -131,11 +120,8 @@ version (Windows)
      *      1   succeeded
      *      0   some failure happened
      */
-    extern (C) int rt_unloadLibrary(void* ptr)
+    export extern (C) int rt_unloadLibrary(void* ptr)
     {
-        gcClrFn gcClr  = cast(gcClrFn) GetProcAddress(ptr, "gc_clrProxy");
-        if (gcClr !is null)
-            gcClr();
         return FreeLibrary(ptr) != 0;
     }
 }
@@ -308,7 +294,7 @@ extern (C) CArgs rt_cArgs() @nogc
  */
 private alias extern(C) int function(char[][] args) MainFunc;
 
-extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
+export extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
 {
     // Remember the original C argc/argv
     _cArgs.argc = argc;
@@ -527,6 +513,11 @@ extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
         {
             result = EXIT_FAILURE;
         }
+    }
+    
+    version(Windows) version(Shared)
+    {
+      _d_dll_registry_unregister(null); // hModule = null is the main executable.
     }
 
     return result;

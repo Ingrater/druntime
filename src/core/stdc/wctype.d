@@ -13,6 +13,7 @@
  */
 
 module core.stdc.wctype;
+pragma(sharedlibrary, "std");
 
 public  import core.stdc.wchar_; // for wint_t, WEOF
 

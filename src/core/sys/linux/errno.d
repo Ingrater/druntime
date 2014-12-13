@@ -4,6 +4,7 @@
  * $(LINK2 http://sourceware.org/git/?p=glibc.git;a=blob;f=stdlib/errno.h, glibc stdlib/errno.h)
  */
 module core.sys.linux.errno;
+pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

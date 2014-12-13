@@ -10,11 +10,12 @@
  * Source:    $(DRUNTIMESRC core/_exception.d)
  */
 module core.exception;
+pragma(sharedlibrary, "std");
 
 /**
  * Thrown on a range error.
  */
-class RangeError : Error
+export class RangeError : Error
 {
     @safe pure nothrow this( string file = __FILE__, size_t line = __LINE__, Throwable next = null )
     {
@@ -45,7 +46,7 @@ unittest
 /**
  * Thrown on an assert error.
  */
-class AssertError : Error
+export class AssertError : Error
 {
     @safe pure nothrow this( string file, size_t line )
     {
@@ -118,7 +119,7 @@ unittest
 /**
  * Thrown on finalize error.
  */
-class FinalizeError : Error
+export class FinalizeError : Error
 {
     TypeInfo   info;
 
@@ -187,7 +188,7 @@ unittest
  * $(RED Deprecated.
  *   This feature is not longer part of the language.)
  */
-deprecated class HiddenFuncError : Error
+deprecated export class HiddenFuncError : Error
 {
     @safe pure nothrow this( ClassInfo ci )
     {
@@ -211,7 +212,7 @@ deprecated unittest
 /**
  * Thrown on an out of memory error.
  */
-class OutOfMemoryError : Error
+export class OutOfMemoryError : Error
 {
     this(string file = __FILE__, size_t line = __LINE__, Throwable next = null ) @safe pure nothrow @nogc
     {
@@ -266,7 +267,7 @@ unittest
  * D GC is not re-entrant, so this can happen due to allocations done from
  * within finalizers called during a garbage collection cycle.
  */
-class InvalidMemoryOperationError : Error
+export class InvalidMemoryOperationError : Error
 {
     this(string file = __FILE__, size_t line = __LINE__, Throwable next = null ) @safe pure nothrow @nogc
     {
@@ -310,7 +311,7 @@ unittest
 /**
  * Thrown on a switch error.
  */
-class SwitchError : Error
+export class SwitchError : Error
 {
     @safe pure nothrow @nogc this( string file = __FILE__, size_t line = __LINE__, Throwable next = null )
     {
@@ -341,7 +342,7 @@ unittest
 /**
  * Thrown on a unicode conversion error.
  */
-class UnicodeException : Exception
+export class UnicodeException : Exception
 {
     size_t idx;
 
@@ -392,13 +393,13 @@ Gets/sets assert hander. null means the default handler is used.
 alias AssertHandler = void function(string file, size_t line, string msg) nothrow;
 
 /// ditto
-@property AssertHandler assertHandler() @trusted nothrow @nogc
+@property export AssertHandler assertHandler() @trusted nothrow @nogc
 {
     return _assertHandler;
 }
 
 /// ditto
-@property void assertHandler(AssertHandler handler) @trusted nothrow @nogc
+@property export void assertHandler(AssertHandler handler) @trusted nothrow @nogc
 {
     _assertHandler = handler;
 }
@@ -411,7 +412,7 @@ alias AssertHandler = void function(string file, size_t line, string msg) nothro
  * Params:
  *  h = The new assert handler.  Set to null to use the default handler.
  */
-deprecated void setAssertHandler( AssertHandler h ) @trusted nothrow @nogc
+deprecated export void setAssertHandler( AssertHandler h ) @trusted nothrow @nogc
 {
     assertHandler = h;
 }
@@ -431,7 +432,7 @@ deprecated void setAssertHandler( AssertHandler h ) @trusted nothrow @nogc
  *  file = The name of the file that signaled this error.
  *  line = The line number on which this error occurred.
  */
-extern (C) void onAssertError( string file = __FILE__, size_t line = __LINE__ ) nothrow
+extern (C) void onAssertError( string file = __FILE__, size_t line = __LINE__ ) nothrow export
 {
     if( _assertHandler is null )
         throw new AssertError( file, line );
@@ -449,7 +450,7 @@ extern (C) void onAssertError( string file = __FILE__, size_t line = __LINE__ ) 
  *  line = The line number on which this error occurred.
  *  msg  = An error message supplied by the user.
  */
-extern (C) void onAssertErrorMsg( string file, size_t line, string msg ) nothrow
+extern (C) void onAssertErrorMsg( string file, size_t line, string msg ) nothrow export
 {
     if( _assertHandler is null )
         throw new AssertError( msg, file, line );
@@ -467,7 +468,7 @@ extern (C) void onAssertErrorMsg( string file, size_t line, string msg ) nothrow
  *  line = The line number on which this error occurred.
  *  msg  = An error message supplied by the user.
  */
-extern (C) void onUnittestErrorMsg( string file, size_t line, string msg ) nothrow
+extern (C) void onUnittestErrorMsg( string file, size_t line, string msg ) nothrow export
 {
     onAssertErrorMsg( file, line, msg );
 }
@@ -487,7 +488,7 @@ extern (C) void onUnittestErrorMsg( string file, size_t line, string msg ) nothr
  * Throws:
  *  $(LREF RangeError).
  */
-extern (C) void onRangeError( string file = __FILE__, size_t line = __LINE__ ) @safe pure nothrow
+extern (C) void onRangeError( string file = __FILE__, size_t line = __LINE__ ) @safe pure nothrow export
 {
     throw new RangeError( file, line, null );
 }
@@ -505,7 +506,7 @@ extern (C) void onRangeError( string file = __FILE__, size_t line = __LINE__ ) @
  * Throws:
  *  $(LREF FinalizeError).
  */
-extern (C) void onFinalizeError( TypeInfo info, Throwable e, string file = __FILE__, size_t line = __LINE__ ) @trusted nothrow
+extern (C) void onFinalizeError( TypeInfo info, Throwable e, string file = __FILE__, size_t line = __LINE__ ) @trusted nothrow export
 {
     // This error is thrown during a garbage collection, so no allocation must occur while
     //  generating this object. So we use a preallocated instance
@@ -522,7 +523,7 @@ extern (C) void onFinalizeError( TypeInfo info, Throwable e, string file = __FIL
  * Throws:
  *  $(LREF HiddenFuncError).
  */
-deprecated extern (C) void onHiddenFuncError( Object o ) @safe pure nothrow
+deprecated extern (C) void onHiddenFuncError( Object o ) @safe pure nothrow export
 {
     throw new HiddenFuncError( typeid(o) );
 }
@@ -535,14 +536,14 @@ deprecated extern (C) void onHiddenFuncError( Object o ) @safe pure nothrow
  * Throws:
  *  $(LREF OutOfMemoryError).
  */
-extern (C) void onOutOfMemoryError(void* pretend_sideffect = null) @trusted pure nothrow @nogc /* dmd @@@BUG11461@@@ */
+extern (C) void onOutOfMemoryError(void* pretend_sideffect = null) @trusted pure nothrow @nogc export /* dmd @@@BUG11461@@@ */
 {
     // NOTE: Since an out of memory condition exists, no allocation must occur
     //       while generating this object.
     throw staticError!OutOfMemoryError();
 }
 
-extern (C) void onOutOfMemoryErrorNoGC() @trusted nothrow @nogc
+extern (C) void onOutOfMemoryErrorNoGC() @trusted nothrow @nogc export
 {
     // suppress stacktrace until they are @nogc
     throw staticError!OutOfMemoryError(false);
@@ -556,7 +557,7 @@ extern (C) void onOutOfMemoryErrorNoGC() @trusted nothrow @nogc
  * Throws:
  *  $(LREF InvalidMemoryOperationError).
  */
-extern (C) void onInvalidMemoryOperationError(void* pretend_sideffect = null) @trusted pure nothrow @nogc /* dmd @@@BUG11461@@@ */
+extern (C) void onInvalidMemoryOperationError(void* pretend_sideffect = null) @trusted pure nothrow @nogc export /* dmd @@@BUG11461@@@ */
 {
     // The same restriction applies as for onOutOfMemoryError. The GC is in an
     // undefined state, thus no allocation must occur while generating this object.
@@ -574,7 +575,7 @@ extern (C) void onInvalidMemoryOperationError(void* pretend_sideffect = null) @t
  * Throws:
  *  $(LREF SwitchError).
  */
-extern (C) void onSwitchError( string file = __FILE__, size_t line = __LINE__ ) @safe pure nothrow
+extern (C) void onSwitchError( string file = __FILE__, size_t line = __LINE__ ) @safe pure nothrow export
 {
     throw new SwitchError( file, line, null );
 }
@@ -598,7 +599,7 @@ void __switch_errorT()(string file = __FILE__, size_t line = __LINE__) @trusted
  * Throws:
  *  $(LREF UnicodeException).
  */
-extern (C) void onUnicodeError( string msg, size_t idx, string file = __FILE__, size_t line = __LINE__ ) @safe pure
+extern (C) void onUnicodeError( string msg, size_t idx, string file = __FILE__, size_t line = __LINE__ ) @safe pure export
 {
     throw new UnicodeException( msg, idx, file, line );
 }
@@ -621,7 +622,7 @@ extern (C) void onSwitchError(string file, size_t line);
  * the object code.
  */
 
-extern (C)
+extern (C) export
 {
     // Use ModuleInfo to get file name for "m" versions
 
@@ -683,7 +684,12 @@ extern (C)
 }
 
 // TLS storage shared for all errors, chaining might create circular reference
-private void[128] _store;
+private void[128] _storeData;
+private void[] _store() export @property
+{
+    pragma(inline, false);
+    return _storeData;
+}
 
 // only Errors for now as those are rarely chained
 private T staticError(T, Args...)(auto ref Args args)
@@ -692,7 +698,7 @@ private T staticError(T, Args...)(auto ref Args args)
     // pure hack, what we actually need is @noreturn and allow to call that in pure functions
     static T get()
     {
-        static assert(__traits(classInstanceSize, T) <= _store.length,
+        static assert(__traits(classInstanceSize, T) <= _storeData.length,
                       T.stringof ~ " is too large for staticError()");
 
         _store[0 .. __traits(classInstanceSize, T)] = typeid(T).initializer[];

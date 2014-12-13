@@ -4,6 +4,7 @@
  * $(LINK2 http://svnweb.freebsd.org/base/head/sys/sys/elf_common.h?view=markup, sys/elf_common.h)
  */
 module core.sys.freebsd.sys.elf_common;
+pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C):

@@ -7,6 +7,7 @@ Authors: Denis Shelomovskij
 Source: $(DRUNTIMESRC src/rt/util/_array.d)
 */
 module rt.util.array;
+pragma(sharedlibrary, "std");
 
 
 import core.internal.string;

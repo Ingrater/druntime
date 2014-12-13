@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_sqlext.d)
  */
 module core.sys.windows.sqlext;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 /* Conversion notes:

@@ -14,7 +14,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.config;
-
+pragma(sharedlibrary, "std");
 
 version( Posix )
 {

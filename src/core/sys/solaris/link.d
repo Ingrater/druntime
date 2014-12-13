@@ -4,6 +4,7 @@
  * $(LINK2 http://src.illumos.org/source/xref/illumos-gate/usr/src/head/link.h, illumos link.h)
  */
 module core.sys.solaris.link;
+pragma(sharedlibrary, "std");
 
 version (Solaris):
 extern (C):

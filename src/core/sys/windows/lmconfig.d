@@ -7,11 +7,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmconfig.d)
  */
 module core.sys.windows.lmconfig;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 // All functions in this file are deprecated!
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 deprecated {
     struct CONFIG_INFO_0 {

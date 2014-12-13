@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_sql.d)
  */
 module core.sys.windows.sql;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 public import core.sys.windows.sqltypes;

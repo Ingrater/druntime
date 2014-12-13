@@ -6,6 +6,7 @@
  * Authors:   Walter Bright, Sean Kelly, Martin Nowak
  */
 module rt.monitor_;
+pragma(sharedlibrary, "std");
 
 import core.atomic, core.stdc.stdlib, core.stdc.string;
 
@@ -16,7 +17,7 @@ import core.atomic, core.stdc.stdlib, core.stdc.string;
 //       may not be safe or desirable.  Thus, devt is only valid if impl is
 //       null.
 
-extern (C) void _d_setSameMutex(shared Object ownee, shared Object owner) nothrow
+extern (C) export void _d_setSameMutex(shared Object ownee, shared Object owner) nothrow
 in
 {
     assert(ownee.__monitor is null);
@@ -36,7 +37,7 @@ do
     ownee.__monitor = owner.__monitor;
 }
 
-extern (C) void _d_monitordelete(Object h, bool det)
+extern (C) export void _d_monitordelete(Object h, bool det)
 {
     auto m = getMonitor(h);
     if (m is null)
@@ -56,7 +57,7 @@ extern (C) void _d_monitordelete(Object h, bool det)
     }
 }
 
-extern (C) void _d_monitorenter(Object h)
+extern (C) export void _d_monitorenter(Object h)
 in
 {
     assert(h !is null, "Synchronized object must not be null.");
@@ -71,7 +72,7 @@ do
         i.lock();
 }
 
-extern (C) void _d_monitorexit(Object h)
+extern (C) export void _d_monitorexit(Object h)
 {
     auto m = cast(Monitor*) getMonitor(h);
     auto i = m.impl;
@@ -81,7 +82,7 @@ extern (C) void _d_monitorexit(Object h)
         i.unlock();
 }
 
-extern (C) void rt_attachDisposeEvent(Object h, DEvent e)
+extern (C) export void rt_attachDisposeEvent(Object h, DEvent e)
 {
     synchronized (h)
     {
@@ -110,7 +111,7 @@ extern (C) void rt_attachDisposeEvent(Object h, DEvent e)
     }
 }
 
-extern (C) void rt_detachDisposeEvent(Object h, DEvent e)
+extern (C) export void rt_detachDisposeEvent(Object h, DEvent e)
 {
     synchronized (h)
     {

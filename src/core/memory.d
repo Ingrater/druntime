@@ -61,7 +61,8 @@
  *   the $(D GC.BlkAttr.$(LREF NO_SCAN)) attribute.)
  *
  * $(LI Destructors will always be executed while other threads are
- *   active; that is, an implementation that stops the world must not
+ *   active;
+pragma(sharedlibrary, "std"); that is, an implementation that stops the world must not
  *   execute destructors until the world has been resumed.)
  *
  * $(LI A destructor of an object must not access object references
@@ -103,6 +104,7 @@
  */
 
 module core.memory;
+pragma(sharedlibrary, "std");
 
 
 private
@@ -150,12 +152,11 @@ private
     package extern (C) bool gc_inFinalizer();
 }
 
-
 /**
  * This struct encapsulates all garbage collection functionality for the D
  * programming language.
  */
-struct GC
+export struct GC
 {
     @disable this();
 

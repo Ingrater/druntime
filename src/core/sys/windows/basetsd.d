@@ -8,7 +8,10 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_basetsd.d)
  */
 module core.sys.windows.basetsd;
+pragma(sharedlibrary, "std");
 version (Windows):
+
+export:
 
 /*  This template is used in these modules to declare constant pointer types,
  *  in order to support both D 1.x and 2.x.

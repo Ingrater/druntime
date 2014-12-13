@@ -7,10 +7,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmat.d)
  */
 module core.sys.windows.lmat;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 enum JOB_RUN_PERIODICALLY = 1;
 enum JOB_EXEC_ERROR       = 2;

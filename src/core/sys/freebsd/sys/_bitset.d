@@ -4,6 +4,7 @@
  * Authors:   Martin Nowak
  */
 module core.sys.freebsd.sys._bitset;
+pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C) pure nothrow @nogc:

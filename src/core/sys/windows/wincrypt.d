@@ -8,6 +8,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_wincrypt.d)
  */
 module core.sys.windows.wincrypt;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "advapi32");
 

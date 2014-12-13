@@ -12,6 +12,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module gc.bits;
+pragma(sharedlibrary, "std");
 
 
 import core.bitop;

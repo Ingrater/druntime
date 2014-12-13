@@ -12,6 +12,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.linux.sys.time;
+pragma(sharedlibrary, "std");
 
 private import core.sys.linux.config;
 public import core.sys.posix.sys.time;  // timeval

@@ -8,11 +8,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_msacm.d)
  */
 module core.sys.windows.msacm;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.basetsd, core.sys.windows.mmsystem, core.sys.windows.windef;
+
+export:
 
 mixin DECLARE_HANDLE!("HACMDRIVERID");
 mixin DECLARE_HANDLE!("HACMDRIVER");

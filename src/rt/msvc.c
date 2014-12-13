@@ -10,6 +10,13 @@
 * Authors:   Rainer Schuetze
 */
 
+#include "msvc.h"
+#ifdef SHARED
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 struct _iobuf
 {
     char* _ptr;
@@ -36,23 +43,15 @@ int _set_output_format(int format); // VS2013-
 //extern const char* __acrt_iob_func;
 extern const char* _nullfunc = 0;
 
-#if defined _M_IX86
-    #define C_PREFIX "_"
-#elif defined _M_X64 || defined _M_ARM || defined _M_ARM64
-    #define C_PREFIX ""
-#else
-    #error Unsupported architecture
-#endif
-
-#define DECLARE_ALTERNATE_NAME(name, alternate_name)  \
-    __pragma(comment(linker, "/alternatename:" C_PREFIX #name "=" C_PREFIX #alternate_name))
-
 DECLARE_ALTERNATE_NAME (__acrt_iob_func, _nullfunc);
 DECLARE_ALTERNATE_NAME (__iob_func, _nullfunc);
 DECLARE_ALTERNATE_NAME (_set_output_format, _nullfunc);
 
+void _msvc_force_link();
+
 void init_msvc()
 {
+	_msvc_force_link(); // force link msvc_renames
     if (&__acrt_iob_func != (void*) &_nullfunc)
     {
         stdin = __acrt_iob_func(0);
@@ -73,22 +72,6 @@ void init_msvc()
     }
 }
 
-// VS2015+ provides C99-conformant (v)snprintf functions, so weakly
-// link to legacy _(v)snprintf (not C99-conformant!) for VS2013- only
-
-DECLARE_ALTERNATE_NAME (snprintf, _snprintf);
-DECLARE_ALTERNATE_NAME (vsnprintf, _vsnprintf);
-
-// VS2013- implements these functions as macros, VS2015+ provides symbols
-
-DECLARE_ALTERNATE_NAME (_fputc_nolock, _msvc_fputc_nolock);
-DECLARE_ALTERNATE_NAME (_fgetc_nolock, _msvc_fgetc_nolock);
-DECLARE_ALTERNATE_NAME (rewind, _msvc_rewind);
-DECLARE_ALTERNATE_NAME (clearerr, _msvc_clearerr);
-DECLARE_ALTERNATE_NAME (feof, _msvc_feof);
-DECLARE_ALTERNATE_NAME (ferror, _msvc_ferror);
-DECLARE_ALTERNATE_NAME (fileno, _msvc_fileno);
-
 // VS2013- helper functions
 int _filbuf(FILE* fp);
 int _flsbuf(int c, FILE* fp);
@@ -96,7 +79,7 @@ int _flsbuf(int c, FILE* fp);
 DECLARE_ALTERNATE_NAME (_filbuf, _nullfunc);
 DECLARE_ALTERNATE_NAME (_flsbuf, _nullfunc);
 
-int _msvc_fputc_nolock(int c, FILE* fp)
+EXPORT int _msvc_fputc_nolock(int c, FILE* fp)
 {
     fp->_cnt = fp->_cnt - 1;
     if (fp->_cnt >= 0)
@@ -109,7 +92,7 @@ int _msvc_fputc_nolock(int c, FILE* fp)
         return _flsbuf(c, fp);
 }
 
-int _msvc_fgetc_nolock(FILE* fp)
+EXPORT int _msvc_fgetc_nolock(FILE* fp)
 {
     fp->_cnt = fp->_cnt - 1;
     if (fp->_cnt >= 0)
@@ -131,58 +114,32 @@ enum
 
 int fseek(FILE* fp, long off, int whence);
 
-void _msvc_rewind(FILE* stream)
+EXPORT void _msvc_rewind(FILE* stream)
 {
     fseek(stream, 0L, SEEK_SET);
     stream->_flag = stream->_flag & ~_IOERR;
 }
 
-void _msvc_clearerr(FILE* stream)
+EXPORT void _msvc_clearerr(FILE* stream)
 {
     stream->_flag = stream->_flag & ~(_IOERR | _IOEOF);
 }
 
-int  _msvc_feof(FILE* stream)
+EXPORT int  _msvc_feof(FILE* stream)
 {
     return stream->_flag & _IOEOF;
 }
 
-int  _msvc_ferror(FILE* stream)
+EXPORT int  _msvc_ferror(FILE* stream)
 {
     return stream->_flag & _IOERR;
 }
 
-int  _msvc_fileno(FILE* stream)
+EXPORT int  _msvc_fileno(FILE* stream)
 {
     return stream->_file;
 }
 
 
 
-/**
- * 32-bit x86 MS VC runtimes lack most single-precision math functions.
- * Declare alternate implementations to be pulled in from msvc_math.c.
- */
-#if defined _M_IX86
 
-DECLARE_ALTERNATE_NAME (acosf,  _msvc_acosf);
-DECLARE_ALTERNATE_NAME (asinf,  _msvc_asinf);
-DECLARE_ALTERNATE_NAME (atanf,  _msvc_atanf);
-DECLARE_ALTERNATE_NAME (atan2f, _msvc_atan2f);
-DECLARE_ALTERNATE_NAME (cosf,   _msvc_cosf);
-DECLARE_ALTERNATE_NAME (sinf,   _msvc_sinf);
-DECLARE_ALTERNATE_NAME (tanf,   _msvc_tanf);
-DECLARE_ALTERNATE_NAME (coshf,  _msvc_coshf);
-DECLARE_ALTERNATE_NAME (sinhf,  _msvc_sinhf);
-DECLARE_ALTERNATE_NAME (tanhf,  _msvc_tanhf);
-DECLARE_ALTERNATE_NAME (expf,   _msvc_expf);
-DECLARE_ALTERNATE_NAME (logf,   _msvc_logf);
-DECLARE_ALTERNATE_NAME (log10f, _msvc_log10f);
-DECLARE_ALTERNATE_NAME (powf,   _msvc_powf);
-DECLARE_ALTERNATE_NAME (sqrtf,  _msvc_sqrtf);
-DECLARE_ALTERNATE_NAME (ceilf,  _msvc_ceilf);
-DECLARE_ALTERNATE_NAME (floorf, _msvc_floorf);
-DECLARE_ALTERNATE_NAME (fmodf,  _msvc_fmodf);
-DECLARE_ALTERNATE_NAME (modff,  _msvc_modff);
-
-#endif // _M_IX86

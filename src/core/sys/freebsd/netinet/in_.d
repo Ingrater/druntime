@@ -8,6 +8,7 @@
     Authors:   Jonathan M Davis
  +/
 module core.sys.freebsd.netinet.in_;
+pragma(sharedlibrary, "std");
 
 import core.sys.freebsd.sys.cdefs;
 

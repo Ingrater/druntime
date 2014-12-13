@@ -8,6 +8,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_aclui.d)
  */
 module core.sys.windows.aclui;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "aclui");
 
@@ -21,6 +22,7 @@ import core.sys.windows.accctrl, core.sys.windows.commctrl, core.sys.windows.obj
 private import core.sys.windows.basetyps, core.sys.windows.prsht, core.sys.windows.unknwn, core.sys.windows.windef,
   core.sys.windows.winuser;
 
+export:
 
 struct SI_OBJECT_INFO {
     DWORD     dwFlags;

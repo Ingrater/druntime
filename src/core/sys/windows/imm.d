@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_imm.d)
  */
 module core.sys.windows.imm;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
@@ -15,6 +16,8 @@ pragma(lib, "imm32");
 import core.sys.windows.windef, core.sys.windows.wingdi;
 import core.sys.windows.winuser; // for the MFS_xxx enums.
 private import core.sys.windows.w32api;
+
+export:
 
 enum WM_CONVERTREQUESTEX     = 0x108;
 enum WM_IME_STARTCOMPOSITION = 0x10D;

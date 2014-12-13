@@ -10,11 +10,14 @@
  */
 
 module core.sys.windows.dbghelp;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.windows;
 
 public import core.sys.windows.dbghelp_types;
+
+export:
 
 extern(System)
 {

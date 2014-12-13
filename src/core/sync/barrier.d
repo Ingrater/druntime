@@ -14,6 +14,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.barrier;
+pragma(sharedlibrary, "std");
 
 
 public import core.sync.exception;
@@ -38,7 +39,7 @@ version( Posix )
  * This class represents a barrier across which threads may only travel in
  * groups of a specific size.
  */
-class Barrier
+export class Barrier
 {
     ////////////////////////////////////////////////////////////////////////////
     // Initialization

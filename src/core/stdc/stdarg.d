@@ -11,6 +11,7 @@
  */
 
 module core.stdc.stdarg;
+pragma(sharedlibrary, "std");
 
 @system:
 //@nogc:    // Not yet, need to make TypeInfo's member functions @nogc first
@@ -144,12 +145,12 @@ else version (Windows) // Win64
     /***********************
      * End use of ap.
      */
-    void va_end(va_list ap)
+    export void va_end(va_list ap)
     {
     }
 
     ///
-    void va_copy(out va_list dest, va_list src)
+    export void va_copy(out va_list dest, va_list src)
     {
         dest = src;
     }

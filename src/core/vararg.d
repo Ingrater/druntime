@@ -15,5 +15,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.vararg;
+pragma(sharedlibrary, "std");
 
 public import core.stdc.stdarg;

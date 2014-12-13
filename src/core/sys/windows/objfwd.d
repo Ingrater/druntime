@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_objfwd.d)
  */
 module core.sys.windows.objfwd;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.objidl;

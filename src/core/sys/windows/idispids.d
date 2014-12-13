@@ -8,7 +8,10 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_idispids.d)
  */
 module core.sys.windows.idispids;
+pragma(sharedlibrary, "std");
 version (Windows):
+
+export:
 
 enum : int {
     DISPID_AMBIENT_OFFLINEIFNOTCONNECTED = -5501,

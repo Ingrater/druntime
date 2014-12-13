@@ -8,11 +8,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_nspapi.d)
  */
 module core.sys.windows.nspapi;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.basetyps, core.sys.windows.windef;
+
+export:
 
 // FIXME: check types of constants
 

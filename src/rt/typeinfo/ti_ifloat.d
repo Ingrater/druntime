@@ -12,8 +12,11 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_ifloat;
+pragma(sharedlibrary, "std");
 
 private import rt.typeinfo.ti_float;
+
+export:
 
 // ifloat
 

@@ -7,5 +7,6 @@
  * Authors: Martin Nowak
  */
 module core.sys.osx.sys.mman;
+pragma(sharedlibrary, "std");
 
 public import core.sys.darwin.sys.mman;

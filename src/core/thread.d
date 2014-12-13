@@ -10,6 +10,7 @@
  */
 
 module core.thread;
+pragma(sharedlibrary, "std");
 
 
 public import core.time; // for Duration
@@ -76,7 +77,7 @@ else version (Windows)
 /**
  * Base class for thread exceptions.
  */
-class ThreadException : Exception
+export class ThreadException : Exception
 {
     @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
     {
@@ -93,7 +94,7 @@ class ThreadException : Exception
 /**
 * Base class for thread errors to be used for function inside GC when allocations are unavailable.
 */
-class ThreadError : Error
+export class ThreadError : Error
 {
     @safe pure nothrow this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
     {
@@ -530,6 +531,7 @@ else
     //       places where version-specific code may be required.  This can be
     //       easily accomlished by searching for 'Windows' or 'Posix'.
     static assert( false, "Unknown threading implementation." );
+pragma(sharedlibrary, "std");
 }
 
 
@@ -546,7 +548,7 @@ else
  * A new thread may be created using either derivation or composition, as
  * in the following example.
  */
-class Thread
+export class Thread
 {
     ///////////////////////////////////////////////////////////////////////////
     // Initialization
@@ -3568,7 +3570,7 @@ private
         }
     }
 
-    static immutable size_t PAGESIZE;
+    export static immutable size_t PAGESIZE;
     version (Posix) static immutable size_t PTHREAD_STACK_MIN;
 }
 
@@ -4017,7 +4019,7 @@ private
  *
  * Authors: Based on a design by Mikola Lysenko.
  */
-class Fiber
+export class Fiber
 {
     ///////////////////////////////////////////////////////////////////////////
     // Initialization

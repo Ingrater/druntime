@@ -3,6 +3,7 @@
  *
  */
 module core.sys.netbsd.sys.elf;
+pragma(sharedlibrary, "std");
 
 version (NetBSD):
 

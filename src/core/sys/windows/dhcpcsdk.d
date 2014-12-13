@@ -8,9 +8,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_dhcpcsdk.d)
  */
 module core.sys.windows.dhcpcsdk;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.w32api, core.sys.windows.windef;
+
+export:
 
 /*static assert (_WIN32_WINNT >= 0x500,
 "core.sys.windows.dhcpcsdk is available only if version Windows2000, WindowsXP, Windows2003

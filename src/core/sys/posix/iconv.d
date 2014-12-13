@@ -20,6 +20,7 @@
 *******************************************************************************/
 
 module core.sys.posix.iconv;
+pragma(sharedlibrary, "std");
 
 enum
 {

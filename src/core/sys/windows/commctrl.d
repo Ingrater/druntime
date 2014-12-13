@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_commctrl.d)
  */
 module core.sys.windows.commctrl;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
@@ -17,6 +18,8 @@ private import core.sys.windows.winbase; // for SYSTEMTIME
 private import core.sys.windows.objfwd;  // for LPSTREAM
 
 import core.sys.windows.prsht;
+
+export:
 
 enum COMCTL32_VERSION = 6;
 

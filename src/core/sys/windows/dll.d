@@ -10,6 +10,7 @@
  */
 
 module core.sys.windows.dll;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.windows;
@@ -54,6 +55,12 @@ extern (C) // rt.minfo
 }
 
 private:
+
+version(CRuntime_Microsoft)
+{
+    extern(C) void _d_dll_registry_unregister(void* hModule); // rt.sections_win64
+}
+
 version (Win32)
 {
 struct dll_aux
@@ -312,7 +319,7 @@ public:
  *
  * _tls_index is initialized by the compiler to 0, so we can use this as a test.
  */
-bool dll_fixTLS( HINSTANCE hInstance, void* tlsstart, void* tlsend, void* tls_callbacks_a, int* tlsindex ) nothrow
+export bool dll_fixTLS( HINSTANCE hInstance, void* tlsstart, void* tlsend, void* tls_callbacks_a, int* tlsindex ) nothrow
 {
     version (Win64)
         return true;                // fixed
@@ -360,7 +367,7 @@ bool dll_fixTLS( HINSTANCE hInstance, void* tlsstart, void* tlsend, void* tls_ca
 
 // fixup TLS storage, initialize runtime and attach to threads
 // to be called from DllMain with reason DLL_PROCESS_ATTACH
-bool dll_process_attach( HINSTANCE hInstance, bool attach_threads,
+export bool dll_process_attach( HINSTANCE hInstance, bool attach_threads,
                          void* tlsstart, void* tlsend, void* tls_callbacks_a, int* tlsindex )
 {
     version (Win32)
@@ -391,7 +398,7 @@ bool dll_process_attach( HINSTANCE hInstance, bool attach_threads,
 }
 
 // same as above, but only usable if druntime is linked statically
-bool dll_process_attach( HINSTANCE hInstance, bool attach_threads = true )
+export bool dll_process_attach( HINSTANCE hInstance, bool attach_threads = true )
 {
     version (Win64)
     {
@@ -406,7 +413,7 @@ bool dll_process_attach( HINSTANCE hInstance, bool attach_threads = true )
 }
 
 // to be called from DllMain with reason DLL_PROCESS_DETACH
-void dll_process_detach( HINSTANCE hInstance, bool detach_threads = true )
+export void dll_process_detach( HINSTANCE hInstance, bool detach_threads = true )
 {
     // detach from all other threads
     if( detach_threads )
@@ -421,6 +428,10 @@ void dll_process_detach( HINSTANCE hInstance, bool detach_threads = true )
             }, null );
 
     Runtime.terminate();
+    version(CRuntime_Microsoft)
+    {
+        _d_dll_registry_unregister(hInstance);
+    }
 }
 
 /* Make sure that tlsCtorRun is itself a tls variable
@@ -430,7 +441,7 @@ static this() { tlsCtorRun = true; }
 static ~this() { tlsCtorRun = false; }
 
 // to be called from DllMain with reason DLL_THREAD_ATTACH
-bool dll_thread_attach( bool attach_thread = true, bool initTls = true )
+export bool dll_thread_attach( bool attach_thread = true, bool initTls = true )
 {
     // if the OS has not prepared TLS for us, don't attach to the thread
     //  (happened when running under x64 OS)
@@ -448,7 +459,7 @@ bool dll_thread_attach( bool attach_thread = true, bool initTls = true )
 }
 
 // to be called from DllMain with reason DLL_THREAD_DETACH
-bool dll_thread_detach( bool detach_thread = true, bool exitTls = true )
+export bool dll_thread_detach( bool detach_thread = true, bool exitTls = true )
 {
     // if the OS has not prepared TLS for us, we did not attach to the thread
     if( !GetTlsDataAddress( GetCurrentThreadId() ) )
@@ -463,17 +474,31 @@ bool dll_thread_detach( bool detach_thread = true, bool exitTls = true )
     return true;
 }
 
+
+/// If a dll is to be used by a C program or not. 
+/// Specifying yes will result in druntime automatically attaching to all threads created by the current process.
+/// If this behavior is unwanted but the D dll should still be used from a C program you have to manually attach all
+/// relevant threads.  
+export enum DllIsUsedFromC : bool
+{
+    no = false,
+    yes = true
+}
+
 /// A simple mixin to provide a $(D DllMain) which calls the necessary
 /// runtime initialization and termination functions automatically.
 ///
 /// Instead of writing a custom $(D DllMain), simply write:
 ///
 /// ---
-/// mixin SimpleDllMain;
+/// mixin SimpleDllMain!(DllIsUsedFromC.no);
 /// ---
-mixin template SimpleDllMain()
+mixin template SimpleDllMain(DllIsUsedFromC isUsedFromC = DllIsUsedFromC.yes)
 {
     import core.sys.windows.windows : HINSTANCE;
+    
+    pragma(mangle, "_d_dll_init")
+    private extern(C) void _d_dll_init(void* hModule);
 
     extern(Windows)
     bool DllMain(HINSTANCE hInstance, uint ulReason, void* reserved)
@@ -486,17 +511,24 @@ mixin template SimpleDllMain()
         {
             default: assert(0);
             case DLL_PROCESS_ATTACH:
-                return dll_process_attach( hInstance, true );
+                _d_dll_init(hInstance);
+                return dll_process_attach( hInstance, isUsedFromC );
 
             case DLL_PROCESS_DETACH:
-                dll_process_detach( hInstance, true );
+                dll_process_detach( hInstance, isUsedFromC );
                 return true;
 
             case DLL_THREAD_ATTACH:
-                return dll_thread_attach( true, true );
+                static if(isUsedFromC)
+                    return dll_thread_attach( true, true );
+                else
+                    return true;
 
             case DLL_THREAD_DETACH:
-                return dll_thread_detach( true, true );
+                static if(isUsedFromC)
+                    return dll_thread_detach( true, true );
+                else
+                    return true;
         }
     }
 }

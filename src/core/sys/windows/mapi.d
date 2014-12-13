@@ -8,9 +8,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_mapi.d)
  */
 module core.sys.windows.mapi;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.windef;
+
+export:
 
 // FIXME: check types and grouping of constants
 

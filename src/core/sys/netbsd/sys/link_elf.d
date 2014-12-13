@@ -4,6 +4,7 @@
  * http://cvsweb.netbsd.org/bsdweb.cgi/~checkout~/src/include/link_elf.h
  */
 module core.sys.netbsd.sys.link_elf;
+pragma(sharedlibrary, "std");
 
 version (NetBSD):
 extern (C):

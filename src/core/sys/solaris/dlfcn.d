@@ -5,6 +5,7 @@
  */
 
 module core.sys.solaris.dlfcn;
+pragma(sharedlibrary, "std");
 
 version (Solaris):
 extern (C):

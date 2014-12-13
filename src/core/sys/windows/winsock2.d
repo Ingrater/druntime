@@ -5,12 +5,14 @@
 
 
 module core.sys.windows.winsock2;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 pragma(lib, "ws2_32");
 
 extern(Windows):
 nothrow:
+export:
 
 alias SOCKET = size_t;
 alias socklen_t = int;

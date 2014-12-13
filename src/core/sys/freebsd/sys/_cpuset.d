@@ -4,6 +4,7 @@
  * Authors:   Martin Nowak
  */
 module core.sys.freebsd.sys._cpuset;
+pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C) pure nothrow @nogc:

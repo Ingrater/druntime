@@ -5,6 +5,7 @@
  */
 
 module core.sys.posix.sys.filio;
+pragma(sharedlibrary, "std");
 
 import core.sys.posix.sys.ioccom;
 

@@ -14,6 +14,7 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.attribute;
+pragma(sharedlibrary, "std");
 
 /**
  * Use this attribute to attach an Objective-C selector to a method.

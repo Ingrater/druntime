@@ -10,6 +10,7 @@
  */
 
 module core.sys.windows.threadaux;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.windows;

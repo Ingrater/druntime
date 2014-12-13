@@ -8,6 +8,7 @@
     Authors:   Jonathan M Davis
  +/
 module core.sys.darwin.netinet.in_;
+pragma(sharedlibrary, "std");
 
 import core.sys.darwin.sys.cdefs;
 

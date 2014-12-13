@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_httpext.d)
  */
 module core.sys.windows.httpext;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 /* Comment from MinGW
@@ -20,6 +21,8 @@ version (Windows):
 */
 
 private import core.sys.windows.windows;
+
+export:
 
 enum {
     HSE_VERSION_MAJOR               = 2,

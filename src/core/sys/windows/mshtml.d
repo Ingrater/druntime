@@ -7,10 +7,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_mshtml.d)
  */
 module core.sys.windows.mshtml;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.basetyps, core.sys.windows.oaidl, core.sys.windows.unknwn,
   core.sys.windows.windef, core.sys.windows.wtypes;
+  
+export:
 
 // These are used in this file, but not defined in MinGW.
 interface IHTMLStyleSheet {};

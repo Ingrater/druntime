@@ -7,12 +7,15 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmerrlog.d)
  */
 module core.sys.windows.lmerrlog;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 // COMMENT: This appears to be only for Win16. All functions are deprecated.
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 private import core.sys.windows.lmaudit; // for LPHLOG
+
+export:
 
 enum ERRLOG_BASE=3100;
 enum ERRLOG2_BASE=5700;

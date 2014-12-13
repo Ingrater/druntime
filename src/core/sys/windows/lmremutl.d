@@ -7,12 +7,15 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmremutl.d)
  */
 module core.sys.windows.lmremutl;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 
 // D Conversion Note: DESC_CHAR is defined as TCHAR.
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 enum SUPPORTS_REMOTE_ADMIN_PROTOCOL =  2;
 enum SUPPORTS_RPC                   =  4;

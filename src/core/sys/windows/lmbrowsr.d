@@ -7,9 +7,12 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmbrowsr.d)
  */
 module core.sys.windows.lmbrowsr;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 enum BROWSER_ROLE_PDC = 1;
 enum BROWSER_ROLE_BDC = 2;

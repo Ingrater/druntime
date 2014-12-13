@@ -8,11 +8,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_accctrl.d)
  */
 module core.sys.windows.accctrl;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.basetyps, core.sys.windows.w32api, core.sys.windows.winbase, core.sys.windows.windef;
+
+export:
 
 // FIXME: check types and grouping of constants
 // FIXME: check Windows version support

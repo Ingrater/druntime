@@ -6,6 +6,7 @@
  * Authors:   Martin Nowak
  */
 module rt.aaA;
+pragma(sharedlibrary, "std");
 
 /// AA version for debuggers, bump whenever changing the layout
 extern (C) immutable int _aaVersion = 1;
@@ -347,7 +348,7 @@ private T max(T)(T a, T b) pure nothrow @nogc
 //------------------------------------------------------------------------------
 
 /// Determine number of entries in associative array.
-extern (C) size_t _aaLen(in AA aa) pure nothrow @nogc
+extern (C) export size_t _aaLen(in AA aa) pure nothrow @nogc
 {
     return aa ? aa.length : 0;
 }
@@ -365,7 +366,7 @@ extern (C) size_t _aaLen(in AA aa) pure nothrow @nogc
  *      If key was not in the aa, a mutable pointer to newly inserted value which
  *      is set to all zeros
  */
-extern (C) void* _aaGetY(AA* aa, const TypeInfo_AssociativeArray ti, in size_t valsz,
+extern (C) export void* _aaGetY(AA* aa, const TypeInfo_AssociativeArray ti, in size_t valsz,
     in void* pkey)
 {
     // lazily alloc implementation
@@ -416,7 +417,7 @@ extern (C) void* _aaGetY(AA* aa, const TypeInfo_AssociativeArray ti, in size_t v
  * Returns:
  *      pointer to value if present, null otherwise
  */
-extern (C) inout(void)* _aaGetRvalueX(inout AA aa, in TypeInfo keyti, in size_t valsz,
+extern (C) export inout(void)* _aaGetRvalueX(inout AA aa, in TypeInfo keyti, in size_t valsz,
     in void* pkey)
 {
     return _aaInX(aa, keyti, pkey);
@@ -432,7 +433,7 @@ extern (C) inout(void)* _aaGetRvalueX(inout AA aa, in TypeInfo keyti, in size_t 
  * Returns:
  *      pointer to value if present, null otherwise
  */
-extern (C) inout(void)* _aaInX(inout AA aa, in TypeInfo keyti, in void* pkey)
+extern (C) export inout(void)* _aaInX(inout AA aa, in TypeInfo keyti, in void* pkey)
 {
     if (aa.empty)
         return null;
@@ -444,7 +445,7 @@ extern (C) inout(void)* _aaInX(inout AA aa, in TypeInfo keyti, in void* pkey)
 }
 
 /// Delete entry in AA, return true if it was present
-extern (C) bool _aaDelX(AA aa, in TypeInfo keyti, in void* pkey)
+extern (C) export bool _aaDelX(AA aa, in TypeInfo keyti, in void* pkey)
 {
     if (aa.empty)
         return false;
@@ -466,7 +467,7 @@ extern (C) bool _aaDelX(AA aa, in TypeInfo keyti, in void* pkey)
 }
 
 /// Remove all elements from AA.
-extern (C) void _aaClear(AA aa) pure nothrow
+extern (C) export void _aaClear(AA aa) pure nothrow
 {
     if (!aa.empty)
     {
@@ -475,7 +476,7 @@ extern (C) void _aaClear(AA aa) pure nothrow
 }
 
 /// Rehash AA
-extern (C) void* _aaRehash(AA* paa, in TypeInfo keyti) pure nothrow
+extern (C) export void* _aaRehash(AA* paa, in TypeInfo keyti) pure nothrow
 {
     if (!paa.empty)
         paa.resize(nextpow2(INIT_DEN * paa.length / INIT_NUM));
@@ -483,7 +484,7 @@ extern (C) void* _aaRehash(AA* paa, in TypeInfo keyti) pure nothrow
 }
 
 /// Return a GC allocated array of all values
-extern (C) inout(void[]) _aaValues(inout AA aa, in size_t keysz, in size_t valsz,
+extern (C) export inout(void[]) _aaValues(inout AA aa, in size_t keysz, in size_t valsz,
     const TypeInfo tiValueArray) pure nothrow
 {
     if (aa.empty)
@@ -507,7 +508,7 @@ extern (C) inout(void[]) _aaValues(inout AA aa, in size_t keysz, in size_t valsz
 }
 
 /// Return a GC allocated array of all keys
-extern (C) inout(void[]) _aaKeys(inout AA aa, in size_t keysz, const TypeInfo tiKeyArray) pure nothrow
+extern (C) export inout(void[]) _aaKeys(inout AA aa, in size_t keysz, const TypeInfo tiKeyArray) pure nothrow
 {
     if (aa.empty)
         return null;
@@ -533,7 +534,7 @@ extern (D) alias dg_t = int delegate(void*);
 extern (D) alias dg2_t = int delegate(void*, void*);
 
 /// foreach opApply over all values
-extern (C) int _aaApply(AA aa, in size_t keysz, dg_t dg)
+extern (C) export int _aaApply(AA aa, in size_t keysz, dg_t dg)
 {
     if (aa.empty)
         return 0;
@@ -550,7 +551,7 @@ extern (C) int _aaApply(AA aa, in size_t keysz, dg_t dg)
 }
 
 /// foreach opApply over all key/value pairs
-extern (C) int _aaApply2(AA aa, in size_t keysz, dg2_t dg)
+extern (C) export int _aaApply2(AA aa, in size_t keysz, dg2_t dg)
 {
     if (aa.empty)
         return 0;
@@ -567,7 +568,7 @@ extern (C) int _aaApply2(AA aa, in size_t keysz, dg2_t dg)
 }
 
 /// Construct an associative array of type ti from keys and value
-extern (C) Impl* _d_assocarrayliteralTX(const TypeInfo_AssociativeArray ti, void[] keys,
+extern (C) export Impl* _d_assocarrayliteralTX(const TypeInfo_AssociativeArray ti, void[] keys,
     void[] vals)
 {
     assert(keys.length == vals.length);
@@ -615,7 +616,7 @@ extern (C) Impl* _d_assocarrayliteralTX(const TypeInfo_AssociativeArray ti, void
 }
 
 /// compares 2 AAs for equality
-extern (C) int _aaEqual(in TypeInfo tiRaw, in AA aa1, in AA aa2)
+extern (C) export int _aaEqual(in TypeInfo tiRaw, in AA aa1, in AA aa2)
 {
     if (aa1.impl is aa2.impl)
         return true;
@@ -645,7 +646,7 @@ extern (C) int _aaEqual(in TypeInfo tiRaw, in AA aa1, in AA aa2)
 }
 
 /// compute a hash
-extern (C) hash_t _aaGetHash(in AA* aa, in TypeInfo tiRaw) nothrow
+extern (C) export hash_t _aaGetHash(in AA* aa, in TypeInfo tiRaw) nothrow
 {
     if (aa.empty)
         return 0;
@@ -672,14 +673,14 @@ extern (C) hash_t _aaGetHash(in AA* aa, in TypeInfo tiRaw) nothrow
 /**
  * _aaRange implements a ForwardRange
  */
-struct Range
+export struct Range
 {
     Impl* impl;
     size_t idx;
     alias impl this;
 }
 
-extern (C) pure nothrow @nogc @safe
+extern (C) pure nothrow @nogc @safe export
 {
     Range _aaRange(AA aa)
     {

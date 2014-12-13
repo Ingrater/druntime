@@ -5,6 +5,7 @@
  */
 
 module core.sys.posix.sys.ttycom;
+pragma(sharedlibrary, "std");
 
 import core.sys.posix.sys.ioccom;
 import core.sys.posix.termios;

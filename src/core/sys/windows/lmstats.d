@@ -7,10 +7,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmstats.d)
  */
 module core.sys.windows.lmstats;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 enum ULONG
     STATSOPT_CLR   = 1,

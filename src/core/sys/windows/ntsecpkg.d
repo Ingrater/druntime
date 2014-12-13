@@ -8,6 +8,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ntsecpkg.d)
  */
 module core.sys.windows.ntsecpkg;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.windef, core.sys.windows.ntsecapi, core.sys.windows.security, core.sys.windows.ntdef, core.sys.windows.sspi;

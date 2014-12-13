@@ -7,6 +7,7 @@
  * Standards: The Open Group Base Specifications Issue 6, IEEE Std 1003.1, 2004 Edition
  */
 module core.sys.posix.sys.select;
+pragma(sharedlibrary, "std");
 
 private import core.sys.posix.config;
 public import core.stdc.time;           // for timespec
@@ -41,6 +42,7 @@ NOTE: This module requires timeval from core.sys.posix.sys.time, but timeval
 fd_set
 
 void FD_CLR(int fd, fd_set* fdset);
+pragma(sharedlibrary, "std");
 int FD_ISSET(int fd, const(fd_set)* fdset);
 void FD_SET(int fd, fd_set* fdset);
 void FD_ZERO(fd_set* fdset);

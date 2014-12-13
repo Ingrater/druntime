@@ -13,6 +13,7 @@
  */
 
 module core.stdc.string;
+pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

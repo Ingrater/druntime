@@ -10,6 +10,7 @@
  */
 
 module rt.deh_win32;
+pragma(sharedlibrary, "std");
 
 version (Win32):
 
@@ -411,7 +412,7 @@ EXCEPTION_RECORD *skipCollateralExceptions(EXCEPTION_RECORD *n)
  * Input:
  *      EAX     the handler table for the frame
  */
-extern(C)
+export extern(C)
 EXCEPTION_DISPOSITION _d_framehandler(
             EXCEPTION_RECORD *exceptionRecord,
             DEstablisherFrame *frame,
@@ -637,7 +638,7 @@ private void throwImpl(Throwable h)
  * into a call to:
  *      _d_throwc(h);
  */
-extern(C) void _d_throwc(Throwable h)
+export extern(C) void _d_throwc(Throwable h)
 {
     // set up a stack frame for trace unwinding
     version (AsmX86)
@@ -932,7 +933,7 @@ int _d_global_unwind(DEstablisherFrame *pFrame, EXCEPTION_RECORD *eRecord)
  * This is used for 'goto' or 'return', to run any finally blocks
  * which were skipped.
  */
-extern(C)
+export extern(C)
 void _d_local_unwind2()
 {
     asm

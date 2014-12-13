@@ -8,12 +8,15 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ddeml.d)
  */
 module core.sys.windows.ddeml;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
 pragma(lib, "user32");
 
 private import core.sys.windows.basetsd, core.sys.windows.windef, core.sys.windows.winnt;
+
+export:
 
 enum : int {
     CP_WINANSI    = 1004,

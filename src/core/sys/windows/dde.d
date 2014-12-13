@@ -8,10 +8,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_dde.d)
  */
 module core.sys.windows.dde;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "user32");
 
 private import core.sys.windows.windef;
+
+export:
 
 enum : uint {
     WM_DDE_FIRST     = 0x03E0,

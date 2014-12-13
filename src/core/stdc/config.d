@@ -11,6 +11,7 @@
  */
 
 module core.stdc.config;
+pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;
@@ -28,7 +29,7 @@ nothrow:
 
 version( Windows )
 {
-    struct __c_long
+    export struct __c_long
     {
       pure nothrow @nogc @safe:
         this(int x) { lng = x; }
@@ -36,7 +37,7 @@ version( Windows )
         alias lng this;
     }
 
-    struct __c_ulong
+    export struct __c_ulong
     {
       pure nothrow @nogc @safe:
         this(uint x) { lng = x; }
@@ -103,7 +104,7 @@ version( CRuntime_Microsoft )
      * to generate the correct name mangling and correct function call/return
      * ABI conformance.
      */
-    struct __c_long_double
+    export struct __c_long_double
     {
       pure nothrow @nogc @safe:
         this(double d) { ld = d; }

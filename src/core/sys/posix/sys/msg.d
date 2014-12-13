@@ -5,6 +5,7 @@
 */
 
 module core.sys.posix.sys.msg;
+pragma(sharedlibrary, "std");
 
 import core.sys.posix.sys.ipc;
 public import core.sys.posix.sys.types;

@@ -12,6 +12,7 @@
  */
 
 module rt.tracegc;
+pragma(sharedlibrary, "std");
 
 //version = tracegc;
 

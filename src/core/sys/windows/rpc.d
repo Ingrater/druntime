@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_rpc.d)
  */
 module core.sys.windows.rpc;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 /* Moved to rpcdecp (duplicate definition).

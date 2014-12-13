@@ -12,9 +12,12 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_Along;
+pragma(sharedlibrary, "std");
 
 private import core.stdc.string;
 private import rt.util.hash;
+
+export:
 
 // long[]
 

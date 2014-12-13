@@ -9,6 +9,7 @@
  */
 
 module rt.sections;
+pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;
@@ -49,6 +50,12 @@ import rt.deh, rt.minfo;
 
 template isSectionGroup(T)
 {
+    static assert(is(typeof(T.init.modules) == immutable(ModuleInfo*)[]));
+    static assert(is(typeof(T.init.moduleGroup) == ModuleGroup));
+    static assert((!is(typeof(T.init.ehTables)) || is(typeof(T.init.ehTables) == immutable(FuncTable)[])));
+    static assert(is(typeof(T.init.gcRanges) == void[][]));
+    static assert(is(typeof({ foreach (ref T; T) {}})));
+    static assert(is(typeof({ foreach_reverse (ref T; T) {}})));
     enum isSectionGroup =
         is(typeof(T.init.modules) == immutable(ModuleInfo*)[]) &&
         is(typeof(T.init.moduleGroup) == ModuleGroup) &&
@@ -65,7 +72,8 @@ static assert(is(typeof(&initTLSRanges) RT == return) &&
               is(typeof(&finiTLSRanges) == void function(RT) nothrow @nogc) &&
               is(typeof(&scanTLSRanges) == void function(RT, scope void delegate(void*, void*) nothrow) nothrow));
 
-version (Shared)
+version (Windows) {}
+else version (Shared)
 {
     static assert(is(typeof(&pinLoadedLibraries) == void* function() nothrow @nogc));
     static assert(is(typeof(&unpinLoadedLibraries) == void function(void*) nothrow @nogc));

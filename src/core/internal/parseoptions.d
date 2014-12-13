@@ -8,6 +8,7 @@
 */
 
 module core.internal.parseoptions;
+pragma(sharedlibrary, "std");
 
 import core.stdc.stdlib;
 import core.stdc.stdio;

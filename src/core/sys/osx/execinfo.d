@@ -9,5 +9,6 @@
  * Authors:   Martin Nowak
  */
 module core.sys.osx.execinfo;
+pragma(sharedlibrary, "std");
 
 public import core.sys.darwin.execinfo;

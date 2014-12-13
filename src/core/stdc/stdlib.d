@@ -13,6 +13,7 @@
  */
 
 module core.stdc.stdlib;
+pragma(sharedlibrary, "std");
 
 private import core.stdc.config;
 public import core.stdc.stddef; // for wchar_t
@@ -108,7 +109,7 @@ version (CRuntime_Microsoft)
 {
     // strtold exists starting from VS2013, so we give it D linkage to avoid link errors
     ///
-    extern (D) real strtold(scope inout(char)* nptr, inout(char)** endptr)
+    extern (D) export real strtold(scope inout(char)* nptr, inout(char)** endptr)
     {   // Fake it 'till we make it
         return strtod(nptr, endptr);
     }

@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_winhttp.d)
  */
 module core.sys.windows.winhttp;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "winhttp");
 // FIXME: Grouping of constants. Windows SDK doesn't make this entirely clear

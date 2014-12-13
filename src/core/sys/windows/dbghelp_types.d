@@ -10,6 +10,7 @@
  */
 
 module core.sys.windows.dbghelp_types;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
@@ -17,6 +18,8 @@ version (ANSI) {} else version = Unicode;
 import core.sys.windows.windows;
 
 public import core.sys.windows.winnt : TCHAR;
+
+export:
 
 /*
 enum ADDRESS_MODE : DWORD

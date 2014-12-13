@@ -8,6 +8,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_schannel.d)
  */
 module core.sys.windows.schannel;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.wincrypt;

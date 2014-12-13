@@ -9,6 +9,7 @@
  */
 
 module rt.sections_solaris;
+pragma(sharedlibrary, "std");
 
 version (Solaris):
 

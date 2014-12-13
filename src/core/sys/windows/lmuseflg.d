@@ -7,6 +7,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmuseflg.d)
  */
 module core.sys.windows.lmuseflg;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 enum : uint {

@@ -7,10 +7,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmserver.d)
  */
 module core.sys.windows.lmserver;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.winsvc;
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 struct SERVER_INFO_100 {
     DWORD  sv100_platform_id;

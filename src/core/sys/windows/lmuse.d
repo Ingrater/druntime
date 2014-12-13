@@ -7,11 +7,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmuse.d)
  */
 module core.sys.windows.lmuse;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 
 import core.sys.windows.lmuseflg;
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 enum {
     USE_LOCAL_PARMNUM = 1,

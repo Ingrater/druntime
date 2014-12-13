@@ -13,6 +13,7 @@
  */
 
 module etc.linux.memoryerror;
+pragma(sharedlibrary, "std");
 
 version (CRuntime_Glibc)
 {

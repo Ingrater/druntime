@@ -1,4 +1,5 @@
 module core.sys.linux.fcntl;
+pragma(sharedlibrary, "std");
 
 public import core.sys.posix.fcntl;
 

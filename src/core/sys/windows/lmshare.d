@@ -7,11 +7,14 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmshare.d)
  */
 module core.sys.windows.lmshare;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 
 import core.sys.windows.lmcons;
 private import core.sys.windows.w32api, core.sys.windows.windef;
+
+export:
 
 
 enum SHARE_NETNAME_PARMNUM      = 1;

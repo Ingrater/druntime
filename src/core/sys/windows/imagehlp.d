@@ -8,6 +8,7 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_imagehlp.d)
  */
 module core.sys.windows.imagehlp;
+pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;
@@ -19,6 +20,8 @@ version (ANSI) {} else version = Unicode;
 */
 
 private import core.sys.windows.winbase, core.sys.windows.windef;
+
+export:
 
 // FIXME: check types of constants
 

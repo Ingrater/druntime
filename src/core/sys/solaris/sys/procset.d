@@ -13,6 +13,7 @@
  *  http://www.boost.org/LICENSE_1_0.txt
  */
 module core.sys.solaris.sys.procset;
+pragma(sharedlibrary, "std");
 
 version (Solaris):
 nothrow:

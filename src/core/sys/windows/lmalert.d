@@ -7,10 +7,13 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmalert.d)
  */
 module core.sys.windows.lmalert;
+pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
+
+export:
 
 const TCHAR[]
     ALERTER_MAILSLOT     = `\\.\MAILSLOT\Alerter`,
