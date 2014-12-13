@@ -11,6 +11,8 @@
  */
 module core.exception;
 
+export:
+
 /**
  * Thrown on a range error.
  */

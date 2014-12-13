@@ -44,6 +44,8 @@ private
     }
 }
 
+export:
+
 private immutable bool callStructDtorsDuringGC;
 
 extern (C) void lifetime_init()

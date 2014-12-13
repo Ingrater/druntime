@@ -18,17 +18,43 @@ version(CRuntime_Microsoft):
 debug(PRINTF) import core.stdc.stdio;
 import core.stdc.stdlib : malloc, free;
 import rt.deh, rt.minfo;
+import rt.util.container.array;
+import core.memory;
 
 struct SectionGroup
 {
     static int opApply(scope int delegate(ref SectionGroup) dg)
     {
-        return dg(_sections);
+        version(Shared)
+        {
+            foreach (ref section; _sections)
+            {
+                if (auto res = dg(section))
+                    return res;
+            }
+            return 0;
+        }
+        else
+        {
+            return dg(_sections);
+        }
     }
 
     static int opApplyReverse(scope int delegate(ref SectionGroup) dg)
     {
-        return dg(_sections);
+        version(Shared)
+        {
+            foreach_reverse (ref section; _sections)
+            {
+                if (auto res = dg(section))
+                    return res;
+            }
+            return 0;
+        }
+        else
+        {
+            return dg(_sections);
+        }
     }
 
     @property immutable(ModuleInfo*)[] modules() const
@@ -41,12 +67,18 @@ struct SectionGroup
         return _moduleGroup;
     }
 
-    version(Win64)
     @property immutable(FuncTable)[] ehTables() const
     {
-        auto pbeg = cast(immutable(FuncTable)*)&_deh_beg;
-        auto pend = cast(immutable(FuncTable)*)&_deh_end;
-        return pbeg[0 .. pend - pbeg];
+        version(Shared)
+        {
+            return _ehTables;
+        }
+        else
+        {
+            auto pbeg = cast(immutable(FuncTable)*)&_deh_beg;
+            auto pend = cast(immutable(FuncTable)*)&_deh_end;
+            return pbeg[0 .. pend - pbeg];
+        }
     }
 
     @property inout(void[])[] gcRanges() inout
@@ -57,49 +89,127 @@ struct SectionGroup
 private:
     ModuleGroup _moduleGroup;
     void[][1] _gcRanges;
+    
+    version(Shared)
+    {
+        void* _hModule;
+        extern(C) void[] function() _getTlsRange;
+        immutable(FuncTable)[] _ehTables;
+    }
 }
 
-void initSections()
-{
-    _sections._moduleGroup = ModuleGroup(getModuleInfos());
+alias ScanDG = void delegate(void* pbeg, void* pend) nothrow;
 
     // the ".data" image section includes both object file sections ".data" and ".bss"
     _sections._gcRanges[0] = findImageSection(".data");
     debug(PRINTF) printf("found .data section: [%p,+%llx]\n", _sections._gcRanges[0].ptr,
                          cast(ulong)_sections._gcRanges[0].length);
 }
+version (Shared)
+{    
+    /**
+     * Per thread per Dll Tls Data
+     **/
+    struct ThreadDllTlsData
+    {
+        void* _hModule;
+        void[] _tlsRange;
+    }
+    Array!(ThreadDllTlsData) _tlsRanges;
+    
+    /****
+    * Boolean flag set to true while the runtime is initialized.
+    */
+    __gshared bool _isRuntimeInitialized;
+    
+    void initSections()
+    {
+        _isRuntimeInitialized = true;
+    }
+    
+    void finiSections()
+    {
+        foreach(ref section; _sections)
+        {
+            .free(cast(void*)section.modules.ptr);
+        }
+        _sections.reset();
+        _isRuntimeInitialized = false;
+    }
+    
+    Array!(ThreadDllTlsData)* initTLSRanges()
+    {
+        auto pbeg = cast(void*)&_tls_start;
+        auto pend = cast(void*)&_tls_end;
+        _tlsRanges.insertBack(ThreadDllTlsData(null, pbeg[0 .. pend - pbeg]));       
 
-void finiSections()
-{
-    .free(cast(void*)_sections.modules.ptr);
+        // iterate over all already loaded dlls and insert their TLS sections as well.
+        // The executable is treated as a dll.
+        foreach(ref section; _sections)
+        {
+            if(section._getTlsRange !is null)
+                _tlsRanges.insertBack(ThreadDllTlsData(section._hModule, section._getTlsRange()));
+        }
+        
+        return &_tlsRanges;
+    }
+
+    void finiTLSRanges(Array!(ThreadDllTlsData)* tlsRanges)
+    {
+        _tlsRanges.reset();
+    }
+    
+    void scanTLSRanges(Array!(ThreadDllTlsData)* tlsRanges, scope ScanDG dg) nothrow
+    {
+        foreach (ref r; *tlsRanges)
+            dg(r._tlsRange.ptr, r._tlsRange.ptr + r._tlsRange.length);
+    }
+
+    private __gshared Array!(SectionGroup) _sections;
 }
-
-void[] initTLSRanges()
+else
 {
-    auto pbeg = cast(void*)&_tls_start;
-    auto pend = cast(void*)&_tls_end;
-    return pbeg[0 .. pend - pbeg];
-}
+    void initSections()
+    {
+        _sections._moduleGroup = ModuleGroup(getModuleInfos(cast(void*)&_minfo_beg, cast(void*)&_minfo_end));
 
-void finiTLSRanges(void[] rng)
-{
-}
+        auto pbeg = cast(void*)&__xc_a;
+        auto pend = cast(void*)&_deh_beg;
+        _sections._gcRanges[0] = pbeg[0 .. pend - pbeg];
+    }
 
-void scanTLSRanges(void[] rng, scope void delegate(void* pbeg, void* pend) nothrow dg) nothrow
-{
-    dg(rng.ptr, rng.ptr + rng.length);
+    void finiSections()
+    {
+        .free(cast(void*)_sections.modules.ptr);
+    }
+
+    void[] initTLSRanges()
+    {
+        auto pbeg = cast(void*)&_tls_start;
+        auto pend = cast(void*)&_tls_end;
+        return pbeg[0 .. pend - pbeg];
+    }
+
+    void finiTLSRanges(void[] rng)
+    {
+    }
+
+    void scanTLSRanges(void[] rng, scope ScanDG dg) nothrow
+    {
+        dg(rng.ptr, rng.ptr + rng.length);
+    }
+    
+    private __gshared SectionGroup _sections;
 }
 
 private:
-__gshared SectionGroup _sections;
-
 extern(C)
 {
     extern __gshared void* _minfo_beg;
     extern __gshared void* _minfo_end;
 }
 
-immutable(ModuleInfo*)[] getModuleInfos()
+immutable(ModuleInfo*)[] getModuleInfos(void* pminfo_beg, void* pminfo_end)
 out (result)
 {
     foreach(m; result)
@@ -107,7 +217,7 @@ out (result)
 }
 body
 {
-    auto m = (cast(immutable(ModuleInfo*)*)&_minfo_beg)[1 .. &_minfo_end - &_minfo_beg];
+    auto m = (cast(immutable(ModuleInfo*)*)pminfo_beg)[1 .. cast(void**)pminfo_end - cast(void**)pminfo_beg];
     /* Because of alignment inserted by the linker, various null pointers
      * are there. We need to filter them out.
      */
@@ -219,4 +329,99 @@ void[] findImageSection(string name) nothrow
             return (cast(void*)&__ImageBase + sections[i].VirtualAddress)[0 .. sections[i].VirtualSize];
 
     return null;
+}
+
+version(Shared)
+{
+private:
+    void registerGCRanges(ref SectionGroup pdll)
+    {
+        foreach (rng; pdll._gcRanges)
+            GC.addRange(rng.ptr, rng.length);
+    }
+
+    void unregisterGCRanges(ref SectionGroup pdll)
+    {
+        foreach (rng; pdll._gcRanges)
+            GC.removeRange(rng.ptr);
+    }
+
+
+export extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p_xc_a, void[] function() getTlsRange)
+    {
+        SectionGroup dllSection;
+        dllSection._moduleGroup = ModuleGroup(getModuleInfos(pminfo_beg, pminfo_end));
+        dllSection._getTlsRange = getTlsRange;
+        dllSection._hModule = hModule;
+
+        {
+            auto pbeg = cast(void*)p_xc_a;
+            auto pend = cast(void*)pdeh_beg;
+            dllSection._gcRanges[0] = pbeg[0 .. pend - pbeg]; 
+        }
+        
+        {
+            auto pbeg = cast(immutable(FuncTable)*)pdeh_beg;
+            auto pend = cast(immutable(FuncTable)*)pdeh_end;
+            dllSection._ehTables = pbeg[0 .. pend - pbeg];
+        }    
+        
+        if(_isRuntimeInitialized)
+        {
+            // Add tls range
+            if(dllSection._getTlsRange !is null)
+                _tlsRanges.insertBack(ThreadDllTlsData(dllSection._hModule, dllSection._getTlsRange()));
+                
+            // register GC ranges
+            registerGCRanges(dllSection);
+        
+            // Run Module Constructors
+            dllSection._moduleGroup.sortCtors();
+            dllSection._moduleGroup.runCtors();
+            dllSection._moduleGroup.runTlsCtors();
+        }
+
+        _sections.insertBack(dllSection);
+    }
+  
+    extern(C) void _d_dll_registry_unregister(void* hModule)
+    {
+        size_t i = 0;
+        for(; i < _sections.length; i++)
+        {
+          if(_sections[i]._hModule is hModule)
+            break;
+        }
+        // if the runtime was already deinitialized _sections is empty
+        if(i < _sections.length)
+        {
+            auto dllSection = _sections[i];
+            _sections.remove(i);
+            
+            if(_isRuntimeInitialized)
+            {
+                // Run Module Destructors
+                dllSection._moduleGroup.runTlsDtors();  
+                dllSection.moduleGroup.runDtors();
+                dllSection.moduleGroup.free();        
+                
+                // unregister GC ranges
+                unregisterGCRanges(dllSection);
+                
+                // remove tls range
+                size_t j = 0;
+                for(; j < _tlsRanges.length; j++)
+                {
+                  if(_tlsRanges[i]._hModule is hModule)
+                    break;
+                }
+                if(j < _tlsRanges.length)
+                {
+                  _tlsRanges.remove(j);
+                }
+            }
+            
+            .free(cast(void*)dllSection.modules.ptr);
+        }
+    }
 }

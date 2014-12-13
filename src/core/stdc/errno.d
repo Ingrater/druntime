@@ -19,9 +19,9 @@ nothrow:
 @nogc:
 
 ///
-@property int errno() { return getErrno(); }
+@property export int errno() { return getErrno(); }
 ///
-@property int errno(int n) { return setErrno(n); }
+@property export int errno(int n) { return setErrno(n); }
 
 extern (C):
 

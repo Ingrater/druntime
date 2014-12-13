@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_ushort;
 
+export:
+
 // ushort
 
 class TypeInfo_t : TypeInfo

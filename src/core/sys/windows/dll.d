@@ -47,14 +47,19 @@ version( Windows )
             extern __gshared int   _tls_index;
         }
     }
-
+    
+private:
     extern (C) // rt.minfo
     {
         void rt_moduleTlsCtor();
         void rt_moduleTlsDtor();
     }
+    
+    version(Win64)
+    {
+        extern(C) void _d_dll_registry_unregister(void* hModule); // rt.sections_win64
+    }
 
-private:
     version (Win32)
     {
     struct dll_aux
@@ -295,7 +300,7 @@ private:
     }
     }
 
-public:
+export:
     /* *****************************************************
      * Fix implicit thread local storage for the case when a DLL is loaded
      * dynamically after process initialization.
@@ -421,6 +426,10 @@ public:
                 }, null );
 
         Runtime.terminate();
+        version(Win64)
+        {
+            _d_dll_registry_unregister(hInstance);
+        }
     }
 
     /* Make sure that tlsCtorRun is itself a tls variable
@@ -462,6 +471,18 @@ public:
         }
         return true;
     }
+    
+    /++
+      If a dll is to be used by a C program or not. 
+      Specifying yes will result in druntime automatically attaching to all threads created by the current process.
+      If this behavior is unwanted but the D dll should still be used from a C program you have to manually attach all
+      relevant threads.
+    +/    
+    enum DllIsUsedFromC : bool
+    {
+      no = false,
+      yes = true
+    }
 
     /// A simple mixin to provide a $(D DllMain) which calls the necessary
     /// runtime initialization and termination functions automatically.
@@ -469,9 +490,9 @@ public:
     /// Instead of writing a custom $(D DllMain), simply write:
     ///
     /// ---
-    /// mixin SimpleDllMain;
+    /// mixin SimpleDllMain!(DllIsUsedFromC.no);
     /// ---
-    mixin template SimpleDllMain()
+    mixin template SimpleDllMain(DllIsUsedFromC isUsedFromC = DllIsUsedFromC.yes)
     {
         import core.sys.windows.windows : HINSTANCE;
 
@@ -479,21 +500,29 @@ public:
         bool DllMain(HINSTANCE hInstance, uint ulReason, void* reserved)
         {
             import core.sys.windows.windows;
+            import core.sys.windows.dllfixup;
             switch(ulReason)
             {
                 default: assert(0);
                 case DLL_PROCESS_ATTACH:
-                    return dll_process_attach( hInstance, true );
+                    _d_dll_fixup(hInstance);
+                    return dll_process_attach( hInstance, isUsedFromC );
 
                 case DLL_PROCESS_DETACH:
-                    dll_process_detach( hInstance, true );
+                    dll_process_detach( hInstance, isUsedFromC );
                     return true;
 
                 case DLL_THREAD_ATTACH:
-                    return dll_thread_attach( true, true );
+                    static if(isUsedFromC)
+                        return dll_thread_attach( true, true );
+                    else
+                        return true;
 
                 case DLL_THREAD_DETACH:
-                    return dll_thread_detach( true, true );
+                    static if(isUsedFromC)
+                        return dll_thread_detach( true, true );
+                    else
+                        return true;
             }
         }
     }

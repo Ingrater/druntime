@@ -15,6 +15,8 @@ module rt.typeinfo.ti_AC;
 
 // Object[]
 
+export:
+
 /*
 NOTE: It is sometimes used for arrays of
 classes or (incorrectly) interfaces.

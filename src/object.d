@@ -23,6 +23,8 @@ private
     extern (C) void rt_finalize(void *data, bool det=true);
 }
 
+export:
+
 // NOTE: For some reason, this declaration method doesn't work
 //       in this particular file (and this file only).  It must
 //       be a DMD thing.
@@ -205,7 +207,7 @@ struct OffsetTypeInfo
  * Can be retrieved for any type using a
  * <a href="../expression.html#typeidexpression">TypeidExpression</a>.
  */
-class TypeInfo
+export class TypeInfo
 {
     override string toString() const pure @safe nothrow
     {
@@ -1017,7 +1019,7 @@ class TypeInfo_Interface : TypeInfo
     TypeInfo_Class info;
 }
 
-class TypeInfo_Struct : TypeInfo
+export class TypeInfo_Struct : TypeInfo
 {
     override string toString() const { return name; }
 
@@ -3230,7 +3232,8 @@ private U[] _dup(T, U)(T[] a) // pure nothrow depends on postblit
 
 private extern (C) void[] _d_newarrayU(const TypeInfo ti, size_t length) pure nothrow;
 
-private inout(T)[] _rawDup(T)(inout(T)[] a)
+/* Workaround */
+export inout(T)[] _rawDup(T)(inout(T)[] a)
 {
     import core.stdc.string : memcpy;
 

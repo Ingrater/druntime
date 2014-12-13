@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_ptr;
 
+export:
+
 // internal typeinfo for any pointer type
 // please keep in sync with TypeInfo_Pointer
 

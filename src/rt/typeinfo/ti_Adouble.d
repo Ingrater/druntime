@@ -15,6 +15,8 @@ module rt.typeinfo.ti_Adouble;
 
 private import rt.util.typeinfo;
 
+export:
+
 // double[]
 
 class TypeInfo_Ad : TypeInfo_Array

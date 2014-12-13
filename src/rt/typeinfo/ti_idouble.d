@@ -15,6 +15,8 @@ module rt.typeinfo.ti_idouble;
 
 private import rt.typeinfo.ti_double;
 
+export:
+
 // idouble
 
 class TypeInfo_p : TypeInfo_d

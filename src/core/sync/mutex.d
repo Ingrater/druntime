@@ -44,7 +44,7 @@ else
 /**
  * This class represents a general purpose, recursive mutex.
  */
-class Mutex :
+export class Mutex :
     Object.Monitor
 {
     ////////////////////////////////////////////////////////////////////////////

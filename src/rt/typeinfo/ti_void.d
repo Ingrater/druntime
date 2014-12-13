@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_void;
 
+export:
+
 // void
 
 class TypeInfo_v : TypeInfo

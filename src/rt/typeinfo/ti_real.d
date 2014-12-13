@@ -15,6 +15,8 @@ module rt.typeinfo.ti_real;
 
 private import rt.util.typeinfo;
 
+export:
+
 // real
 
 class TypeInfo_e : TypeInfo

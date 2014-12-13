@@ -32,6 +32,8 @@ private
         externDFunc!("rt.tlsgc.processGCMarks", void function(void*, scope IsMarkedDg) nothrow);
 }
 
+export:
+
 version( Solaris )
 {
     import core.sys.solaris.sys.priocntl;
@@ -3401,7 +3403,7 @@ private
         }
     }
 
-    static immutable size_t PAGESIZE;
+    export static immutable size_t PAGESIZE;
     version (Posix) static immutable size_t PTHREAD_STACK_MIN;
 }
 

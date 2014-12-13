@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_char;
 
+export:
+
 // char
 
 class TypeInfo_a : TypeInfo

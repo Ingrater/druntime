@@ -291,7 +291,7 @@ private:
         }
     }
 
-public:
+export:
     // forward as few symbols as possible into the "global" name space
     alias thread_aux.getTEB getTEB;
     alias thread_aux.getThreadStackBottom getThreadStackBottom;

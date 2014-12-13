@@ -96,7 +96,7 @@ version (CRuntime_Microsoft)
 {
     // strtold exists starting from VS2013, so we make this a template to avoid link errors
     ///
-    real strtold()(in char* nptr, char** endptr)
+    export real strtold()(in char* nptr, char** endptr)
     {   // Fake it 'till we make it
         return strtod(nptr, endptr);
     }

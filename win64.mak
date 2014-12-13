@@ -26,11 +26,14 @@ CFLAGS=/Z7 /I"$(VCDIR)"\INCLUDE /I"$(SDKDIR)"\Include
 
 DRUNTIME_BASE=druntime$(MODEL)
 DRUNTIME=lib\$(DRUNTIME_BASE).lib
+DRUNTIME_SHARED=lib\$(DRUNTIME_BASE)s.lib
+DRUNTIME_SHARED_DLL=lib\$(DRUNTIME_BASE)s.dll
 GCSTUB=lib\gcstub$(MODEL).obj
+DLLFIXUP=lib\dllfixup$(MODEL).lib
 
 DOCFMT=
 
-target : import copydir copy $(DRUNTIME) $(GCSTUB)
+target : import copydir copy $(DRUNTIME) $(GCSTUB) $(DRUNTIME_SHARED)
 
 $(mak\COPY)
 $(mak\DOCS)
@@ -646,6 +649,9 @@ $(IMPDIR)\core\sys\windows\windows.d : src\core\sys\windows\windows.d
 
 $(IMPDIR)\core\sys\windows\winsock2.d : src\core\sys\windows\winsock2.d
 	copy $** $@
+	
+$(IMPDIR)\core\sys\windows\dllfixup.d : src\core\sys\windows\dllfixup.d
+	copy $** $@
 
 $(IMPDIR)\etc\linux\memoryerror.d : src\etc\linux\memoryerror.d
 	copy $** $@
@@ -662,11 +668,20 @@ src\rt\minit.obj : src\rt\minit.asm
 
 $(GCSTUB) : src\gcstub\gc.d win64.mak
 	$(DMD) -c -of$(GCSTUB) src\gcstub\gc.d $(DFLAGS)
+	
+################### dllfixup generation #########################
+
+$(DLLFIXUP) : src\core\sys\windows\dllfixup.d win64.mak
+	$(DMD) -of$(DLLFIXUP) -version=Shared src\core\sys\windows\dllfixup.d $(DFLAGS) -lib
 
 ################### Library generation #########################
 
-$(DRUNTIME): $(OBJS) $(SRCS) win64.mak
-	$(DMD) -lib -of$(DRUNTIME) -Xfdruntime.json $(DFLAGS) $(SRCS) $(OBJS)
+$(DRUNTIME): $(OBJS) $(SRCS) win64.mak src\core\sys\windows\dllfixup.d 
+	$(DMD) -lib -of$(DRUNTIME) -Xfdruntime.json $(DFLAGS) $(SRCS) src\core\sys\windows\dllfixup.d $(OBJS)
+	
+$(DRUNTIME_SHARED) : $(OBJS) $(DLLFIXUP) $(SRCS) src\rt\dllmain.d win64.mak
+	$(DMD) -of$(DRUNTIME_SHARED_DLL) -version=Shared -shared $(DFLAGS) $(SRCS) src\rt\dllmain.d -defaultlib="msvcrt" $(OBJS) $(DLLFIXUP) -L/IMPLIB:$(DRUNTIME_SHARED) -L/NODEFAULTLIB:libcmt user32.lib
+	$(AR) /OUT:$(DRUNTIME_SHARED) $(DRUNTIME_SHARED) $(DLLFIXUP)
 
 # due to -conf= on the command line, LINKCMD and LIB need to be set in the environment
 unittest : $(SRCS) $(DRUNTIME)

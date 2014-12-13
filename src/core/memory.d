@@ -147,6 +147,7 @@ private
     extern (C) void gc_runFinalizers( in void[] segment );
 }
 
+export:
 
 /**
  * This struct encapsulates all garbage collection functionality for the D

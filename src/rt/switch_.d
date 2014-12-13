@@ -26,6 +26,7 @@ private import core.stdc.string;
  */
 
 extern (C):
+export:
 
 int _d_switch_string(char[][] table, char[] ca)
 in

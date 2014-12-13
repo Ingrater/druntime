@@ -1669,6 +1669,7 @@ private struct Demangle
     }
 }
 
+export:
 
 /**
  * Demangles D mangled names.  If it is not a D mangled name, it returns its

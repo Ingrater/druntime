@@ -530,15 +530,15 @@ version( CRuntime_DigitalMars )
     private extern shared FILE[_NFILE] _iob;
 
     ///
-    shared stdin  = &_iob[0];
+    export shared stdin  = &_iob[0];
     ///
-    shared stdout = &_iob[1];
+    export shared stdout = &_iob[1];
     ///
-    shared stderr = &_iob[2];
+    export shared stderr = &_iob[2];
     ///
-    shared stdaux = &_iob[3];
+    export shared stdaux = &_iob[3];
     ///
-    shared stdprn = &_iob[4];
+    export shared stdprn = &_iob[4];
 }
 else version( CRuntime_Microsoft )
 {
@@ -577,11 +577,19 @@ else version( CRuntime_Microsoft )
     shared(FILE)* __iob_func();
 
     ///
-    shared FILE* stdin;  // = &__iob_func()[0];
+    export shared FILE* stdin;  // = &__iob_func()[0];
     ///
-    shared FILE* stdout; // = &__iob_func()[1];
+    export shared FILE* stdout; // = &__iob_func()[1];
     ///
-    shared FILE* stderr; // = &__iob_func()[2];
+    export shared FILE* stderr; // = &__iob_func()[2];
+    
+    void _d_init_std_streams()
+    {
+        auto fp = __iob_func();
+        stdin = &fp[0];
+        stdout = &fp[1];
+        stderr = &fp[2];
+    }
 }
 else version( CRuntime_Glibc )
 {
@@ -939,7 +947,7 @@ else version( CRuntime_DigitalMars )
 else version( CRuntime_Microsoft )
 {
   // No unsafe pointer manipulation.
-  extern (D) @trusted
+  extern (D) @trusted export
   {
       ///
     void rewind(FILE* stream)   { fseek(stream,0L,SEEK_SET); stream._flag = stream._flag & ~_IOERR; }
@@ -973,7 +981,7 @@ else version( CRuntime_Microsoft )
     int _flsbuf(int c, FILE *fp);
 
     ///
-    int _fputc_nolock(int c, FILE *fp)
+    export int _fputc_nolock(int c, FILE *fp)
     {
         fp._cnt = fp._cnt - 1;
         if (fp._cnt >= 0)
@@ -987,7 +995,7 @@ else version( CRuntime_Microsoft )
     }
 
     ///
-    int _fgetc_nolock(FILE *fp)
+    export int _fgetc_nolock(FILE *fp)
     {
         fp._cnt = fp._cnt - 1;
         if (fp._cnt >= 0)

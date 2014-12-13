@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_dchar;
 
+export:
+
 // dchar
 
 class TypeInfo_w : TypeInfo

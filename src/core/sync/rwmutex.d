@@ -48,7 +48,7 @@ version( Posix )
  * an issue however, because it is uncommon to call deeply into unknown code
  * while holding a lock that simply protects data.
  */
-class ReadWriteMutex
+export class ReadWriteMutex
 {
     /**
      * Defines the policy used by this mutex.  Currently, two policies are

@@ -67,7 +67,7 @@ else
 {
     private TypeInfo tiglobal;
 
-    extern (C) void[] _adSort(void[] a, TypeInfo ti)
+    export extern (C) void[] _adSort(void[] a, TypeInfo ti)
     {
         extern (C) int cmp(in void* p1, in void* p2)
         {

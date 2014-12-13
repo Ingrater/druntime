@@ -18,7 +18,7 @@ private import rt.util.utf : decode, toUTF8;
 // dg is D, but _aApplycd() is C
 extern (D) alias int delegate(void *) dg_t;
 
-extern (C) int _aApplycd1(in char[] aa, dg_t dg)
+extern (C) export int _aApplycd1(in char[] aa, dg_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -80,7 +80,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplywd1(in wchar[] aa, dg_t dg)
+extern (C) export int _aApplywd1(in wchar[] aa, dg_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -142,7 +142,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplycw1(in char[] aa, dg_t dg)
+extern (C) export int _aApplycw1(in char[] aa, dg_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -217,7 +217,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplywc1(in wchar[] aa, dg_t dg)
+extern (C) export int _aApplywc1(in wchar[] aa, dg_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -298,7 +298,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplydc1(in dchar[] aa, dg_t dg)
+extern (C) export int _aApplydc1(in dchar[] aa, dg_t dg)
 {
     int result;
 
@@ -375,7 +375,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplydw1(in dchar[] aa, dg_t dg)
+extern (C) export int _aApplydw1(in dchar[] aa, dg_t dg)
 {
     int result;
 
@@ -449,7 +449,7 @@ unittest
 // dg is D, but _aApplycd2() is C
 extern (D) alias int delegate(void *, void *) dg2_t;
 
-extern (C) int _aApplycd2(in char[] aa, dg2_t dg)
+extern (C) export int _aApplycd2(in char[] aa, dg2_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -518,7 +518,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplywd2(in wchar[] aa, dg2_t dg)
+extern (C) export int _aApplywd2(in wchar[] aa, dg2_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -587,7 +587,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplycw2(in char[] aa, dg2_t dg)
+extern (C) export int _aApplycw2(in char[] aa, dg2_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -667,7 +667,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplywc2(in wchar[] aa, dg2_t dg)
+extern (C) export int _aApplywc2(in wchar[] aa, dg2_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -753,7 +753,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplydc2(in dchar[] aa, dg2_t dg)
+extern (C) export int _aApplydc2(in dchar[] aa, dg2_t dg)
 {
     int result;
     size_t len = aa.length;
@@ -834,7 +834,7 @@ unittest
 
 /*****************************/
 
-extern (C) int _aApplydw2(in dchar[] aa, dg2_t dg)
+extern (C) export int _aApplydw2(in dchar[] aa, dg2_t dg)
 {   int result;
 
     debug(apply) printf("_aApplydw2(), len = %d\n", aa.length);

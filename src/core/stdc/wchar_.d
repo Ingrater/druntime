@@ -113,7 +113,7 @@ extern (D) @trusted
     version( CRuntime_Microsoft )
     {
         // MSVC defines this as an inline function.
-        int fwide(FILE* stream, int mode) { return mode; }
+        export int fwide(FILE* stream, int mode) { return mode; }
     }
     else
     {

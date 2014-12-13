@@ -16,6 +16,8 @@ module rt.typeinfo.ti_Ashort;
 private import core.stdc.string;
 private import rt.util.hash;
 
+export:
+
 // short[]
 
 class TypeInfo_As : TypeInfo_Array
