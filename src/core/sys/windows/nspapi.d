@@ -14,6 +14,8 @@ version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.basetyps, core.sys.windows.windef;
 
+export:
+
 // FIXME: check types of constants
 
 enum {

@@ -433,7 +433,7 @@ version(AnyX86)
 }
 
 
-@system pure nothrow @nogc
+@system pure nothrow @nogc export
 size_t bytesHash(const(void)* buf, size_t len, size_t seed)
 {
     static uint rotl32(uint n)(in uint x) pure nothrow @safe @nogc

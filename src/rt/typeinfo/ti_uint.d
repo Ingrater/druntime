@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_uint;
 
+export:
+
 // uint
 
 class TypeInfo_k : TypeInfo

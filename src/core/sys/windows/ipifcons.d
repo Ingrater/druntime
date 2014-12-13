@@ -11,6 +11,7 @@ module core.sys.windows.ipifcons;
 version (Windows):
 
 // FIXME: check types of constants
+export:
 
 enum {
     MIB_IF_ADMIN_STATUS_UP = 1,

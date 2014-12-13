@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_C;
 
+export:
+
 // Object
 
 class TypeInfo_C : TypeInfo

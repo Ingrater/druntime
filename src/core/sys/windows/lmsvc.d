@@ -20,6 +20,8 @@ private import core.sys.windows.lmcons, core.sys.windows.lmsname, core.sys.windo
 
 const TCHAR[] SERVICE_DOS_ENCRYPTION = "ENCRYPT";
 
+export:
+
 enum SERVICE_UNINSTALLED=0;
 enum SERVICE_INSTALL_PENDING=1;
 enum SERVICE_UNINSTALL_PENDING=2;

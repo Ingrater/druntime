@@ -13,6 +13,8 @@ version (Windows):
 import core.sys.windows.ipifcons;
 private import core.sys.windows.windef;
 
+export:
+
 // FIXME: check types of constants
 
 enum size_t

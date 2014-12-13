@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_wchar;
 
+export:
+
 // wchar
 
 class TypeInfo_u : TypeInfo

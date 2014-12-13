@@ -12,6 +12,8 @@ version (Windows):
 version (ANSI) {} else version = Unicode;
 pragma(lib, "kernel32");
 
+export:
+
 /**
 Translation Notes:
 The following macros are obsolete, and have no effect.

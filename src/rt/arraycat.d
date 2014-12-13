@@ -19,7 +19,7 @@ private
 
 extern (C) @trusted nothrow:
 
-void[] _d_arraycopy(size_t size, void[] from, void[] to)
+export void[] _d_arraycopy(size_t size, void[] from, void[] to)
 {
     debug(PRINTF) printf("f = %p,%d, t = %p,%d, size = %d\n",
                  from.ptr, from.length, to.ptr, to.length, size);

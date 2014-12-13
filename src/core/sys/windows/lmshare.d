@@ -13,6 +13,8 @@ pragma(lib, "netapi32");
 import core.sys.windows.lmcons;
 private import core.sys.windows.w32api, core.sys.windows.windef;
 
+export:
+
 
 enum SHARE_NETNAME_PARMNUM      = 1;
 enum SHARE_TYPE_PARMNUM         = 3;

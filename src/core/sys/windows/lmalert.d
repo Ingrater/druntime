@@ -12,6 +12,8 @@ pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 const TCHAR[]
     ALERTER_MAILSLOT     = `\\.\MAILSLOT\Alerter`,
     ALERT_PRINT_EVENT    = "PRINTING",

@@ -15,6 +15,8 @@ pragma(lib, "user32");
 
 private import core.sys.windows.basetsd, core.sys.windows.windef, core.sys.windows.winnt;
 
+export:
+
 enum : int {
     CP_WINANSI    = 1004,
     CP_WINUNICODE = 1200

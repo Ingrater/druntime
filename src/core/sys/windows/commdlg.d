@@ -16,6 +16,8 @@ private import core.sys.windows.w32api;
 import core.sys.windows.windef, core.sys.windows.winuser;
 import core.sys.windows.wingdi; // for LPLOGFONTA
 
+export:
+
 const TCHAR[]
     LBSELCHSTRING = "commdlg_LBSelChangedNotify",
     SHAREVISTRING = "commdlg_ShareViolation",

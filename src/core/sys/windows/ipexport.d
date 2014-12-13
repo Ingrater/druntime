@@ -12,6 +12,8 @@ version (Windows):
 
 private import core.sys.windows.windef;
 
+export:
+
 enum size_t MAX_ADAPTER_NAME = 128;
 
 // IP STATUS flags

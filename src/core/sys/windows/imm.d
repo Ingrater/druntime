@@ -16,6 +16,8 @@ import core.sys.windows.windef, core.sys.windows.wingdi;
 import core.sys.windows.winuser; // for the MFS_xxx enums.
 private import core.sys.windows.w32api;
 
+export:
+
 enum WM_CONVERTREQUESTEX     = 0x108;
 enum WM_IME_STARTCOMPOSITION = 0x10D;
 enum WM_IME_ENDCOMPOSITION   = 0x10E;

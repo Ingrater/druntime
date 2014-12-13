@@ -29,13 +29,18 @@ CFLAGS=/Z7 /I"$(VCDIR)"\INCLUDE /I"$(SDKDIR)"\Include
 
 DRUNTIME_BASE=druntime$(MODEL)
 DRUNTIME=lib\$(DRUNTIME_BASE).lib
+DRUNTIME_SHARED=lib\$(DRUNTIME_BASE)s.lib
+DRUNTIME_SHARED_OBJ=lib\$(DRUNTIME_BASE)s.obj
+DRUNTIME_SHARED_C_LIB=lib\$(DRUNTIME_BASE)s_c.lib
+DRUNTIME_SHARED_DLL=bin\$(DRUNTIME_BASE)s.dll
+DLLINIT=lib\dllinit$(MODEL).lib
 
 # do not preselect a C runtime (extracted from the line above to make the auto tester happy)
 CFLAGS=$(CFLAGS) /Zl
 
 DOCFMT=
 
-target : import copydir copy $(DRUNTIME)
+target : import copydir copy $(DRUNTIME) $(DRUNTIME_SHARED_OBJ) $(DRUNTIME_SHARED_C_LIB) $(DLLINIT)
 
 $(mak\COPY)
 $(mak\DOCS)
@@ -45,8 +50,8 @@ $(mak\SRCS)
 # NOTE: trace.d and cover.d are not necessary for a successful build
 #       as both are used for debugging features (profiling and coverage)
 
-OBJS= errno_c_$(MODEL).obj msvc_$(MODEL).obj msvc_math_$(MODEL).obj
-OBJS_TO_DELETE= errno_c_$(MODEL).obj msvc_$(MODEL).obj msvc_math_$(MODEL).obj
+OBJS= errno_c_$(MODEL).obj msvc_math_$(MODEL).obj
+OBJS_TO_DELETE= errno_c_$(MODEL).obj msvc_$(MODEL).obj msvc_$(MODEL)_shared.obj msvc_math_$(MODEL).obj msvc_renames_$(MODEL).obj 
 
 ######################## Doc .html file generation ##############################
 
@@ -1241,6 +1246,9 @@ $(IMPDIR)\core\sys\windows\winreg.d : src\core\sys\windows\winreg.d
 
 $(IMPDIR)\core\sys\windows\winsock2.d : src\core\sys\windows\winsock2.d
 	copy $** $@
+	
+$(IMPDIR)\core\sys\windows\dllinit.d : src\core\sys\windows\dllinit.d
+	copy $** $@
 
 $(IMPDIR)\core\sys\windows\winspool.d : src\core\sys\windows\winspool.d
 	copy $** $@
@@ -1268,16 +1276,51 @@ $(IMPDIR)\etc\linux\memoryerror.d : src\etc\linux\memoryerror.d
 errno_c_$(MODEL).obj : src\core\stdc\errno.c
 	$(CC) -c -Fo$@ $(CFLAGS) src\core\stdc\errno.c
 
-msvc_$(MODEL).obj : src\rt\msvc.c win64.mak
+msvc_renames_$(MODEL).obj : src\rt\msvc_renames.c src\rt\msvc.h win64.mak
+	$(CC) -c -Fo$@ $(CFLAGS) src\rt\msvc_renames.c
+	
+msvc_$(MODEL).obj : src\rt\msvc.c src\rt\msvc.h win64.mak
 	$(CC) -c -Fo$@ $(CFLAGS) src\rt\msvc.c
+	
+msvc_$(MODEL)_shared.obj : src\rt\msvc.c src\rt\msvc.h win64.mak
+	$(CC) -c -Fo$@ $(CFLAGS) /DSHARED src\rt\msvc.c
 
 msvc_math_$(MODEL).obj : src\rt\msvc_math.c win64.mak
 	$(CC) -c -Fo$@ $(CFLAGS) src\rt\msvc_math.c
 
+
+################### dllinit generation #########################
+# dllinit.d needs to be compiled into a static lib and linked into 
+# each d binary so it can access the executables sections.
+# To do that its merged with the import library of the runtime.
+
+$(DLLINIT) : src\core\sys\windows\dllinit.d msvc_renames_$(MODEL).obj win64.mak
+	$(DMD) -ofdllinitTmp$(MODEL).lib -version=Shared src\core\sys\windows\dllinit.d $(DFLAGS) -lib
+	$(AR) /OUT:$(DLLINIT) dllinitTmp$(MODEL).lib msvc_renames_$(MODEL).obj
+
+
 ################### Library generation #########################
 
+# static version of druntime
 $(DRUNTIME): $(OBJS) $(SRCS) win64.mak
 	*$(DMD) -lib -of$(DRUNTIME) -Xfdruntime.json $(DFLAGS) $(SRCS) $(OBJS)
+
+# standalone version of shared druntime
+$(DRUNTIME_SHARED) : $(OBJS) msvc_$(MODEL)_shared.obj $(DLLINIT) $(SRCS) src\rt\dllmain.d win64.mak
+	$(DMD) -of$(DRUNTIME_SHARED_DLL) -version=Shared -shared $(DFLAGS) $(SRCS) src\rt\dllmain.d $(OBJS) msvc_$(MODEL)_shared.obj $(DLLINIT) -L/IMPLIB:tmp\imp_$(DRUNTIME_BASE).lib user32.lib
+	$(AR) /OUT:$(DRUNTIME_SHARED) tmp\imp_$(DRUNTIME_BASE).lib $(DLLINIT)
+
+# shared version to be linked into shared version of phobos
+$(DRUNTIME_SHARED_OBJ) : $(SRCS) src\rt\dllmain.d win64.mak
+	$(DMD) -c -of$(DRUNTIME_SHARED_OBJ) -version=Shared -shared $(DFLAGS) $(SRCS) src\rt\dllmain.d -defaultlib="msvcrt"
+
+# Lib file of all C code build in druntime to be linked into shared version of phobos
+# Note DRUNTIME_SHARED_OBJ can not be part of this because the linker treats .lib and .obj
+# files differently when it comes to dllexport.
+$(DRUNTIME_SHARED_C_LIB) : win64.mak $(OBJS) msvc_$(MODEL)_shared.obj
+	$(AR) /OUT:$(DRUNTIME_SHARED_C_LIB) $(OBJS) msvc_$(MODEL)_shared.obj
+
+	
 
 # due to -conf= on the command line, LINKCMD and LIB need to be set in the environment
 unittest : $(SRCS) $(DRUNTIME)
@@ -1310,6 +1353,7 @@ install: druntime.zip
 
 clean:
 	del $(DRUNTIME) $(OBJS_TO_DELETE)
+	del $(DLLINIT) $(DRUNTIME_SHARED_OBJ) $(DRUNTIME_SHARED_C_LIB) $(DRUNTIME_SHARED)
 	rmdir /S /Q $(DOCDIR) $(IMPDIR)
 
 auto-tester-build: target

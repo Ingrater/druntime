@@ -11,6 +11,8 @@ version (Windows):
 
 private import core.sys.windows.windef;
 
+export:
+
 const TCHAR[]
     SERVICE_WORKSTATION      = "LanmanWorkstation",
     SERVICE_LM20_WORKSTATION = "WORKSTATION",

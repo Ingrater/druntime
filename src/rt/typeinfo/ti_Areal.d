@@ -15,6 +15,8 @@ module rt.typeinfo.ti_Areal;
 
 private import rt.util.typeinfo;
 
+export:
+
 // real[]
 
 class TypeInfo_Ae : TypeInfo_Array

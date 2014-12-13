@@ -14,6 +14,8 @@ version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.basetsd, core.sys.windows.mmsystem, core.sys.windows.windef;
 
+export:
+
 mixin DECLARE_HANDLE!("HACMDRIVERID");
 mixin DECLARE_HANDLE!("HACMDRIVER");
 alias HACMDRIVER* LPHACMDRIVER;

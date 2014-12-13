@@ -12,6 +12,8 @@ version (Windows):
 
 private import core.sys.windows.windef;
 
+export:
+
 enum size_t
     NCBNAMSZ =  16,
     MAX_LANA = 254;

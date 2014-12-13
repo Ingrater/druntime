@@ -46,7 +46,7 @@ else
  * Implemented using `pthread_mutex` on Posix and `CRITICAL_SECTION`
  * on Windows.
  */
-class Mutex :
+export class Mutex :
     Object.Monitor
 {
     ////////////////////////////////////////////////////////////////////////////

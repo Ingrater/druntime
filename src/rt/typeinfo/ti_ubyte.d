@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_ubyte;
 
+export:
+
 // ubyte
 
 class TypeInfo_h : TypeInfo

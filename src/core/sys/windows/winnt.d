@@ -14,6 +14,8 @@ version (ANSI) {} else version = Unicode;
 public import core.sys.windows.basetsd, core.sys.windows.windef, core.sys.windows.winerror;
 private import core.sys.windows.w32api;
 
+export:
+
 /* Translation Notes:
 The following macros are unneeded for D:
 FIELD_OFFSET(t,f), CONTAINING_RECORD(address, type, field)

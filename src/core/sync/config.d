@@ -15,7 +15,6 @@
  */
 module core.sync.config;
 
-
 version( Posix )
 {
     private import core.sys.posix.time;

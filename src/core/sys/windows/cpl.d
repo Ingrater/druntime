@@ -14,6 +14,8 @@ version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.windef, core.sys.windows.winuser;
 
+export:
+
 enum : uint {
     WM_CPL_LAUNCH = WM_USER + 1000,
     WM_CPL_LAUNCHED

@@ -59,7 +59,7 @@ public import core.sys.windows.uuid;
 extern (System)
 {
 
-class ComObject : IUnknown
+export class ComObject : IUnknown
 {
 extern (System):
     HRESULT QueryInterface(const(IID)* riid, void** ppv)

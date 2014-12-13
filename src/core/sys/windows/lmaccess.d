@@ -18,6 +18,8 @@ pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 const wchar[]
     GROUP_SPECIALGRP_USERS  = "USERS",
     GROUP_SPECIALGRP_ADMINS = "ADMINS",

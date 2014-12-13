@@ -12,7 +12,7 @@
  *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
-module core.runtime;
+export module core.runtime;
 
 version (Windows) import core.stdc.wchar_ : wchar_t;
 
@@ -136,7 +136,7 @@ struct CArgs
  * This struct encapsulates all functionality related to the underlying runtime
  * module for the calling context.
  */
-struct Runtime
+export struct Runtime
 {
     /**
      * Initializes the runtime.  This call is to be used in instances where the
@@ -577,7 +577,7 @@ extern (C) void profilegc_setlogfilename(string name);
  * Returns:
  *   A `UnitTestResult` struct indicating the result of running unit tests.
  */
-extern (C) UnitTestResult runModuleUnitTests()
+extern (C) export UnitTestResult runModuleUnitTests()
 {
     // backtrace
     version( CRuntime_Glibc )
@@ -689,7 +689,7 @@ extern (C) UnitTestResult runModuleUnitTests()
 /**
  *
  */
-Throwable.TraceInfo defaultTraceHandler( void* ptr = null )
+export Throwable.TraceInfo defaultTraceHandler( void* ptr = null )
 {
     // backtrace
     version( CRuntime_Glibc )

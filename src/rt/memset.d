@@ -20,6 +20,7 @@ extern (C)
 }
 
 extern (C):
+export:
 
 short *_memset16(short *p, short value, size_t count)
 {

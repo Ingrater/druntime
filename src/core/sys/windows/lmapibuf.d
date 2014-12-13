@@ -12,6 +12,8 @@ pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 extern (Windows) {
     NET_API_STATUS NetApiBufferAllocate(DWORD, PVOID*);
     NET_API_STATUS NetApiBufferFree(PVOID);

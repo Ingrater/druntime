@@ -15,6 +15,8 @@ version (ANSI) {} else version = Unicode;
 import core.sys.windows.w32api, core.sys.windows.windef;
 import core.sys.windows.basetyps; // for GUID
 
+export:
+
 // FIXME: clean up Windows version support
 
 enum : DWORD {

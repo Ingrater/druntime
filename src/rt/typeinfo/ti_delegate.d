@@ -15,6 +15,8 @@ module rt.typeinfo.ti_delegate;
 
 private import rt.util.hash;
 
+export:
+
 // delegate
 
 alias void delegate(int) dg;

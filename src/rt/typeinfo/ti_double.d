@@ -15,6 +15,8 @@ module rt.typeinfo.ti_double;
 
 private import rt.util.typeinfo;
 
+export:
+
 // double
 
 class TypeInfo_d : TypeInfo

@@ -12,6 +12,8 @@ pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 enum REPL_ROLE_EXPORT=1;
 enum REPL_ROLE_IMPORT=2;
 enum REPL_ROLE_BOTH=3;

@@ -20,7 +20,7 @@ enum S_IEXEC  = 0x0040;
 enum S_IFBLK  = 0x6000;
 enum S_IFNAM  = 0x5000;
 
-@safe pure
+@safe pure export
 {
 int S_ISREG(int m)  { return (m & S_IFMT) == S_IFREG; }
 int S_ISBLK(int m)  { return (m & S_IFMT) == S_IFBLK; }
@@ -29,7 +29,7 @@ int S_ISDIR(int m)  { return (m & S_IFMT) == S_IFDIR; }
 int S_ISCHR(int m)  { return (m & S_IFMT) == S_IFCHR; }
 }
 
-struct struct_stat
+export struct struct_stat
 {
     short st_dev;
     ushort st_ino;

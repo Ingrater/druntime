@@ -14,6 +14,8 @@ pragma(lib, "lz32");
 
 private import core.sys.windows.winbase, core.sys.windows.windef;
 
+export:
+
 enum : LONG {
     LZERROR_BADINHANDLE  = -1,
     LZERROR_BADOUTHANDLE = -2,

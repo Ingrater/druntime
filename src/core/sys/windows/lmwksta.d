@@ -15,6 +15,8 @@ private import core.sys.windows.lmcons, core.sys.windows.windef;
 
 pragma(lib, "Netapi32");
 
+export:
+
 enum {
     WKSTA_COMPUTERNAME_PARMNUM     = 1,
     WKSTA_LANGROUP_PARMNUM,     // = 2

@@ -14,6 +14,8 @@ version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.unknwn, core.sys.windows.windef;
 
+export:
+
 enum : SCODE {
     E_FLAGS                     = 0x80041000,
       // = MAKE_SCODE(SEVERITY_ERROR, FACILITY_ITF, 0x1000)

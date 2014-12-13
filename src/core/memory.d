@@ -150,12 +150,11 @@ private
     package extern (C) bool gc_inFinalizer();
 }
 
-
 /**
  * This struct encapsulates all garbage collection functionality for the D
  * programming language.
  */
-struct GC
+export struct GC
 {
     @disable this();
 

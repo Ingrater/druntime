@@ -15,6 +15,8 @@ module rt.typeinfo.ti_Acreal;
 
 private import rt.util.typeinfo;
 
+export:
+
 // creal[]
 
 class TypeInfo_Ac : TypeInfo_Array

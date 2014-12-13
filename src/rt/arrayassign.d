@@ -22,7 +22,7 @@ private
 /**
  * Keep for backward binary compatibility. This function can be removed in the future.
  */
-extern (C) void[] _d_arrayassign(TypeInfo ti, void[] from, void[] to)
+extern (C) export void[] _d_arrayassign(TypeInfo ti, void[] from, void[] to)
 {
     debug(PRINTF) printf("_d_arrayassign(from = %p,%d, to = %p,%d) size = %d\n", from.ptr, from.length, to.ptr, to.length, ti.tsize);
 
@@ -44,7 +44,7 @@ extern (C) void[] _d_arrayassign(TypeInfo ti, void[] from, void[] to)
  *      src     Points source memory. Its .length is equal to the element count, not byte length.
  *      ptmp    Temporary memory for element swapping.
  */
-extern (C) void[] _d_arrayassign_l(TypeInfo ti, void[] src, void[] dst, void* ptmp)
+extern (C) export void[] _d_arrayassign_l(TypeInfo ti, void[] src, void[] dst, void* ptmp)
 {
     debug(PRINTF) printf("_d_arrayassign_l(src = %p,%d, dst = %p,%d) size = %d\n", src.ptr, src.length, dst.ptr, dst.length, ti.tsize);
 
@@ -136,7 +136,7 @@ unittest    // Bugzilla 14024
  *              It is always allocated on stack and never overlapping with dst.
  *      ptmp    Temporary memory for element swapping.
  */
-extern (C) void[] _d_arrayassign_r(TypeInfo ti, void[] src, void[] dst, void* ptmp)
+extern (C) export void[] _d_arrayassign_r(TypeInfo ti, void[] src, void[] dst, void* ptmp)
 {
     debug(PRINTF) printf("_d_arrayassign_r(src = %p,%d, dst = %p,%d) size = %d\n", src.ptr, src.length, dst.ptr, dst.length, ti.tsize);
 
@@ -162,7 +162,7 @@ extern (C) void[] _d_arrayassign_r(TypeInfo ti, void[] src, void[] dst, void* pt
  * array of the same element type.
  * ti is the element type.
  */
-extern (C) void[] _d_arrayctor(TypeInfo ti, void[] from, void[] to)
+extern (C) export void[] _d_arrayctor(TypeInfo ti, void[] from, void[] to)
 {
     debug(PRINTF) printf("_d_arrayctor(from = %p,%d, to = %p,%d) size = %d\n", from.ptr, from.length, to.ptr, to.length, ti.tsize);
 
@@ -200,7 +200,7 @@ extern (C) void[] _d_arrayctor(TypeInfo ti, void[] from, void[] to)
  * Do assignment to an array.
  *      p[0 .. count] = value;
  */
-extern (C) void* _d_arraysetassign(void* p, void* value, int count, TypeInfo ti)
+extern (C) export void* _d_arraysetassign(void* p, void* value, int count, TypeInfo ti)
 {
     void* pstart = p;
 
@@ -231,7 +231,7 @@ extern (C) void* _d_arraysetassign(void* p, void* value, int count, TypeInfo ti)
  * Do construction of an array.
  *      ti[count] p = value;
  */
-extern (C) void* _d_arraysetctor(void* p, void* value, int count, TypeInfo ti)
+extern (C) export void* _d_arraysetctor(void* p, void* value, int count, TypeInfo ti)
 {
     void* pstart = p;
     auto element_size = ti.tsize;

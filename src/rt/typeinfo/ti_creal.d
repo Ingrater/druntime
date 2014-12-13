@@ -15,6 +15,8 @@ module rt.typeinfo.ti_creal;
 
 private import rt.util.typeinfo;
 
+export:
+
 // creal
 
 class TypeInfo_c : TypeInfo

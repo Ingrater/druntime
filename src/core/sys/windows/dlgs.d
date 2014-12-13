@@ -12,6 +12,8 @@ version (Windows):
 
 private import core.sys.windows.windef;
 
+export:
+
 enum : ushort {
     FILEOPENORD      = 1536,
     MULTIFILEOPENORD = 1537,

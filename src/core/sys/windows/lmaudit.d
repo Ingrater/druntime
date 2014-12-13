@@ -12,6 +12,8 @@ version (Windows):
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 enum LOGFLAGS_FORWARD  = 0;
 enum LOGFLAGS_BACKWARD = 1;
 enum LOGFLAGS_SEEK     = 2;

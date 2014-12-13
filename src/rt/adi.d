@@ -38,7 +38,7 @@ private dchar[] mallocUTF32(C)(in C[] s)
  * Sort array of chars.
  */
 
-extern (C) char[] _adSortChar(char[] a)
+extern (C) export char[] _adSortChar(char[] a)
 {
     if (a.length > 1)
     {
@@ -60,7 +60,7 @@ extern (C) char[] _adSortChar(char[] a)
  * Sort array of wchars.
  */
 
-extern (C) wchar[] _adSortWchar(wchar[] a)
+extern (C) export wchar[] _adSortWchar(wchar[] a)
 {
     if (a.length > 1)
     {
@@ -85,7 +85,7 @@ extern (C) wchar[] _adSortWchar(wchar[] a)
  *      0       not equal
  */
 
-extern (C) int _adEq(void[] a1, void[] a2, TypeInfo ti)
+extern (C) export int _adEq(void[] a1, void[] a2, TypeInfo ti)
 {
     debug(adi) printf("_adEq(a1.length = %d, a2.length = %d)\n", a1.length, a2.length);
     if (a1.length != a2.length)
@@ -106,7 +106,7 @@ extern (C) int _adEq(void[] a1, void[] a2, TypeInfo ti)
     return 1; // equal
 }
 
-extern (C) int _adEq2(void[] a1, void[] a2, TypeInfo ti)
+extern (C) export int _adEq2(void[] a1, void[] a2, TypeInfo ti)
 {
     debug(adi) printf("_adEq2(a1.length = %d, a2.length = %d)\n", a1.length, a2.length);
     if (a1.length != a2.length)

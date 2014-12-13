@@ -13,6 +13,8 @@ version (Windows):
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 enum CHARDEVQ_NO_REQUESTS  = -1;
 enum CHARDEV_CLOSE         = 0;
 enum CHARDEVQ_MAX_PRIORITY = 1;

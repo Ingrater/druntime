@@ -16,6 +16,8 @@ import core.sys.windows.windows;
 
 public import core.sys.windows.dbghelp_types;
 
+export:
+
 extern(System)
 {
     alias BOOL         function(HANDLE hProcess, DWORD64 lpBaseAddress, PVOID lpBuffer, DWORD nSize, LPDWORD lpNumberOfBytesRead) ReadProcessMemoryProc64;

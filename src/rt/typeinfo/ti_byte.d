@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_byte;
 
+export:
+
 // byte
 
 class TypeInfo_g : TypeInfo

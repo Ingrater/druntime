@@ -13,6 +13,8 @@ version (Windows):
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 deprecated {
     struct CONFIG_INFO_0 {
         LPWSTR cfgi0_key;

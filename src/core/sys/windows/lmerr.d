@@ -11,6 +11,8 @@ version (Windows):
 
 import core.sys.windows.winerror;
 
+export:
+
 enum {
     NERR_Success                      = 0,
     NERR_BASE                         = 2100,

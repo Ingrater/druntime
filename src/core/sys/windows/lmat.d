@@ -12,6 +12,8 @@ pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 enum JOB_RUN_PERIODICALLY = 1;
 enum JOB_EXEC_ERROR       = 2;
 enum JOB_RUNS_TODAY       = 4;

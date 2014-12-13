@@ -13,6 +13,8 @@ pragma(lib, "user32");
 
 private import core.sys.windows.windef;
 
+export:
+
 enum : uint {
     WM_DDE_FIRST     = 0x03E0,
     WM_DDE_INITIATE  = WM_DDE_FIRST,

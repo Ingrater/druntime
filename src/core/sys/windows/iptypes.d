@@ -14,6 +14,8 @@ import core.sys.windows.windef;
 import core.stdc.time;
 //#include <sys/types.h>
 
+export:
+
 enum size_t
     DEFAULT_MINIMUM_ENTITIES       =  32,
     MAX_ADAPTER_ADDRESS_LENGTH     =   8,

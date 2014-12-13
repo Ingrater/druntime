@@ -12,6 +12,8 @@ version (Windows):
 
 private import core.sys.windows.w32api, core.sys.windows.windef;
 
+export:
+
 /*static assert (_WIN32_WINNT >= 0x500,
 "core.sys.windows.dhcpcsdk is available only if version Windows2000, WindowsXP, Windows2003
 or WindowsVista is set");*/

@@ -14,6 +14,8 @@ version (Windows):
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 private import core.sys.windows.lmaudit; // for LPHLOG
 
+export:
+
 enum ERRLOG_BASE=3100;
 enum ERRLOG2_BASE=5700;
 enum LOGFLAGS_FORWARD=0;

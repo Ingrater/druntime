@@ -18,6 +18,8 @@ private import core.sys.windows.objfwd;  // for LPSTREAM
 
 import core.sys.windows.prsht;
 
+export:
+
 enum COMCTL32_VERSION = 6;
 
 const TCHAR[]

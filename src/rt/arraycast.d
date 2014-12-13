@@ -19,7 +19,7 @@ module rt.arraycast;
 
 extern (C)
 
-@trusted nothrow
+@trusted nothrow export
 void[] _d_arraycast(size_t tsize, size_t fsize, void[] a)
 {
     auto length = a.length;

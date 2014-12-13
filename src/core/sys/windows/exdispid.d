@@ -10,6 +10,8 @@
 module core.sys.windows.exdispid;
 version (Windows):
 
+export:
+
 enum : int {
     DISPID_STATUSTEXTCHANGE = 102,
     DISPID_PROGRESSCHANGE   = 108,

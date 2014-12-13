@@ -8,7 +8,7 @@
  * Source:    $(DRUNTIMESRC core/_atomic.d)
  */
 
-module core.atomic;
+export module core.atomic;
 
 version( D_InlineAsm_X86 )
 {

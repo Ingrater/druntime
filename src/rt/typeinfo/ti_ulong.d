@@ -15,6 +15,8 @@ module rt.typeinfo.ti_ulong;
 
 private import rt.util.hash;
 
+export:
+
 // ulong
 
 class TypeInfo_m : TypeInfo

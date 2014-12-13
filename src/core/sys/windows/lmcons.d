@@ -14,6 +14,8 @@ version (ANSI) {} else version = Unicode;
 private import core.sys.windows.windef;
 private import core.sys.windows.lmerr; // for NERR_BASE
 
+export:
+
 const TCHAR[]
     MESSAGE_FILENAME = "NETMSG",
     OS2MSG_FILENAME = "BASE",

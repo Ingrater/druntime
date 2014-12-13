@@ -11,6 +11,8 @@ version (Windows):
 
 private import core.sys.windows.windef, core.sys.windows.basetsd;
 
+export:
+
 align(1) struct GUID {  // size is 16
     align(1):
     DWORD   Data1;

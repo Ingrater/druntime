@@ -14,6 +14,7 @@ import core.sys.windows.winbase, core.sys.windows.windef;
 private import core.sys.windows.basetyps, core.sys.windows.w32api;
 
 import core.sys.windows.winsock2;
+export:
 
 //static if (_WIN32_WINNT >= 0x500) {
     enum {

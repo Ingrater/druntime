@@ -32,7 +32,7 @@ private __gshared RtlCaptureStackBackTraceFunc RtlCaptureStackBackTrace;
 private __gshared immutable bool initialized;
 
 
-class StackTrace : Throwable.TraceInfo
+export class StackTrace : Throwable.TraceInfo
 {
 public:
     /**

@@ -21,6 +21,8 @@ version (Windows):
 
 private import core.sys.windows.windows;
 
+export:
+
 enum {
     HSE_VERSION_MAJOR               = 2,
     HSE_VERSION_MINOR               = 0,

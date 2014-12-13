@@ -18,6 +18,8 @@ pragma(lib, "winmm");
 
 private import core.sys.windows.w32api, core.sys.windows.windef, core.sys.windows.winver;
 
+export:
+
 align(1):
 
 enum MAXPNAMELEN = 32;

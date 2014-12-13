@@ -14,6 +14,8 @@ pragma(lib, "netapi32");
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;
 
+export:
+
 enum SUPPORTS_REMOTE_ADMIN_PROTOCOL =  2;
 enum SUPPORTS_RPC                   =  4;
 enum SUPPORTS_SAM_PROTOCOL          =  8;

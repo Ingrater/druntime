@@ -70,14 +70,14 @@ unittest
  *      The bit number of the first bit set.
  *      The return value is undefined if v is zero.
  */
-int bsf(uint v) pure
+int bsf(uint v) pure export
 {
     pragma(inline, false);  // so intrinsic detection will work
     return softBsf!uint(v);
 }
 
 /// ditto
-int bsf(ulong v) pure
+int bsf(ulong v) pure export
 {
     static if (size_t.sizeof == ulong.sizeof)  // 64 bit code gen
     {
@@ -118,14 +118,14 @@ unittest
  *      The bit number of the first bit set.
  *      The return value is undefined if v is zero.
  */
-int bsr(uint v) pure
+int bsr(uint v) pure export
 {
     pragma(inline, false);  // so intrinsic detection will work
     return softBsr!uint(v);
 }
 
 /// ditto
-int bsr(ulong v) pure
+int bsr(ulong v) pure export
 {
     static if (size_t.sizeof == ulong.sizeof)  // 64 bit code gen
     {
@@ -267,7 +267,7 @@ unittest
  * (No longer an intrisic - the compiler recognizes the patterns
  * in the body.)
  */
-int bt(in size_t* p, size_t bitnum) pure @system
+int bt(in size_t* p, size_t bitnum) pure @system export
 {
     static if (size_t.sizeof == 8)
         return ((p[bitnum >> 6] & (1L << (bitnum & 63)))) != 0;
@@ -363,7 +363,7 @@ int bts(size_t* p, size_t bitnum) pure @system;
  * This is more efficient than testing each bit in a sparsely populated bit
  * set. Note that the first bit in the bit set would be bit 0.
  */
-struct BitRange
+export struct BitRange
 {
     /// Number of bits in each size_t
     enum bitsPerWord = size_t.sizeof * 8;
@@ -505,7 +505,7 @@ uint bswap(uint v) pure;
  * Swaps bytes in an 8 byte ulong end-to-end, i.e. byte 0 becomes
  * byte 7, byte 1 becomes byte 6, etc.
  */
-ulong bswap(ulong v) pure
+ulong bswap(ulong v) pure export
 {
     auto sv = Split64(v);
 
@@ -558,7 +558,7 @@ version (DigitalMars) version (AnyX86) @system // not pure
 /**
  *  Calculates the number of set bits in an integer.
  */
-int popcnt(uint x) pure
+int popcnt(uint x) pure export
 {
     // Select the fastest method depending on the compiler and CPU architecture
     version(LDC)
@@ -597,7 +597,7 @@ unittest
 }
 
 /// ditto
-int popcnt(ulong x) pure
+int popcnt(ulong x) pure export
 {
     // Select the fastest method depending on the compiler and CPU architecture
     version(LDC)
@@ -794,7 +794,7 @@ void volatileStore(ulong * ptr, ulong  value);   /// ditto
  * Reverses the order of bits in a 32-bit integer.
  */
 pragma(inline, true)
-uint bitswap( uint x ) pure
+uint bitswap( uint x ) pure export
 {
     if (!__ctfe)
     {
@@ -828,7 +828,7 @@ unittest
  * Reverses the order of bits in a 64-bit integer.
  */
 pragma(inline, true)
-ulong bitswap ( ulong x ) pure
+ulong bitswap ( ulong x ) pure export
 {
     if (!__ctfe)
     {

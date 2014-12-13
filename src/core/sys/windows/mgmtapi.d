@@ -13,6 +13,8 @@ version (Windows):
 import core.sys.windows.snmp;
 private import core.sys.windows.windef;
 
+export:
+
 enum {
     SNMP_MGMTAPI_TIMEOUT = 40,
     SNMP_MGMTAPI_SELECT_FDERRORS,

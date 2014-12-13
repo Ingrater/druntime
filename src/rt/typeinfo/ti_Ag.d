@@ -19,6 +19,8 @@ private import core.internal.string;
 
 // byte[]
 
+export:
+
 class TypeInfo_Ag : TypeInfo_Array
 {
     override bool opEquals(Object o) { return TypeInfo.opEquals(o); }

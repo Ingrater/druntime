@@ -15,6 +15,8 @@ module rt.typeinfo.ti_Afloat;
 
 private import rt.util.typeinfo;
 
+export:
+
 // float[]
 
 class TypeInfo_Af : TypeInfo_Array

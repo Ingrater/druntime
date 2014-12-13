@@ -20,6 +20,8 @@ version (ANSI) {} else version = Unicode;
 
 private import core.sys.windows.winbase, core.sys.windows.windef;
 
+export:
+
 // FIXME: check types of constants
 
 enum API_VERSION_NUMBER = 7;

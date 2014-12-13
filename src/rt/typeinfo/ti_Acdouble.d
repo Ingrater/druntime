@@ -15,6 +15,8 @@ module rt.typeinfo.ti_Acdouble;
 
 private import rt.util.typeinfo;
 
+export:
+
 // cdouble[]
 
 class TypeInfo_Ar : TypeInfo_Array

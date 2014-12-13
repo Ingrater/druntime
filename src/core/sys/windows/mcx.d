@@ -12,6 +12,8 @@ version (Windows):
 
 private import core.sys.windows.windef;
 
+export:
+
 enum DWORD
     DIALOPTION_BILLING  =  64,
     DIALOPTION_QUIET    = 128,

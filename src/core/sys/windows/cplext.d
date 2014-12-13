@@ -10,6 +10,8 @@
 module core.sys.windows.cplext;
 version (Windows):
 
+export:
+
 enum : uint {
     CPLPAGE_MOUSE_BUTTONS      = 1,
     CPLPAGE_MOUSE_PTRMOTION    = 2,

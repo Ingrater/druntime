@@ -15,6 +15,8 @@ module rt.typeinfo.ti_ireal;
 
 private import rt.typeinfo.ti_real;
 
+export:
+
 // ireal
 
 class TypeInfo_j : TypeInfo_e
