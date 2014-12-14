@@ -2723,7 +2723,7 @@ export ATOM RegisterClassExA(in WNDCLASSEXA *lpWndClass);
 export ATOM RegisterClassW(in WNDCLASSW *lpWndClass);
 export ATOM RegisterClassExW(in WNDCLASSEXW *lpWndClass);
 
-/*export HWND CreateWindowExA(
+export HWND CreateWindowExA(
     DWORD dwExStyle,
     LPCSTR lpClassName,
     LPCSTR lpWindowName,
@@ -2784,7 +2784,7 @@ HWND CreateWindowW(
     LPVOID lpParam)
 {
     return CreateWindowExW(0, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
-}*/
+}
 
 export BOOL DestroyWindow(HWND hWnd);
 export BOOL SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
