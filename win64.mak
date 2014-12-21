@@ -27,11 +27,11 @@ DRUNTIME=lib\$(DRUNTIME_BASE).lib
 DRUNTIME_SHARED=lib\$(DRUNTIME_BASE)s.lib
 DRUNTIME_SHARED_DLL=lib\$(DRUNTIME_BASE)s.dll
 GCSTUB=lib\gcstub$(MODEL).obj
-DLLFIXUP=lib\dllfixup$(MODEL).obj
+DLLFIXUP=lib\dllfixup$(MODEL).lib
 
 DOCFMT=
 
-target : import copydir copy $(DRUNTIME) $(GCSTUB)
+target : import copydir copy $(DRUNTIME) $(GCSTUB) $(DRUNTIME_SHARED)
 
 $(mak\COPY)
 $(mak\DOCS)
@@ -547,7 +547,7 @@ $(GCSTUB) : src\gcstub\gc.d win64.mak
 ################### dllfixup generation #########################
 
 $(DLLFIXUP) : src\core\sys\windows\dllfixup.d win64.mak
-	$(DMD) -c -of$(DLLFIXUP) src\core\sys\windows\dllfixup.d $(DFLAGS)
+	$(DMD) -of$(DLLFIXUP) src\core\sys\windows\dllfixup.d $(DFLAGS) -lib
 
 ################### Library generation #########################
 
@@ -556,6 +556,7 @@ $(DRUNTIME): $(OBJS) $(SRCS) win64.mak
 	
 $(DRUNTIME_SHARED) : $(OBJS) $(DLLFIXUP) $(SRCS) src\core\sys\windows\dllmain.d win64.mak
 	$(DMD) -exportall -of$(DRUNTIME_SHARED_DLL) $(DFLAGS) $(SRCS) src\core\sys\windows\dllmain.d $(OBJS) $(DLLFIXUP) -L/DLL -L/IMPLIB:$(DRUNTIME_SHARED) user32.lib
+	$(AR) /OUT:$(DRUNTIME_SHARED) $(DRUNTIME_SHARED) $(DLLFIXUP)
 
 unittest : $(SRCS) $(DRUNTIME) src\unittest.d
 	$(DMD) $(UDFLAGS) -version=druntime_unittest -unittest src\unittest.d $(SRCS) $(DRUNTIME) -debuglib=$(DRUNTIME) -defaultlib=$(DRUNTIME) user32.lib

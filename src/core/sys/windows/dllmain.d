@@ -11,7 +11,7 @@ BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
   {
     case DLL_PROCESS_ATTACH:
       printf("druntime loaded\n");
-      fixupDataSymbols();
+      _d_dll_fixup();
       break;
     case DLL_PROCESS_DETACH:
       printf("druntime unloaded\n");

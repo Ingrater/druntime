@@ -14,7 +14,7 @@ extern(C)
   extern __gshared void* _dllra_end;
 }
 
-void fixupDataSymbols()
+extern(C) void _d_dll_fixup()
 {
   void** begin = &_dllra_beg;
   void** end = &_dllra_end;
