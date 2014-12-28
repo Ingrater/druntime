@@ -527,6 +527,9 @@ $(IMPDIR)\core\sys\windows\windows.d : src\core\sys\windows\windows.d
 
 $(IMPDIR)\core\sys\windows\winsock2.d : src\core\sys\windows\winsock2.d
 	copy $** $@
+	
+$(IMPDIR)\core\sys\windows\dllfixup.d : src\core\sys\windows\dllfixup.d
+	copy $** $@
 
 $(IMPDIR)\etc\linux\memoryerror.d : src\etc\linux\memoryerror.d
 	copy $** $@
@@ -555,7 +558,7 @@ $(DRUNTIME): $(OBJS) $(SRCS) win64.mak
 	$(DMD) -lib -of$(DRUNTIME) -Xfdruntime.json $(DFLAGS) $(SRCS) $(OBJS)
 	
 $(DRUNTIME_SHARED) : $(OBJS) $(DLLFIXUP) $(SRCS) src\core\sys\windows\dllmain.d win64.mak
-	$(DMD) -exportall -of$(DRUNTIME_SHARED_DLL) $(DFLAGS) $(SRCS) src\core\sys\windows\dllmain.d $(OBJS) $(DLLFIXUP) -L/DLL -L/IMPLIB:$(DRUNTIME_SHARED) user32.lib
+	$(DMD) -exportall -of$(DRUNTIME_SHARED_DLL) -version=Shared $(DFLAGS) $(SRCS) src\core\sys\windows\dllmain.d $(OBJS) $(DLLFIXUP) -L/DLL -L/IMPLIB:$(DRUNTIME_SHARED) user32.lib
 	$(AR) /OUT:$(DRUNTIME_SHARED) $(DRUNTIME_SHARED) $(DLLFIXUP)
 
 unittest : $(SRCS) $(DRUNTIME) src\unittest.d

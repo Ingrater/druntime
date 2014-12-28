@@ -12,23 +12,48 @@
 
 module rt.sections_win64;
 
-version(CRuntime_Microsoft):
+version(Win64):
 
 // debug = PRINTF;
 debug(PRINTF) import core.stdc.stdio;
 import core.stdc.stdlib : malloc, free;
 import rt.deh, rt.minfo;
+import rt.util.container.array;
 
 struct SectionGroup
 {
     static int opApply(scope int delegate(ref SectionGroup) dg)
     {
-        return dg(_sections);
+        version(Shared)
+        {
+            foreach (ref section; _sections)
+            {
+                if (auto res = dg(section))
+                    return res;
+            }
+            return 0;
+        }
+        else
+        {
+            return dg(_sections);
+        }
     }
 
     static int opApplyReverse(scope int delegate(ref SectionGroup) dg)
     {
-        return dg(_sections);
+        version(Shared)
+        {
+            foreach_reverse (ref section; _sections)
+            {
+                if (auto res = dg(section))
+                    return res;
+            }
+            return 0;
+        }
+        else
+        {
+            return dg(_sections);
+        }
     }
 
     @property immutable(ModuleInfo*)[] modules() const
@@ -41,12 +66,18 @@ struct SectionGroup
         return _moduleGroup;
     }
 
-    version(Win64)
     @property immutable(FuncTable)[] ehTables() const
     {
-        auto pbeg = cast(immutable(FuncTable)*)&_deh_beg;
-        auto pend = cast(immutable(FuncTable)*)&_deh_end;
-        return pbeg[0 .. pend - pbeg];
+        version(Shared)
+        {
+            return _ehTables;
+        }
+        else
+        {
+            auto pbeg = cast(immutable(FuncTable)*)&_deh_beg;
+            auto pend = cast(immutable(FuncTable)*)&_deh_end;
+            return pbeg[0 .. pend - pbeg];
+        }
     }
 
     @property inout(void[])[] gcRanges() inout
@@ -57,48 +88,128 @@ struct SectionGroup
 private:
     ModuleGroup _moduleGroup;
     void[][1] _gcRanges;
+    
+    version(Shared)
+    {
+        void* _hModule;
+        void[] function() _getTlsRange;
+        immutable(FuncTable)[] _ehTables;
+    }
 }
 
-void initSections()
-{
-    _sections._moduleGroup = ModuleGroup(getModuleInfos());
+alias ScanDG = void delegate(void* pbeg, void* pend) nothrow;
 
-    auto pbeg = cast(void*)&__xc_a;
-    auto pend = cast(void*)&_deh_beg;
-    _sections._gcRanges[0] = pbeg[0 .. pend - pbeg];
+version (Shared)
+{    
+    /**
+     * Per thread per Dll Tls Data
+     **/
+    struct ThreadDllTlsData
+    {
+        void* _hModule;
+        void[] _tlsRange;
+    }
+    Array!(ThreadDllTlsData) _tlsRanges;
+    
+    void initSections()
+    {
+        SectionGroup druntimeSections;
+        druntimeSections._moduleGroup = ModuleGroup(getModuleInfos(&_minfo_beg, &_minfo_end));
+
+        {
+            auto pbeg = cast(void*)&__xc_a;
+            auto pend = cast(void*)&_deh_beg;
+            druntimeSections._gcRanges[0] = pbeg[0 .. pend - pbeg]; 
+        }
+        
+        {
+            auto pbeg = cast(immutable(FuncTable)*)&_deh_beg;
+            auto pend = cast(immutable(FuncTable)*)&_deh_end;
+            druntimeSections._ehTables = pbeg[0 .. pend - pbeg];
+        }
+
+        _sections.insertBack(druntimeSections);
+    }
+    
+    void finiSections()
+    {
+        foreach(ref section; _sections)
+            .free(cast(void*)section.modules.ptr);
+        _sections.reset();
+    }
+    
+    Array!(ThreadDllTlsData)* initTLSRanges()
+    {
+        auto pbeg = cast(void*)&_tls_start;
+        auto pend = cast(void*)&_tls_end;
+        _tlsRanges.insertBack(ThreadDllTlsData(null, pbeg[0 .. pend - pbeg]));       
+
+        // iterate over all already loaded dlls and insert their TLS sections as well.
+        // The executable is treated as a dll.
+        foreach(ref section; _sections)
+        {
+            _tlsRanges.insertBack(ThreadDllTlsData(section._hModule, section._getTlsRange()));
+        }
+        
+        return &_tlsRanges;
+    }
+
+    void finiTLSRanges(Array!(ThreadDllTlsData)* tlsRanges)
+    {
+        _tlsRanges.reset();
+    }
+    
+    void scanTLSRanges(Array!(ThreadDllTlsData)* tlsRanges, scope ScanDG dg) nothrow
+    {
+        foreach (ref r; *tlsRanges)
+            dg(r._tlsRange.ptr, r._tlsRange.ptr + r._tlsRange.length);
+    }
+
+    private __gshared Array!(SectionGroup) _sections;
 }
-
-void finiSections()
+else
 {
-    .free(cast(void*)_sections.modules.ptr);
-}
+    void initSections()
+    {
+        _sections._moduleGroup = ModuleGroup(getModuleInfos(_minfo_beg, _minfo_end));
 
-void[] initTLSRanges()
-{
-    auto pbeg = cast(void*)&_tls_start;
-    auto pend = cast(void*)&_tls_end;
-    return pbeg[0 .. pend - pbeg];
-}
+        auto pbeg = cast(void*)&__xc_a;
+        auto pend = cast(void*)&_deh_beg;
+        _sections._gcRanges[0] = pbeg[0 .. pend - pbeg];
+    }
 
-void finiTLSRanges(void[] rng)
-{
-}
+    void finiSections()
+    {
+        .free(cast(void*)_sections.modules.ptr);
+    }
 
-void scanTLSRanges(void[] rng, scope void delegate(void* pbeg, void* pend) nothrow dg) nothrow
-{
-    dg(rng.ptr, rng.ptr + rng.length);
+    void[] initTLSRanges()
+    {
+        auto pbeg = cast(void*)&_tls_start;
+        auto pend = cast(void*)&_tls_end;
+        return pbeg[0 .. pend - pbeg];
+    }
+
+    void finiTLSRanges(void[] rng)
+    {
+    }
+
+    void scanTLSRanges(void[] rng, scope ScanDG dg) nothrow
+    {
+        dg(rng.ptr, rng.ptr + rng.length);
+    }
+    
+    private __gshared SectionGroup _sections;
 }
 
 private:
-__gshared SectionGroup _sections;
-
 extern(C)
 {
     extern __gshared void* _minfo_beg;
     extern __gshared void* _minfo_end;
 }
 
-immutable(ModuleInfo*)[] getModuleInfos()
+immutable(ModuleInfo*)[] getModuleInfos(void* pminfo_beg, void* pminfo_end)
 out (result)
 {
     foreach(m; result)
@@ -106,7 +217,7 @@ out (result)
 }
 body
 {
-    auto m = (cast(immutable(ModuleInfo*)*)&_minfo_beg)[1 .. &_minfo_end - &_minfo_beg];
+    auto m = (cast(immutable(ModuleInfo*)*)pminfo_beg)[1 .. cast(void**)pminfo_end - cast(void**)pminfo_beg];
     /* Because of alignment inserted by the linker, various null pointers
      * are there. We need to filter them out.
      */
@@ -150,4 +261,30 @@ extern(C)
         int _tls_start;
         int _tls_end;
     }
+}
+
+version(Shared)
+{
+public:
+  extern(C) void _d_dll_registry(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p_xc_a, void[] function() getTlsRange)
+  {
+        if(pminfo_beg is cast(void*)&_minfo_beg)
+          return;
+        SectionGroup dllSection;
+        dllSection._moduleGroup = ModuleGroup(getModuleInfos(pminfo_beg, pminfo_end));
+
+        {
+            auto pbeg = cast(void*)&__xc_a;
+            auto pend = cast(void*)&_deh_beg;
+            dllSection._gcRanges[0] = pbeg[0 .. pend - pbeg]; 
+        }
+        
+        {
+            auto pbeg = cast(immutable(FuncTable)*)&_deh_beg;
+            auto pend = cast(immutable(FuncTable)*)&_deh_end;
+            dllSection._ehTables = pbeg[0 .. pend - pbeg];
+        }
+
+        _sections.insertBack(dllSection);    
+  }
 }
