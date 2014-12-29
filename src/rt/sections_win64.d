@@ -92,7 +92,7 @@ private:
     version(Shared)
     {
         void* _hModule;
-        void[] function() _getTlsRange;
+        extern(C) void[] function() _getTlsRange;
         immutable(FuncTable)[] _ehTables;
     }
 }
@@ -148,7 +148,8 @@ version (Shared)
         // The executable is treated as a dll.
         foreach(ref section; _sections)
         {
-            _tlsRanges.insertBack(ThreadDllTlsData(section._hModule, section._getTlsRange()));
+            if(section._getTlsRange !is null)
+                _tlsRanges.insertBack(ThreadDllTlsData(section._hModule, section._getTlsRange()));
         }
         
         return &_tlsRanges;
@@ -272,6 +273,7 @@ public:
           return;
         SectionGroup dllSection;
         dllSection._moduleGroup = ModuleGroup(getModuleInfos(pminfo_beg, pminfo_end));
+        dllSection._getTlsRange = getTlsRange;
 
         {
             auto pbeg = cast(void*)&__xc_a;
