@@ -266,7 +266,7 @@ extern(C)
 
 version(Shared)
 {
-public:
+export:
   extern(C) void _d_dll_registry(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p_xc_a, void[] function() getTlsRange)
   {
         if(pminfo_beg is cast(void*)&_minfo_beg)

@@ -35,6 +35,8 @@ private
     extern (C) void rt_finalize(void *data, bool det=true);
 }
 
+export:
+
 // NOTE: For some reason, this declaration method doesn't work
 //       in this particular file (and this file only).  It must
 //       be a DMD thing.

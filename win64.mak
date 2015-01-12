@@ -558,7 +558,7 @@ $(DRUNTIME): $(OBJS) $(SRCS) win64.mak
 	$(DMD) -lib -of$(DRUNTIME) -Xfdruntime.json $(DFLAGS) $(SRCS) $(OBJS)
 	
 $(DRUNTIME_SHARED) : $(OBJS) $(DLLFIXUP) $(SRCS) src\core\sys\windows\dllmain.d win64.mak
-	$(DMD) -exportall -of$(DRUNTIME_SHARED_DLL) -version=Shared -shared $(DFLAGS) $(SRCS) src\core\sys\windows\dllmain.d -defaultlib="LIBCMT" $(OBJS) $(DLLFIXUP) -L/IMPLIB:$(DRUNTIME_SHARED) user32.lib
+	$(DMD) -of$(DRUNTIME_SHARED_DLL) -version=Shared -shared $(DFLAGS) $(SRCS) src\core\sys\windows\dllmain.d -defaultlib="LIBCMT" $(OBJS) $(DLLFIXUP) -L/IMPLIB:$(DRUNTIME_SHARED) user32.lib
 	$(AR) /OUT:$(DRUNTIME_SHARED) $(DRUNTIME_SHARED) $(DLLFIXUP)
 
 unittest : $(SRCS) $(DRUNTIME) src\unittest.d

@@ -234,7 +234,7 @@ extern (C) CArgs rt_cArgs()
  */
 private alias extern(C) int function(char[][] args) MainFunc;
 
-extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
+export extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
 {
     // Remember the original C argc/argv
     _cArgs.argc = argc;
