@@ -15,6 +15,8 @@ module rt.typeinfo.ti_long;
 
 private import rt.util.hash;
 
+export:
+
 // long
 
 class TypeInfo_l : TypeInfo

@@ -276,14 +276,16 @@ export:
         dllSection._getTlsRange = getTlsRange;
 
         {
-            auto pbeg = cast(void*)&__xc_a;
-            auto pend = cast(void*)&_deh_beg;
+            auto pbeg = cast(void*)p_xc_a;
+            auto pend = cast(void*)pdeh_beg;
+            import core.stdc.stdio : printf;
+            printf("new GC Range %016llX - %016llX\n", pbeg, pend);
             dllSection._gcRanges[0] = pbeg[0 .. pend - pbeg]; 
         }
         
         {
-            auto pbeg = cast(immutable(FuncTable)*)&_deh_beg;
-            auto pend = cast(immutable(FuncTable)*)&_deh_end;
+            auto pbeg = cast(immutable(FuncTable)*)pdeh_beg;
+            auto pend = cast(immutable(FuncTable)*)pdeh_end;
             dllSection._ehTables = pbeg[0 .. pend - pbeg];
         }
 

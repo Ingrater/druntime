@@ -20,7 +20,9 @@ extern(C) void _d_dll_fixup()
 {
   void** begin = &_dllra_beg;
   void** end = &_dllra_end;
-  for(void** outer = begin; outer < end; outer += 2)
+  void** outer = begin;
+  while(outer < end && *outer is null) outer++; // skip leading 0s
+  for(; outer < end; outer += 2)
   {
     if(*outer !is null) // skip any padding
     {

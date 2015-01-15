@@ -211,7 +211,7 @@ struct OffsetTypeInfo
  * Can be retrieved for any type using a
  * <a href="../expression.html#typeidexpression">TypeidExpression</a>.
  */
-class TypeInfo
+export class TypeInfo
 {
     override string toString() const pure @safe nothrow
     {
@@ -962,7 +962,7 @@ class TypeInfo_Interface : TypeInfo
     TypeInfo_Class info;
 }
 
-class TypeInfo_Struct : TypeInfo
+export class TypeInfo_Struct : TypeInfo
 {
     override string toString() const { return name; }
 

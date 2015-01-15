@@ -18,6 +18,8 @@ private import rt.util.hash;
 
 extern (C) void[] _adSort(void[] a, TypeInfo ti);
 
+export:
+
 // int[]
 
 class TypeInfo_Ai : TypeInfo_Array

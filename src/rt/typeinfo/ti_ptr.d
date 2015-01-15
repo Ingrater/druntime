@@ -13,6 +13,8 @@
  */
 module rt.typeinfo.ti_ptr;
 
+export:
+
 // pointer
 
 class TypeInfo_P : TypeInfo

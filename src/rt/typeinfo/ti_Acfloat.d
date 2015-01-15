@@ -15,6 +15,8 @@ module rt.typeinfo.ti_Acfloat;
 
 private import rt.util.typeinfo;
 
+export:
+
 // cfloat[]
 
 class TypeInfo_Aq : TypeInfo_Array

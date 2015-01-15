@@ -16,6 +16,8 @@ module rt.typeinfo.ti_Along;
 private import core.stdc.string;
 private import rt.util.hash;
 
+export:
+
 // long[]
 
 class TypeInfo_Al : TypeInfo_Array

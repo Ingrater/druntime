@@ -15,6 +15,8 @@ module rt.typeinfo.ti_cfloat;
 
 private import rt.util.typeinfo;
 
+export:
+
 // cfloat
 
 class TypeInfo_q : TypeInfo

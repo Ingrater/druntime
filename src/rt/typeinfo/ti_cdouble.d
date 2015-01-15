@@ -15,6 +15,8 @@ module rt.typeinfo.ti_cdouble;
 
 private import rt.util.typeinfo;
 
+export:
+
 // cdouble
 
 class TypeInfo_r : TypeInfo
