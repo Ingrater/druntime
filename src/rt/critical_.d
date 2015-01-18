@@ -89,7 +89,7 @@ version( Windows )
     static __gshared D_CRITICAL_SECTION critical_section;
     static __gshared int inited;
 
-    extern (C) void _d_criticalenter(D_CRITICAL_SECTION *dcs)
+    extern (C) export void _d_criticalenter(D_CRITICAL_SECTION *dcs)
     {
         if (!dcs_list)
         {
@@ -111,7 +111,7 @@ version( Windows )
         EnterCriticalSection(&dcs.cs);
     }
 
-    extern (C) void _d_criticalexit(D_CRITICAL_SECTION *dcs)
+    extern (C) export void _d_criticalexit(D_CRITICAL_SECTION *dcs)
     {
         debug(PRINTF) printf("_d_criticalexit(dcs = x%x)\n", dcs);
         LeaveCriticalSection(&dcs.cs);

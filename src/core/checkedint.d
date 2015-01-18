@@ -32,6 +32,7 @@ nothrow:
 @safe:
 @nogc:
 pure:
+export:
 
 /*******************************
  * Add two signed integers, checking for overflow.

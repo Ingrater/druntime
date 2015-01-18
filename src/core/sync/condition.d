@@ -53,7 +53,7 @@ else
  * indicate that control is not transferred to the waiter when a notification
  * is sent.
  */
-class Condition
+export class Condition
 {
     ////////////////////////////////////////////////////////////////////////////
     // Initialization

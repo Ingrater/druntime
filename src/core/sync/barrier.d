@@ -42,7 +42,7 @@ else version( Posix )
  * This class represents a barrier across which threads may only travel in
  * groups of a specific size.
  */
-class Barrier
+export class Barrier
 {
     ////////////////////////////////////////////////////////////////////////////
     // Initialization

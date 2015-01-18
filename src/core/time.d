@@ -93,6 +93,8 @@ import core.sys.posix.time;
 import core.sys.posix.sys.time;
 }
 
+export:
+
 //This probably should be moved somewhere else in druntime which
 //is OSX-specific.
 version(OSX)
@@ -3896,6 +3898,7 @@ private:
     int _hnsecs;
 }
 
+export:
 
 /++
     Exception type used by core.time.

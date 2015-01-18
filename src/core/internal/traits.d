@@ -8,6 +8,8 @@
  */
 module core.internal.traits;
 
+export:
+
 /// taken from std.typetuple.TypeTuple
 template TypeTuple(TList...)
 {

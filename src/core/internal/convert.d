@@ -10,6 +10,8 @@
 module core.internal.convert;
 import core.internal.traits : Unqual;
 
+export:
+
 @trusted pure nothrow
 const(ubyte)[] toUbyte(T)(ref T val) if(is(Unqual!T == float) || is(Unqual!T == double) || is(Unqual!T == real) ||
                                         is(Unqual!T == ifloat) || is(Unqual!T == idouble) || is(Unqual!T == ireal))

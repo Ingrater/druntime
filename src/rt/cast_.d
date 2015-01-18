@@ -14,6 +14,7 @@
 module rt.cast_;
 
 extern (C):
+export:
 
 /******************************************
  * Given a pointer:

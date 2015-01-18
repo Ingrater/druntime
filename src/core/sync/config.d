@@ -15,6 +15,7 @@
  */
 module core.sync.config;
 
+export:
 
 version( Posix )
 {

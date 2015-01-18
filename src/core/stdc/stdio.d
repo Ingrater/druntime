@@ -423,11 +423,11 @@ version( CRuntime_DigitalMars )
 
     private extern shared FILE[_NFILE] _iob;
 
-    shared stdin  = &_iob[0];
-    shared stdout = &_iob[1];
-    shared stderr = &_iob[2];
-    shared stdaux = &_iob[3];
-    shared stdprn = &_iob[4];
+    export shared stdin  = &_iob[0];
+    export shared stdout = &_iob[1];
+    export shared stderr = &_iob[2];
+    export shared stdaux = &_iob[3];
+    export shared stdprn = &_iob[4];
 }
 else version( CRuntime_Microsoft )
 {
@@ -453,9 +453,9 @@ else version( CRuntime_Microsoft )
 
     shared(FILE)* __iob_func();
 
-    shared FILE* stdin;  // = &__iob_func()[0];
-    shared FILE* stdout; // = &__iob_func()[1];
-    shared FILE* stderr; // = &__iob_func()[2];
+    export shared FILE* stdin;  // = &__iob_func()[0];
+    export shared FILE* stdout; // = &__iob_func()[1];
+    export shared FILE* stderr; // = &__iob_func()[2];
 }
 else version( linux )
 {
@@ -714,7 +714,7 @@ else version( CRuntime_Microsoft )
     int _filbuf(FILE *fp);
     int _flsbuf(int c, FILE *fp);
 
-    int _fputc_nolock(int c, FILE *fp)
+    export int _fputc_nolock(int c, FILE *fp)
     {
         fp._cnt = fp._cnt - 1;
         if (fp._cnt >= 0)
@@ -727,7 +727,7 @@ else version( CRuntime_Microsoft )
             return _flsbuf(c, fp);
     }
 
-    int _fgetc_nolock(FILE *fp)
+    export int _fgetc_nolock(FILE *fp)
     {
         fp._cnt = fp._cnt - 1;
         if (fp._cnt >= 0)

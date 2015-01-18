@@ -57,7 +57,7 @@ else
  * with "notify" to indicate that control is not transferred to the waiter when
  * a notification is sent.
  */
-class Semaphore
+export class Semaphore
 {
     ////////////////////////////////////////////////////////////////////////////
     // Initialization

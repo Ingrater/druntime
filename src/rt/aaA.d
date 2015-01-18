@@ -120,6 +120,7 @@ size_t aligntsize(in size_t tsize) @safe pure nothrow @nogc
 }
 
 extern (C):
+export:
 
 /****************************************************
  * Determine number of entries in associative array.
@@ -254,7 +255,7 @@ pure nothrow unittest
  * Get pointer to value in associative array indexed by key.
  * Returns null if it is not already there.
  */
-inout(void)* _aaGetRvalueX(inout AA aa, in TypeInfo keyti, in size_t valuesize, in void* pkey)
+export inout(void)* _aaGetRvalueX(inout AA aa, in TypeInfo keyti, in size_t valuesize, in void* pkey)
 {
     return _aaInX(aa, keyti, pkey);
 }
@@ -266,7 +267,7 @@ inout(void)* _aaGetRvalueX(inout AA aa, in TypeInfo keyti, in size_t valuesize, 
  *      null    not in aa
  *      !=null  in aa, return pointer to value
  */
-inout(void)* _aaInX(inout AA aa, in TypeInfo keyti, in void* pkey)
+export inout(void)* _aaInX(inout AA aa, in TypeInfo keyti, in void* pkey)
 in
 {
 }

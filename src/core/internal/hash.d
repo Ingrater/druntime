@@ -11,6 +11,8 @@ module core.internal.hash;
 
 import core.internal.convert;
 
+export:
+
 //enum hash. CTFE depends on base type
 size_t hashOf(T)(auto ref T val, size_t seed = 0) if (is(T == enum))
 {

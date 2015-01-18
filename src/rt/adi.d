@@ -26,6 +26,8 @@ private
     extern (C) void[] _adSort(void[] a, TypeInfo ti);
 }
 
+export:
+
 
 /**********************************************
  * Reverse array of chars.
