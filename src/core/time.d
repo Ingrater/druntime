@@ -1582,7 +1582,7 @@ public:
     }
 
 
-private:
+package:
 
     /+
         Since we have two versions of toString, we have _toStringImpl
@@ -2435,14 +2435,14 @@ struct TickDuration
        $(D TickDuration) is not going to work. That would be highly abnormal
        though.
       +/
-    static immutable long ticksPerSec;
+    __gshared immutable long ticksPerSec;
 
 
     /++
         The tick of the system clock (as a $(D TickDuration)) when the
         application started.
       +/
-    static immutable TickDuration appOrigin;
+    __gshared immutable TickDuration appOrigin;
 
 
     static @property @safe pure nothrow @nogc
@@ -3756,7 +3756,9 @@ public:
     }
 
 
-private:
+// can't use private here because these functions might be used from
+// template instances instanciated from other dll's / the executable.
+package:
 
     /+
         Since we have two versions of $(D toString), we have $(D _toStringImpl)

@@ -694,7 +694,7 @@ else version( CRuntime_DigitalMars )
 else version( CRuntime_Microsoft )
 {
   // No unsafe pointer manipulation.
-  extern (D) @trusted
+  extern (D) @trusted export
   {
     void rewind(FILE* stream)   { fseek(stream,0L,SEEK_SET); stream._flag = stream._flag & ~_IOERR; }
     pure void clearerr(FILE* stream) { stream._flag = stream._flag & ~(_IOERR|_IOEOF);                 }

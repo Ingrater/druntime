@@ -95,7 +95,7 @@ else version(D_InlineAsm_X86_64)
     version = InlineAsm_X86_Any;
 }
 
-public:
+export:
 
 /// Cache size and behaviour
 struct CacheInfo
@@ -115,7 +115,7 @@ struct CacheInfo
     uint lineSize;
 }
 
-public:
+export:
     /// $(RED Scheduled for deprecation. Please use $(D dataCaches) instead.)
     // Note: When we deprecate it, we simply make it private.
     __gshared CacheInfo[5] datacache;
