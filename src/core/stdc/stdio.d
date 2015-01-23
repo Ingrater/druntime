@@ -456,6 +456,14 @@ else version( CRuntime_Microsoft )
     export shared FILE* stdin;  // = &__iob_func()[0];
     export shared FILE* stdout; // = &__iob_func()[1];
     export shared FILE* stderr; // = &__iob_func()[2];
+    
+    void _d_init_std_streams()
+    {
+        auto fp = __iob_func();
+        stdin = &fp[0];
+        stdout = &fp[1];
+        stderr = &fp[2];
+    }
 }
 else version( linux )
 {

@@ -268,10 +268,7 @@ export extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
     }
     version (CRuntime_Microsoft)
     {
-        auto fp = __iob_func();
-        stdin = &fp[0];
-        stdout = &fp[1];
-        stderr = &fp[2];
+        _d_init_std_streams();
 
         // ensure that sprintf generates only 2 digit exponent when writing floating point values
         _set_output_format(_TWO_DIGIT_EXPONENT);

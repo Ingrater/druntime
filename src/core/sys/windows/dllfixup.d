@@ -28,7 +28,7 @@ extern(C) void _d_dll_fixup()
     {
       void** address = *cast(void***)outer;
       size_t offset = *cast(size_t*)(outer+1);
-      printf("patching %llx to %llx (offset %d)\n", address, (**cast(void***)address), offset);
+      debug(PRINTF) printf("patching %llx to %llx (offset %d)\n", address, (**cast(void***)address), offset);
       *address = (**cast(void***)address) + offset;
     }
   }

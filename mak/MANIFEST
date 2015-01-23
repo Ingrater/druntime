@@ -166,7 +166,6 @@ MANIFEST=\
 	src\core\sys\windows\threadaux.d \
 	src\core\sys\windows\windows.d \
 	src\core\sys\windows\winsock2.d \
-	src\core\sys\windows\dllmain.d \
 	src\core\sys\windows\dllfixup.d \
 	\
 	src\gc\gc.d \
@@ -202,6 +201,7 @@ MANIFEST=\
 	src\rt\deh_win32.d \
 	src\rt\deh_win64_posix.d \
 	src\rt\dmain2.d \
+	src\rt\dllmain.d \
 	src\rt\dylib_fixes.c \
 	src\rt\invariant.d \
 	src\rt\lifetime.d \
