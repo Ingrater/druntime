@@ -111,6 +111,11 @@ version (Shared)
     }
     Array!(ThreadDllTlsData) _tlsRanges;
     
+    /****
+    * Boolean flag set to true while the runtime is initialized.
+    */
+    __gshared bool _isRuntimeInitialized;
+    
     void initSections()
     {
         SectionGroup druntimeSections;
@@ -129,6 +134,7 @@ version (Shared)
         }
 
         _sections.insertBack(druntimeSections);
+        _isRuntimeInitialized = true;
     }
     
     void finiSections()
@@ -136,6 +142,7 @@ version (Shared)
         foreach(ref section; _sections)
             .free(cast(void*)section.modules.ptr);
         _sections.reset();
+        _isRuntimeInitialized = false;
     }
     
     Array!(ThreadDllTlsData)* initTLSRanges()
@@ -290,5 +297,17 @@ export:
         }
 
         _sections.insertBack(dllSection);    
+        
+        if(_isRuntimeInitialized)
+        {
+            // Add tls range
+            if(dllSection._getTlsRange !is null)
+                _tlsRanges.insertBack(ThreadDllTlsData(dllSection._hModule, dllSection._getTlsRange()));
+        
+            // Run Module Constructors
+            dllSection._moduleGroup.sortCtors();
+            dllSection._moduleGroup.runCtors();
+            dllSection._moduleGroup.runTlsCtors();
+        }
   }
 }

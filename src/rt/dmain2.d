@@ -81,26 +81,12 @@ version (Windows)
      */
     extern (C) void* rt_loadLibrary(const char* name)
     {
-        return initLibrary(.LoadLibraryA(name));
+        return .LoadLibraryA(name);
     }
 
     extern (C) void* rt_loadLibraryW(const wchar_t* name)
     {
-        return initLibrary(.LoadLibraryW(name));
-    }
-
-    void* initLibrary(void* mod)
-    {
-        // BUG: LoadLibrary() call calls rt_init(), which fails if proxy is not set!
-        // (What? LoadLibrary() is a Windows API call, it shouldn't call rt_init().)
-        if (mod is null)
-            return mod;
-        gcSetFn gcSet = cast(gcSetFn) GetProcAddress(mod, "gc_setProxy");
-        if (gcSet !is null)
-        {   // BUG: Set proxy, but too late
-            gcSet(gc_getProxy());
-        }
-        return mod;
+        return .LoadLibraryW(name);
     }
 
     /*************************************
@@ -113,9 +99,6 @@ version (Windows)
      */
     extern (C) int rt_unloadLibrary(void* ptr)
     {
-        gcClrFn gcClr  = cast(gcClrFn) GetProcAddress(ptr, "gc_clrProxy");
-        if (gcClr !is null)
-            gcClr();
         return FreeLibrary(ptr) != 0;
     }
 }
