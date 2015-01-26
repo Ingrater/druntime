@@ -47,14 +47,19 @@ version( Windows )
             extern __gshared int   _tls_index;
         }
     }
-
+    
+private:
     extern (C) // rt.minfo
     {
         void rt_moduleTlsCtor();
         void rt_moduleTlsDtor();
     }
+    
+    version(Win64)
+    {
+        extern(C) void _d_dll_registry_unregister(void* hModule); // rt.sections_win64
+    }
 
-private:
     version (Win32)
     {
     struct dll_aux
@@ -421,6 +426,10 @@ export:
                 }, null );
 
         Runtime.terminate();
+        version(Win64)
+        {
+            _d_dll_registry_unregister(hInstance);
+        }
     }
 
     /* Make sure that tlsCtorRun is itself a tls variable
@@ -496,7 +505,7 @@ export:
             {
                 default: assert(0);
                 case DLL_PROCESS_ATTACH:
-                    _d_dll_fixup();
+                    _d_dll_fixup(hInstance);
                     return dll_process_attach( hInstance, isUsedFromC );
 
                 case DLL_PROCESS_DETACH:

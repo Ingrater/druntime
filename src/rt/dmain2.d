@@ -79,12 +79,12 @@ version (Windows)
      *      opaque handle to the DLL if successfully loaded
      *      null if failure
      */
-    extern (C) void* rt_loadLibrary(const char* name)
+    export extern (C) void* rt_loadLibrary(const char* name)
     {
         return .LoadLibraryA(name);
     }
 
-    extern (C) void* rt_loadLibraryW(const wchar_t* name)
+    export extern (C) void* rt_loadLibraryW(const wchar_t* name)
     {
         return .LoadLibraryW(name);
     }
@@ -97,7 +97,7 @@ version (Windows)
      *      1   succeeded
      *      0   some failure happened
      */
-    extern (C) int rt_unloadLibrary(void* ptr)
+    export extern (C) int rt_unloadLibrary(void* ptr)
     {
         return FreeLibrary(ptr) != 0;
     }

@@ -19,6 +19,7 @@ debug(PRINTF) import core.stdc.stdio;
 import core.stdc.stdlib : malloc, free;
 import rt.deh, rt.minfo;
 import rt.util.container.array;
+import core.memory;
 
 struct SectionGroup
 {
@@ -118,29 +119,15 @@ version (Shared)
     
     void initSections()
     {
-        SectionGroup druntimeSections;
-        druntimeSections._moduleGroup = ModuleGroup(getModuleInfos(&_minfo_beg, &_minfo_end));
-
-        {
-            auto pbeg = cast(void*)&__xc_a;
-            auto pend = cast(void*)&_deh_beg;
-            druntimeSections._gcRanges[0] = pbeg[0 .. pend - pbeg]; 
-        }
-        
-        {
-            auto pbeg = cast(immutable(FuncTable)*)&_deh_beg;
-            auto pend = cast(immutable(FuncTable)*)&_deh_end;
-            druntimeSections._ehTables = pbeg[0 .. pend - pbeg];
-        }
-
-        _sections.insertBack(druntimeSections);
         _isRuntimeInitialized = true;
     }
     
     void finiSections()
     {
         foreach(ref section; _sections)
+        {
             .free(cast(void*)section.modules.ptr);
+        }
         _sections.reset();
         _isRuntimeInitialized = false;
     }
@@ -273,14 +260,26 @@ extern(C)
 
 version(Shared)
 {
-export:
-  extern(C) void _d_dll_registry(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p_xc_a, void[] function() getTlsRange)
-  {
-        if(pminfo_beg is cast(void*)&_minfo_beg)
-          return;
+private:
+    void registerGCRanges(ref SectionGroup pdll)
+    {
+        foreach (rng; pdll._gcRanges)
+            GC.addRange(rng.ptr, rng.length);
+    }
+
+    void unregisterGCRanges(ref SectionGroup pdll)
+    {
+        foreach (rng; pdll._gcRanges)
+            GC.removeRange(rng.ptr);
+    }
+
+
+export extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p_xc_a, void[] function() getTlsRange)
+    {
         SectionGroup dllSection;
         dllSection._moduleGroup = ModuleGroup(getModuleInfos(pminfo_beg, pminfo_end));
         dllSection._getTlsRange = getTlsRange;
+        dllSection._hModule = hModule;
 
         {
             auto pbeg = cast(void*)p_xc_a;
@@ -303,11 +302,55 @@ export:
             // Add tls range
             if(dllSection._getTlsRange !is null)
                 _tlsRanges.insertBack(ThreadDllTlsData(dllSection._hModule, dllSection._getTlsRange()));
+                
+            // register GC ranges
+            registerGCRanges(dllSection);
         
             // Run Module Constructors
             dllSection._moduleGroup.sortCtors();
             dllSection._moduleGroup.runCtors();
             dllSection._moduleGroup.runTlsCtors();
         }
-  }
+    }
+  
+    extern(C) void _d_dll_registry_unregister(void* hModule)
+    {
+        size_t i = 0;
+        for(; i < _sections.length; i++)
+        {
+          if(_sections[i]._hModule is hModule)
+            break;
+        }
+        // if the runtime was already deinitialized _sections is empty
+        if(i < _sections.length)
+        {
+            auto dllSection = _sections[i];
+            _sections.remove(i);
+            
+            if(_isRuntimeInitialized)
+            {
+                // Run Module Destructors
+                dllSection._moduleGroup.runTlsDtors();  
+                dllSection.moduleGroup.runDtors();
+                dllSection.moduleGroup.free();        
+                
+                // unregister GC ranges
+                unregisterGCRanges(dllSection);
+                
+                // remove tls range
+                size_t j = 0;
+                for(; j < _tlsRanges.length; j++)
+                {
+                  if(_tlsRanges[i]._hModule is hModule)
+                    break;
+                }
+                if(j < _tlsRanges.length)
+                {
+                  _tlsRanges.remove(j);
+                }
+            }
+            
+            .free(cast(void*)dllSection.modules.ptr);
+        }
+    }
 }

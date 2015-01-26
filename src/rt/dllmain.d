@@ -17,7 +17,7 @@ BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
   switch(ulReason)
   {
       case DLL_PROCESS_ATTACH:
-          _d_dll_fixup();
+          _d_dll_fixup(hInstance);
           debug(PRINTF) printf("druntime loaded\n");
           version(Win32)
           {
