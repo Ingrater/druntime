@@ -284,8 +284,6 @@ export extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, 
         {
             auto pbeg = cast(void*)p_xc_a;
             auto pend = cast(void*)pdeh_beg;
-            import core.stdc.stdio : printf;
-            printf("new GC Range %016llX - %016llX\n", pbeg, pend);
             dllSection._gcRanges[0] = pbeg[0 .. pend - pbeg]; 
         }
         
@@ -293,9 +291,7 @@ export extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, 
             auto pbeg = cast(immutable(FuncTable)*)pdeh_beg;
             auto pend = cast(immutable(FuncTable)*)pdeh_end;
             dllSection._ehTables = pbeg[0 .. pend - pbeg];
-        }
-
-        _sections.insertBack(dllSection);    
+        }    
         
         if(_isRuntimeInitialized)
         {
@@ -311,6 +307,8 @@ export extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, 
             dllSection._moduleGroup.runCtors();
             dllSection._moduleGroup.runTlsCtors();
         }
+
+        _sections.insertBack(dllSection);
     }
   
     extern(C) void _d_dll_registry_unregister(void* hModule)
