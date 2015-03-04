@@ -15,8 +15,8 @@ CP=cp
 DOCDIR=doc
 IMPDIR=import
 
-DFLAGS=-m$(MODEL) -debug -gc -op -w -Isrc -Iimport
-UDFLAGS=-m$(MODEL) -debug -gc -op -w -Isrc -Iimport
+DFLAGS=-m$(MODEL) -O -release -inline -w -Isrc -Iimport
+UDFLAGS=-m$(MODEL) -O -release -w -Isrc -Iimport
 DDOCFLAGS=-c -w -o- -Isrc -Iimport -version=CoreDdoc
 
 #CFLAGS=/O2 /I"$(VCDIR)"\INCLUDE /I"$(SDKDIR)"\Include
@@ -550,12 +550,12 @@ $(GCSTUB) : src\gcstub\gc.d win64.mak
 ################### dllfixup generation #########################
 
 $(DLLFIXUP) : src\core\sys\windows\dllfixup.d win64.mak
-	$(DMD) -of$(DLLFIXUP) src\core\sys\windows\dllfixup.d $(DFLAGS) -lib
+	$(DMD) -of$(DLLFIXUP) -version=Shared src\core\sys\windows\dllfixup.d $(DFLAGS) -lib
 
 ################### Library generation #########################
 
-$(DRUNTIME): $(OBJS) $(SRCS) win64.mak
-	$(DMD) -lib -of$(DRUNTIME) -Xfdruntime.json $(DFLAGS) $(SRCS) $(OBJS)
+$(DRUNTIME): $(OBJS) $(SRCS) win64.mak src\core\sys\windows\dllfixup.d 
+	$(DMD) -lib -of$(DRUNTIME) -Xfdruntime.json $(DFLAGS) $(SRCS) src\core\sys\windows\dllfixup.d $(OBJS)
 	
 $(DRUNTIME_SHARED) : $(OBJS) $(DLLFIXUP) $(SRCS) src\rt\dllmain.d win64.mak
 	$(DMD) -of$(DRUNTIME_SHARED_DLL) -version=Shared -shared $(DFLAGS) $(SRCS) src\rt\dllmain.d -defaultlib="msvcrt" $(OBJS) $(DLLFIXUP) -L/IMPLIB:$(DRUNTIME_SHARED) -L/NODEFAULTLIB:libcmt user32.lib

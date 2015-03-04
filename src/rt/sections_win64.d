@@ -166,7 +166,7 @@ else
 {
     void initSections()
     {
-        _sections._moduleGroup = ModuleGroup(getModuleInfos(_minfo_beg, _minfo_end));
+        _sections._moduleGroup = ModuleGroup(getModuleInfos(cast(void*)&_minfo_beg, cast(void*)&_minfo_end));
 
         auto pbeg = cast(void*)&__xc_a;
         auto pend = cast(void*)&_deh_beg;

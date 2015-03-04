@@ -32,7 +32,10 @@ extern(C) void _d_dll_fixup(void* hModule)
       *address = (**cast(void***)address) + offset;
     }
   }
-  _d_dll_registry_register(hModule, cast(void*)&_minfo_beg, cast(void*)&_minfo_end, cast(void*)&_deh_beg, cast(void*)&_deh_end, cast(void*)&__xc_a, &_d_getTLSRange);
+  version(Shared)
+  {
+    _d_dll_registry_register(hModule, cast(void*)&_minfo_beg, cast(void*)&_minfo_end, cast(void*)&_deh_beg, cast(void*)&_deh_end, cast(void*)&__xc_a, &_d_getTLSRange);
+  }
 }
 
 private: 
