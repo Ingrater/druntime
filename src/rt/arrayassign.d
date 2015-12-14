@@ -22,6 +22,8 @@ private
     debug(PRINTF) import core.stdc.stdio;
 }
 
+export:
+
 /**
  * Keep for backward binary compatibility. This function can be removed in the future.
  */
