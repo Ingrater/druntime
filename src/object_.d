@@ -2984,7 +2984,8 @@ private U[] _dup(T, U)(T[] a) // pure nothrow depends on postblit
 
 private extern (C) void[] _d_newarrayU(const TypeInfo ti, size_t length) pure nothrow;
 
-private inout(T)[] _rawDup(T)(inout(T)[] a)
+/* Workaround */
+export inout(T)[] _rawDup(T)(inout(T)[] a)
 {
     import core.stdc.string : memcpy;
 
