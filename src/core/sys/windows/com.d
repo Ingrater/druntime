@@ -34,7 +34,7 @@ enum : int
         E_UNEXPECTED  = cast(int)0x8000FFFF,
 }
 
-struct GUID {          // size is 16
+export struct GUID {          // size is 16
     align(1):
         DWORD Data1;
         WORD  Data2;
@@ -179,8 +179,6 @@ extern (C)
 extern (System)
 {
 
-export
-{
 DWORD   CoBuildVersion();
 
 int StringFromGUID2(GUID *rguid, LPOLESTR lpsz, int cbMax);
@@ -200,22 +198,21 @@ HRESULT CoCreateInstance(const(CLSID) *rclsid, IUnknown UnkOuter,
 void    CoFreeLibrary(HINSTANCE hInst);
 void    CoFreeAllLibraries();
 void    CoFreeUnusedLibraries();
-}
 
-interface IUnknown
+export interface IUnknown
 {
     HRESULT QueryInterface(const(IID)* riid, void** pvObject);
     ULONG AddRef();
     ULONG Release();
 }
 
-interface IClassFactory : IUnknown
+export interface IClassFactory : IUnknown
 {
     HRESULT CreateInstance(IUnknown UnkOuter, IID* riid, void** pvObject);
     HRESULT LockServer(BOOL fLock);
 }
 
-class ComObject : IUnknown
+export class ComObject : IUnknown
 {
 extern (System):
     HRESULT QueryInterface(const(IID)* riid, void** ppv)

@@ -21,7 +21,7 @@ BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
           debug(PRINTF) printf("druntime loaded\n");
           version(Win32)
           {
-              return dll_fixTLS( hInstance, &_tlsstart, &_tlsend, &_tls_callbacks_a, &_tls_index );        
+              dll_fixTLS( hInstance, &_tlsstart, &_tlsend, &_tls_callbacks_a, &_tls_index );        
           }
           // We need to initialize std streams here as well in case
           // D is used from a C program so _d_main is never called.
