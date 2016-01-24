@@ -3037,15 +3037,15 @@ size_t hashOf(T)(auto ref T arg, size_t seed = 0)
     return core.internal.hash.hashOf(arg, seed);
 }
 
-bool _xopEquals(in void*, in void*)
+/*bool _xopEquals(in void*, in void*)
 {
     throw new Error("TypeInfo.equals is not implemented");
-}
+}*/
 
-bool _xopCmp(in void*, in void*)
+/*bool _xopCmp(in void*, in void*)
 {
     throw new Error("TypeInfo.compare is not implemented");
-}
+}*/
 
 void __ctfeWrite(T...)(auto ref T) {}
 void __ctfeWriteln(T...)(auto ref T values) { __ctfeWrite(values, "\n"); }

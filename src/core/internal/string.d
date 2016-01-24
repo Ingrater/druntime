@@ -15,7 +15,7 @@ nothrow:
 
 alias UnsignedStringBuf = char[20];
 
-char[] unsignedToTempString(ulong value, char[] buf, uint radix) @safe
+export char[] unsignedToTempString(ulong value, char[] buf, uint radix) @safe
 {
     size_t i = buf.length;
     do

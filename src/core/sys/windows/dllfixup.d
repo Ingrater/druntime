@@ -4,6 +4,8 @@ import core.stdc.stdio : printf;
 
 extern(C)
 {
+  // the dll relocation section basically is a DllRealloc[].
+  // we can't use the struct however because the struct itself would introduce data symbol references through its typeinfo.
   /*struct DllRealloc 
   {
     void* address;
@@ -14,7 +16,7 @@ extern(C)
   extern __gshared void* _dllra_end;
 }
 
-extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p_xc_a, void[] function() getTlsRange);
+extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p__ImageBase, void[] function() getTlsRange);
 
 extern(C) void _d_dll_fixup(void* hModule)
 {
@@ -34,7 +36,7 @@ extern(C) void _d_dll_fixup(void* hModule)
   }
   version(Shared)
   {
-    _d_dll_registry_register(hModule, cast(void*)&_minfo_beg, cast(void*)&_minfo_end, cast(void*)&_deh_beg, cast(void*)&_deh_end, cast(void*)&__xc_a, &_d_getTLSRange);
+    _d_dll_registry_register(hModule, cast(void*)&_minfo_beg, cast(void*)&_minfo_end, cast(void*)&_deh_beg, cast(void*)&_deh_end, cast(void*)&__ImageBase, &_d_getTLSRange);
   }
 }
 
@@ -49,12 +51,10 @@ extern(C)
      */
     extern __gshared
     {
+        void* __ImageBase;
+    
         void* _deh_beg;
         void* _deh_end;
-
-        int __xc_a;      // &__xc_a just happens to be start of data segment
-        //int _edata;    // &_edata is start of BSS segment
-        //void* _deh_beg;  // &_deh_beg is past end of BSS
     }
 
     extern

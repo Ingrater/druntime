@@ -337,6 +337,8 @@ private T max(T)(T a, T b) pure nothrow @nogc
 // API Implementation
 //------------------------------------------------------------------------------
 
+export:
+
 /// Determine number of entries in associative array.
 extern (C) size_t _aaLen(in AA aa) pure nothrow @nogc
 {

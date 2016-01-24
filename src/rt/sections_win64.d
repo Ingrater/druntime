@@ -100,11 +100,6 @@ private:
 
 alias ScanDG = void delegate(void* pbeg, void* pend) nothrow;
 
-    // the ".data" image section includes both object file sections ".data" and ".bss"
-    _sections._gcRanges[0] = findImageSection(".data");
-    debug(PRINTF) printf("found .data section: [%p,+%llx]\n", _sections._gcRanges[0].ptr,
-                         cast(ulong)_sections._gcRanges[0].length);
-}
 version (Shared)
 {    
     /**
@@ -172,10 +167,10 @@ else
     void initSections()
     {
         _sections._moduleGroup = ModuleGroup(getModuleInfos(cast(void*)&_minfo_beg, cast(void*)&_minfo_end));
-
-        auto pbeg = cast(void*)&__xc_a;
-        auto pend = cast(void*)&_deh_beg;
-        _sections._gcRanges[0] = pbeg[0 .. pend - pbeg];
+        // the ".data" image section includes both object file sections ".data" and ".bss"
+        _sections._gcRanges[0] = findImageSection(".data");
+        debug(PRINTF) printf("found .data section: [%p,+%llx]\n", _sections._gcRanges[0].ptr,
+                             cast(ulong)_sections._gcRanges[0].length);
     }
 
     void finiSections()
@@ -316,9 +311,14 @@ bool compareSectionName(ref IMAGE_SECTION_HEADER section, string name) nothrow
 
 void[] findImageSection(string name) nothrow
 {
+  return findImageSection(&__ImageBase, name);
+}
+
+private void[] findImageSection(void* p__ImageBase, string name) nothrow
+{
     if (name.length > 8) // section name from string table not supported
         return null;
-    IMAGE_DOS_HEADER* doshdr = cast(IMAGE_DOS_HEADER*) &__ImageBase;
+    IMAGE_DOS_HEADER* doshdr = cast(IMAGE_DOS_HEADER*) p__ImageBase;
     if (doshdr.e_magic != IMAGE_DOS_SIGNATURE)
         return null;
 
@@ -326,7 +326,7 @@ void[] findImageSection(string name) nothrow
     auto sections = cast(IMAGE_SECTION_HEADER*)(cast(void*)nthdr + IMAGE_NT_HEADERS.sizeof + nthdr.FileHeader.SizeOfOptionalHeader);
     for(ushort i = 0; i < nthdr.FileHeader.NumberOfSections; i++)
         if (compareSectionName (sections[i], name))
-            return (cast(void*)&__ImageBase + sections[i].VirtualAddress)[0 .. sections[i].VirtualSize];
+            return (cast(void*)p__ImageBase + sections[i].VirtualAddress)[0 .. sections[i].VirtualSize];
 
     return null;
 }
@@ -347,18 +347,19 @@ private:
     }
 
 
-export extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p_xc_a, void[] function() getTlsRange)
+export extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p__ImageBase, void[] function() getTlsRange)
     {
         SectionGroup dllSection;
         dllSection._moduleGroup = ModuleGroup(getModuleInfos(pminfo_beg, pminfo_end));
         dllSection._getTlsRange = getTlsRange;
         dllSection._hModule = hModule;
 
-        {
+        dllSection._gcRanges[0] = findImageSection(p__ImageBase, ".data");
+        /*{
             auto pbeg = cast(void*)p_xc_a;
             auto pend = cast(void*)pdeh_beg;
             dllSection._gcRanges[0] = pbeg[0 .. pend - pbeg]; 
-        }
+        }*/
         
         {
             auto pbeg = cast(immutable(FuncTable)*)pdeh_beg;

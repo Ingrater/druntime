@@ -2616,7 +2616,8 @@ private:
 // prevents that from working. However, moving it back to a static ctor will
 // reraise issues with other systems using MonoTime, so we should leave this
 // here even when that bug is fixed.
-private immutable long[__traits(allMembers, ClockType).length] _ticksPerSecond;
+/* workaround */
+export immutable long[__traits(allMembers, ClockType).length] _ticksPerSecond;
 
 // This is called directly from the runtime initilization function (rt_init),
 // instead of using a static constructor. Other subsystems inside the runtime
@@ -4722,6 +4723,7 @@ double _abs(double val) @safe pure nothrow @nogc
     Unfortunately, $(D snprintf) is not pure, so here's a way to convert
     a number to a string which is.
   +/
+/* Workaround */ export
 string numToString(long value) @safe pure nothrow
 {
     try
