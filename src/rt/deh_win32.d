@@ -400,7 +400,7 @@ EXCEPTION_RECORD *skipCollateralExceptions(EXCEPTION_RECORD *n)
  * Input:
  *      EAX     the handler table for the frame
  */
-extern(C)
+export extern(C)
 EXCEPTION_DISPOSITION _d_framehandler(
             EXCEPTION_RECORD *exceptionRecord,
             DEstablisherFrame *frame,
@@ -614,7 +614,7 @@ private void throwImpl(Object h)
                    1, cast(void *)&h);
 }
 
-extern(C) void _d_throwc(Object h)
+export extern(C) void _d_throwc(Object h)
 {
     // set up a stack frame for trace unwinding
     version (AsmX86)

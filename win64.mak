@@ -711,7 +711,7 @@ install: druntime.zip
 	unzip -o druntime.zip -d \dmd2\src\druntime
 
 clean:
-	del $(DRUNTIME) $(OBJS_TO_DELETE) $(GCSTUB)
+	del $(DRUNTIME) $(OBJS_TO_DELETE) $(GCSTUB) $(DLLFIXUP)
 	rmdir /S /Q $(DOCDIR) $(IMPDIR)
 
 auto-tester-build: target

@@ -67,6 +67,7 @@ struct SectionGroup
         return _moduleGroup;
     }
 
+    version(Win64)
     @property immutable(FuncTable)[] ehTables() const
     {
         version(Shared)
@@ -94,7 +95,7 @@ private:
     {
         void* _hModule;
         extern(C) void[] function() _getTlsRange;
-        immutable(FuncTable)[] _ehTables;
+        version(Win64) immutable(FuncTable)[] _ehTables;
     }
 }
 
@@ -361,6 +362,7 @@ export extern(C) void _d_dll_registry_register(void* hModule, void* pminfo_beg, 
             dllSection._gcRanges[0] = pbeg[0 .. pend - pbeg]; 
         }*/
         
+        version(Win64)
         {
             auto pbeg = cast(immutable(FuncTable)*)pdeh_beg;
             auto pend = cast(immutable(FuncTable)*)pdeh_end;

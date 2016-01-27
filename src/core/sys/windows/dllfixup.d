@@ -24,7 +24,7 @@ extern(C) void _d_dll_fixup(void* hModule)
   void** end = &_dllra_end;
   void** outer = begin;
   while(outer < end && *outer is null) outer++; // skip leading 0s
-  for(; outer < end; outer += 2)
+  while(outer < end)
   {
     if(*outer !is null) // skip any padding
     {
@@ -32,6 +32,11 @@ extern(C) void _d_dll_fixup(void* hModule)
       size_t offset = *cast(size_t*)(outer+1);
       debug(PRINTF) printf("patching %llx to %llx (offset %d)\n", address, (**cast(void***)address), offset);
       *address = (**cast(void***)address) + offset;
+      outer += 2;
+    }
+    else
+    {
+      outer++;
     }
   }
   version(Shared)
