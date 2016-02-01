@@ -28,11 +28,28 @@ extern(C) void _d_dll_fixup(void* hModule)
   {
     if(*outer !is null) // skip any padding
     {
-      void** address = *cast(void***)outer;
-      size_t offset = *cast(size_t*)(outer+1);
-      debug(PRINTF) printf("patching %llx to %llx (offset %d)\n", address, (**cast(void***)address), offset);
-      *address = (**cast(void***)address) + offset;
-      outer += 2;
+      // For 64-bit we actually store the address as 32-bit offset instead of a 64-bit pointer
+      version(Win64)
+      {
+        int* start = cast(int*)outer;
+        int relAddress = (*start) + 4; // take size of the offset into account as well
+        int offset = *(start+1);
+        //void** address = *cast(void***)(outer+1);
+        void** reconstructedAddress = cast(void**)(cast(void*)start + relAddress);
+        //if(address != reconstructedAddress) asm { int 3; }
+        debug(PRINTF) printf("patching %llx to %llx (offset %d)\n", reconstructedAddress, (**cast(void***)reconstructedAddress), offset);
+        *reconstructedAddress = (**cast(void***)reconstructedAddress) + offset;
+        //outer += 2;
+        outer++;
+      }
+      else
+      {
+        void** address = *cast(void***)outer;
+        size_t offset = *cast(size_t*)(outer+1);
+        debug(PRINTF) printf("patching %llx to %llx (offset %d)\n", address, (**cast(void***)address), offset);
+        *address = (**cast(void***)address) + offset;
+        outer += 2;
+      }
     }
     else
     {
