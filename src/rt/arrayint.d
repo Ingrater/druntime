@@ -69,7 +69,7 @@ else
 
 alias int T;
 
-extern (C) @trusted nothrow:
+extern (C) export @trusted nothrow:
 
 /* ======================================================================== */
 
