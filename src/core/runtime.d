@@ -87,7 +87,7 @@ struct CArgs
  * This struct encapsulates all functionality related to the underlying runtime
  * module for the calling context.
  */
-struct Runtime
+export struct Runtime
 {
     /**
      * Initializes the runtime.  This call is to be used in instances where the
@@ -447,7 +447,7 @@ extern (C) void profilegc_setlogfilename(string name);
  *  true if execution should continue after testing is complete and false if
  *  not.  Default behavior is to return true.
  */
-extern (C) bool runModuleUnitTests()
+extern (C) export bool runModuleUnitTests()
 {
     // backtrace
     version( CRuntime_Glibc )
@@ -529,7 +529,7 @@ extern (C) bool runModuleUnitTests()
 /**
  *
  */
-Throwable.TraceInfo defaultTraceHandler( void* ptr = null )
+export Throwable.TraceInfo defaultTraceHandler( void* ptr = null )
 {
     // backtrace
     version( CRuntime_Glibc )
