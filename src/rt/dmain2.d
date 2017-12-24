@@ -500,8 +500,6 @@ export extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
 
         if (!rt_term())
             result = (result == EXIT_SUCCESS) ? EXIT_FAILURE : result;
-
-        // TODO call _d_dll_registry_unregister(null); to ensure main executable module dtors are called.
     }
 
     tryExec(&runAll);

@@ -693,7 +693,7 @@ export ulong mulu(ulong x, uint y, ref bool overflow)
 
 /// ditto
 pragma(inline, true)
-ulong mulu(ulong x, ulong y, ref bool overflow)
+export ulong mulu(ulong x, ulong y, ref bool overflow)
 {
     immutable ulong r = x * y;
     if ((x | y) >> 32 &&

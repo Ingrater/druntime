@@ -21,6 +21,11 @@ import rt.deh, rt.minfo;
 import rt.util.container.array;
 import core.memory;
 
+version(Shared)
+{  
+    alias GetTlsRangeDG = void[] function() nothrow @nogc;
+}
+
 struct SectionGroup
 {
     static int opApply(scope int delegate(ref SectionGroup) dg)
@@ -94,9 +99,9 @@ private:
     version(Shared)
     {
         void* _hModule;
-        extern(C) void[] function() _getTlsRange;
-        void* _p_TP_beg;
-        void* _p_TP_end;
+        GetTlsRangeDG _getTlsRange;
+        uint* _p_TP_beg;
+        uint* _p_TP_end;
         version(Win64) immutable(FuncTable)[] _ehTables;
     }
 }
@@ -104,6 +109,7 @@ private:
 shared(bool) conservative;
 
 alias ScanDG = void delegate(void* pbeg, void* pend) nothrow;
+extern(C) void[] _d_getTLSRange();
 
 version (Shared)
 {    
@@ -114,8 +120,8 @@ version (Shared)
     {
         void* _hModule;
         void[] _tlsRange;
-        void* _p_TP_beg;
-        void* _p_TP_end;
+        uint* _p_TP_beg;
+        uint* _p_TP_end;
     }
     Array!(ThreadDllTlsData) _tlsRanges;
     
@@ -148,9 +154,9 @@ version (Shared)
     
     Array!(ThreadDllTlsData)* initTLSRanges() nothrow @nogc
     {
-        auto pbeg = cast(void*)&_tls_start;
-        auto pend = cast(void*)&_tls_end;
-        _tlsRanges.insertBack(ThreadDllTlsData(null, pbeg[0 .. pend - pbeg], &_TP_beg, &_TP_end));       
+        static import rt.dllinit;
+        // Insert the tls range for druntime
+        _tlsRanges.insertBack(ThreadDllTlsData(null, rt.dllinit.initTLSRanges(), &_TP_beg, &_TP_end));       
 
         // iterate over all already loaded dlls and insert their TLS sections as well.
         // The executable is treated as a dll.
@@ -179,49 +185,9 @@ version (Shared)
     private __gshared Array!(SectionGroup) _sections;
 }
 else
-{
-    // TODO fix other paths for tls range initialization
-    void* pbeg;
-    void* pend;
-    // with VS2017 15.3.1, the linker no longer puts TLS segments into a
-    //  separate image section. That way _tls_start and _tls_end no
-    //  longer generate offsets into .tls, but DATA.
-    // Use the TEB entry to find the start of TLS instead and read the
-    //  length from the TLS directory
-    version(D_InlineAsm_X86)
+{    
+    void initSections() nothrow @nogc
     {
-        asm @nogc nothrow
-        {
-            mov EAX, _tls_index;
-            mov ECX, FS:[0x2C];     // _tls_array
-            mov EAX, [ECX+4*EAX];
-            mov pbeg, EAX;
-            add EAX, [_tls_used+4]; // end
-            sub EAX, [_tls_used+0]; // start
-            mov pend, EAX;
-        }
-    }
-    else version(D_InlineAsm_X86_64)
-    {
-        asm @nogc nothrow
-        {
-            xor RAX, RAX;
-            mov EAX, _tls_index;
-            mov RCX, 0x58;
-            mov RCX, GS:[RCX];      // _tls_array (immediate value causes fixup)
-            mov RAX, [RCX+8*RAX];
-            mov pbeg, RAX;
-            add RAX, [_tls_used+8]; // end
-            sub RAX, [_tls_used+0]; // start
-            mov pend, RAX;
-        }
-    }
-    else
-        static assert(false, "Architecture not supported.");
-
-    return pbeg[0 .. pend - pbeg];
-}
-
         // the ".data" image section includes both object file sections ".data" and ".bss"
         void[] dataSection = findImageSection(".data");
         debug(PRINTF) printf("found .data section: [%p,+%llx]\n", dataSection.ptr,
@@ -241,9 +207,8 @@ else
 
     void[] initTLSRanges() nothrow @nogc
     {
-        auto pbeg = cast(void*)&_tls_start;
-        auto pend = cast(void*)&_tls_end;
-        return pbeg[0 .. pend - pbeg];
+        static import rt.dllinit;
+        return rt.dllinit.initTLSRanges();
     }
 
     void finiTLSRanges(void[] rng) nothrow @nogc
@@ -297,7 +262,7 @@ do
     return cast(immutable)result;
 }
 
-void[][] getGcRanges(void[] dataSection, void* p_DP_beg, void* p_DP_end, bool conservative)
+void[][] getGcRanges(void[] dataSection, uint* p_DP_beg, uint* p_DP_end, bool conservative) @nogc nothrow
 {
     void[][] result;
     if (conservative)
@@ -330,7 +295,7 @@ void[][] getGcRanges(void[] dataSection, void* p_DP_beg, void* p_DP_end, bool co
     return result;
 }
 
-void scanTLSRangesImpl(void[] rng, scope ScanDG dg, void* p_TP_beg, void* p_TP_end) nothrow
+void scanTLSRangesImpl(void[] rng, scope ScanDG dg, uint* p_TP_beg, uint* p_TP_end) nothrow
 {
     if (conservative)
     {
@@ -368,9 +333,6 @@ extern(C)
         uint _DP_end;
         uint _TP_beg;
         uint _TP_end;
-
-        void*[2] _tls_used; // start, end
-        int _tls_index;
     }
 }
 
@@ -432,7 +394,7 @@ void[] findImageSection(string name) nothrow @nogc
   return findImageSection(&__ImageBase, name);
 }
 
-private void[] findImageSection(void* p__ImageBase, string name) nothrow
+private void[] findImageSection(void* p__ImageBase, string name) nothrow @nogc
 {
     if (name.length > 8) // section name from string table not supported
         return null;
@@ -464,7 +426,8 @@ private:
             GC.removeRange(rng.ptr);
     }
 
-    export extern(C) void _d_dll_registry_register(void* hModule, void* pdllrl_beg, void* pdllrl_end, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p__ImageBase, void* p_DP_beg, void* p_DP_end, void* p_TP_beg, void * p_TP_end, void[] function() getTlsRange)
+public:
+    export void registerDll(void* hModule, void* pdllrl_beg, void* pdllrl_end, void* pminfo_beg, void* pminfo_end, void* pdeh_beg, void* pdeh_end, void* p__ImageBase, uint* p_DP_beg, uint* p_DP_end, uint* p_TP_beg, uint* p_TP_end, GetTlsRangeDG getTlsRange)
     {
         // First relocate all pointers in data sections
         {

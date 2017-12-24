@@ -1246,9 +1246,6 @@ $(IMPDIR)\core\sys\windows\winreg.d : src\core\sys\windows\winreg.d
 
 $(IMPDIR)\core\sys\windows\winsock2.d : src\core\sys\windows\winsock2.d
 	copy $** $@
-	
-$(IMPDIR)\core\sys\windows\dllinit.d : src\core\sys\windows\dllinit.d
-	copy $** $@
 
 $(IMPDIR)\core\sys\windows\winspool.d : src\core\sys\windows\winspool.d
 	copy $** $@
@@ -1294,8 +1291,8 @@ msvc_math_$(MODEL).obj : src\rt\msvc_math.c win64.mak
 # each d binary so it can access the executables sections.
 # To do that its merged with the import library of the runtime.
 
-$(DLLINIT) : src\core\sys\windows\dllinit.d msvc_renames_$(MODEL).obj win64.mak
-	$(DMD) -ofdllinitTmp$(MODEL).lib -version=Shared src\core\sys\windows\dllinit.d $(DFLAGS) -lib
+$(DLLINIT) : src\rt\dllinit.d msvc_renames_$(MODEL).obj win64.mak
+	$(DMD) -ofdllinitTmp$(MODEL).lib -version=Shared src\rt\dllinit.d $(DFLAGS) -lib
 	$(AR) /OUT:$(DLLINIT) dllinitTmp$(MODEL).lib msvc_renames_$(MODEL).obj
 
 

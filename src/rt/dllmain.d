@@ -1,10 +1,10 @@
 module core.sys.windows.dllmain;
 
 import core.sys.windows.windows;
-import core.sys.windows.dllinit;
 import core.sys.windows.dll;
 import core.stdc.stdio;
 import core.runtime;
+import rt.dllinit;
 
 //debug = PRINTF;
 

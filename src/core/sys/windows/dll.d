@@ -495,7 +495,9 @@ export enum DllIsUsedFromC : bool
 mixin template SimpleDllMain(DllIsUsedFromC isUsedFromC = DllIsUsedFromC.yes)
 {
     import core.sys.windows.windows : HINSTANCE;
-    import core.sys.windows.dllinit : _d_dll_init;
+    
+    pragma(mangle, "_d_dll_init")
+    private extern(C) void _d_dll_init(void* hModule);
 
     extern(Windows)
     bool DllMain(HINSTANCE hInstance, uint ulReason, void* reserved)
