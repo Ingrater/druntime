@@ -14,6 +14,5 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.osx.mach.dyld;
-pragma(sharedlibrary, "std");
 
 public import core.sys.darwin.mach.dyld;

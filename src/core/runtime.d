@@ -13,7 +13,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.runtime;
-pragma(sharedlibrary, "std");
 
 version (Windows) import core.stdc.wchar_ : wchar_t;
 

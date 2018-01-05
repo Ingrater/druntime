@@ -14,7 +14,6 @@
  */
 
 module core.sys.solaris.sys.types;
-pragma(sharedlibrary, "std");
 
 version (Solaris):
 nothrow:

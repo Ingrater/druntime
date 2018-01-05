@@ -13,7 +13,6 @@
  */
 
 module core.stdc.signal;
-pragma(sharedlibrary, "std");
 
 extern (C):
 @system:

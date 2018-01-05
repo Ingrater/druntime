@@ -14,7 +14,6 @@
  */
 
 module core.stdc.stdio;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

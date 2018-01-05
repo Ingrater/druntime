@@ -11,7 +11,6 @@
  */
 
 module core.simd;
-pragma(sharedlibrary, "std");
 
 pure:
 nothrow:

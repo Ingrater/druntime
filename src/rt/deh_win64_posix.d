@@ -11,7 +11,6 @@
  */
 
 module rt.deh_win64_posix;
-pragma(sharedlibrary, "std");
 
 version (Win64)
     version = Win64_Posix;

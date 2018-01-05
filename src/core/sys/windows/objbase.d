@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_objbase.d)
  */
 module core.sys.windows.objbase;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "ole32");
 

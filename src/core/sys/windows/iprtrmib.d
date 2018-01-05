@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_iprtrmib.d)
  */
 module core.sys.windows.iprtrmib;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.ipifcons;

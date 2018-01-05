@@ -7,7 +7,6 @@
  */
 
 module core.sys.linux.tipc;
-pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C) nothrow @nogc:

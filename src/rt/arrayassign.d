@@ -10,7 +10,6 @@
  */
 
 module rt.arrayassign;
-pragma(sharedlibrary, "std");
 
 private
 {

@@ -7,7 +7,6 @@
  * Standards: The Open Group Base Specifications Issue 7, IEEE Std 1003.1-2008
  */
 module core.sys.posix.sys.resource;
-pragma(sharedlibrary, "std");
 version (Posix):
 
 public import core.sys.posix.sys.time;

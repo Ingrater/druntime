@@ -8,7 +8,6 @@
     Authors:   Jonathan M Davis
  +/
 module core.sys.freebsd.time;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.time;
 

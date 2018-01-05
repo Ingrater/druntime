@@ -13,7 +13,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.posix.sys.time;
-pragma(sharedlibrary, "std");
 
 private import core.sys.posix.config;
 public import core.sys.posix.sys.types;  // for time_t, suseconds_t

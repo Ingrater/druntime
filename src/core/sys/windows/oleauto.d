@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_oleauto.d)
  */
 module core.sys.windows.oleauto;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "oleaut32");
 

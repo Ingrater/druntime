@@ -11,7 +11,6 @@
  */
 
 module rt.lifetime;
-pragma(sharedlibrary, "std");
 
 import core.memory;
 debug(PRINTF) import core.stdc.stdio;

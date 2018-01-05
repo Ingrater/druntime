@@ -8,7 +8,6 @@
  */
 // Don't include this file directly, use core.sys.windows.security instead.
 module core.sys.windows.secext;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;

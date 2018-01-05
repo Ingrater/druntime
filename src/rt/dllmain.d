@@ -1,5 +1,4 @@
 module core.sys.windows.dllmain;
-pragma(sharedlibrary, "std");
 
 import core.sys.windows.windows;
 import core.sys.windows.dll;

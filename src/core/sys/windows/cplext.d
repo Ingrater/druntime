@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_cplext.d)
  */
 module core.sys.windows.cplext;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 export:

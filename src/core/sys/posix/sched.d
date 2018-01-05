@@ -14,7 +14,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.posix.sched;
-pragma(sharedlibrary, "std");
 
 private import core.sys.posix.config;
 public import core.sys.posix.time;

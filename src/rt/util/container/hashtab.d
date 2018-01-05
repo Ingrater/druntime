@@ -6,7 +6,6 @@
  * Authors:   Martin Nowak
  */
 module rt.util.container.hashtab;
-pragma(sharedlibrary, "std");
 
 import rt.util.container.array;
 static import common = rt.util.container.common;

@@ -11,7 +11,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.darwin.mach.getsect;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

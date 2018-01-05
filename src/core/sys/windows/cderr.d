@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_cderr.d)
  */
 module core.sys.windows.cderr;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 enum {

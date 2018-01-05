@@ -13,7 +13,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.posix.unistd;
-pragma(sharedlibrary, "std");
 
 private import core.sys.posix.config;
 private import core.stdc.stddef;

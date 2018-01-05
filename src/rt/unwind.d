@@ -8,7 +8,6 @@
  */
 
 module rt.unwind;
-pragma(sharedlibrary, "std");
 
 import core.stdc.stdint;
 

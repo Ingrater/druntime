@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_mcx.d)
  */
 module core.sys.windows.mcx;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.windef;

@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_winperf.d)
  */
 module core.sys.windows.winperf;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.windef;

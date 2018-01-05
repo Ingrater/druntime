@@ -6,7 +6,6 @@
  * Authors:   Martin Nowak
  */
 module rt.util.container.array;
-pragma(sharedlibrary, "std");
 
 static import common = rt.util.container.common;
 

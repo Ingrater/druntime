@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_httpext.d)
  */
 module core.sys.windows.httpext;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 /* Comment from MinGW

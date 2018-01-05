@@ -12,7 +12,6 @@
  */
 
 module rt.profilegc;
-pragma(sharedlibrary, "std");
 
 private:
 

@@ -12,7 +12,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_long;
-pragma(sharedlibrary, "std");
 
 private import rt.util.hash;
 

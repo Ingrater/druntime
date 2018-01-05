@@ -8,7 +8,6 @@
  */
 
 module core.internal.string;
-pragma(sharedlibrary, "std");
 
 pure:
 nothrow:

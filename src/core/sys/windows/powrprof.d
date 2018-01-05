@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_powrprof.d)
  */
 module core.sys.windows.powrprof;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "powrprof");
 

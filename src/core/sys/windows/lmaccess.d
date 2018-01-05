@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmaccess.d)
  */
 module core.sys.windows.lmaccess;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 

@@ -6,7 +6,6 @@
  * Authors:   Martin Nowak
  */
 module rt.aaA;
-pragma(sharedlibrary, "std");
 
 /// AA version for debuggers, bump whenever changing the layout
 extern (C) immutable int _aaVersion = 1;

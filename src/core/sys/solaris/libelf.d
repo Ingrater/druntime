@@ -4,7 +4,6 @@
  * $(LINK2 http://src.illumos.org/source/xref/illumos-gate/usr/src/head/libelf.h, illumos libelf.h)
  */
 module core.sys.solaris.libelf;
-pragma(sharedlibrary, "std");
 
 version (Solaris):
 extern (C):

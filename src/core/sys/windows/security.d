@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_security.d)
  */
 module core.sys.windows.security;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 enum :SECURITY_STATUS{

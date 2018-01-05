@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_exdispid.d)
  */
 module core.sys.windows.exdispid;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 export:

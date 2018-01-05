@@ -10,7 +10,6 @@
  */
 
 module rt.dwarfeh;
-pragma(sharedlibrary, "std");
 
 version (Posix):
 

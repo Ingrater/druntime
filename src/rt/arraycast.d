@@ -9,7 +9,6 @@
  */
 
 module rt.arraycast;
-pragma(sharedlibrary, "std");
 
 /******************************************
  * Runtime helper to convert dynamic array of one

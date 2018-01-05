@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC core/internal/_hash.d)
  */
 module core.internal.hash;
-pragma(sharedlibrary, "std");
 
 import core.internal.convert;
 

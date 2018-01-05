@@ -9,7 +9,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ocidl.d)
  */
 module core.sys.windows.ocidl;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.ole2, core.sys.windows.oleidl, core.sys.windows.oaidl, core.sys.windows.objfwd,

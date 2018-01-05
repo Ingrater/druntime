@@ -7,6 +7,5 @@
  * Authors: Martin Nowak
  */
 module core.sys.osx.sys.cdefs;
-pragma(sharedlibrary, "std");
 
 public import core.sys.darwin.sys.cdefs;

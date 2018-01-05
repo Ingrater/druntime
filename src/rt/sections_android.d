@@ -9,7 +9,6 @@
  */
 
 module rt.sections_android;
-pragma(sharedlibrary, "std");
 
 version (CRuntime_Bionic):
 

@@ -4,7 +4,6 @@
  * Authors: Martin Nowak
  */
 module core.sys.darwin.sys.cdefs;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

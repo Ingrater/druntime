@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_comcat.d)
  */
 module core.sys.windows.comcat;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.windows, core.sys.windows.ole2;

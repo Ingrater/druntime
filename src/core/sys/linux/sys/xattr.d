@@ -6,7 +6,6 @@
  * Authors:   Robert Klotzner
  */
 module core.sys.linux.sys.xattr;
-pragma(sharedlibrary, "std");
 
 import core.sys.posix.sys.types;
 

@@ -12,7 +12,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.freebsd.sys.event;
-pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C):

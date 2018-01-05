@@ -1,5 +1,4 @@
 module core.sys.windows.com;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 pragma(lib,"uuid");

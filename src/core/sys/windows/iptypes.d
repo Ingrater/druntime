@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_iptypes.d)
  */
 module core.sys.windows.iptypes;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.windef;

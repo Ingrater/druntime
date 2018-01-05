@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_windows.d)
  */
 module core.sys.windows.windows;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 /*

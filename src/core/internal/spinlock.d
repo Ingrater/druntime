@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC core/internal/_spinlock.d)
  */
 module core.internal.spinlock;
-pragma(sharedlibrary, "std");
 
 import core.atomic, core.thread;
 

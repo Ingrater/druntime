@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_winber.d)
  */
 module core.sys.windows.winber;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 /* Comment from MinGW

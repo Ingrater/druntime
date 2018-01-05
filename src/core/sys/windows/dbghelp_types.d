@@ -10,7 +10,6 @@
  */
 
 module core.sys.windows.dbghelp_types;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;

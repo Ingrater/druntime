@@ -7,7 +7,6 @@
  * Source:    $(DRUNTIMESRC core/sys/netbsd/_execinfo.d)
  */
 module core.sys.netbsd.execinfo;
-pragma(sharedlibrary, "std");
 
 version (NetBSD):
 extern (C):

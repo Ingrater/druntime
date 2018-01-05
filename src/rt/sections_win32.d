@@ -11,7 +11,6 @@
  */
 
 module rt.sections_win32;
-pragma(sharedlibrary, "std");
 
 version(CRuntime_DigitalMars):
 
@@ -71,7 +70,6 @@ void initSections() nothrow @nogc
 
         // skip module info and CONST segment
         auto bssbeg = cast(void*)&_edata;
-pragma(sharedlibrary, "std");
         auto bssend = cast(void*)&_end;
         _sections._gcRanges[1] = bssbeg[0 .. bssend - bssbeg];
     }

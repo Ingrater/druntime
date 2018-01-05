@@ -10,7 +10,6 @@
  */
 
 module rt.backtrace.elf;
-pragma(sharedlibrary, "std");
 
 version(linux) version = linux_or_freebsd;
 else version(FreeBSD) version = linux_or_freebsd;

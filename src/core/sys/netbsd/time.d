@@ -10,7 +10,6 @@
     http://cvsweb.netbsd.org/bsdweb.cgi/~checkout~/src/sys/sys/time.h
  +/
 module core.sys.netbsd.time;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.time;
 

@@ -6,7 +6,6 @@
  * Authors:   Martin Nowak
  */
 module core.sys.linux.execinfo;
-pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

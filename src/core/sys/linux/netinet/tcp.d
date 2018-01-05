@@ -11,7 +11,6 @@
 *******************************************************************************/
 
 module core.sys.linux.netinet.tcp;
-pragma(sharedlibrary, "std");
 
 /*
 * Copyright (c) 1982, 1986, 1993

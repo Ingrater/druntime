@@ -4,7 +4,6 @@
  * $(LINK2 http://sourceware.org/git/?p=glibc.git;a=blob;f=dlfcn/dlfcn.h, glibc dlfcn/dlfcn.h)
  */
 module core.sys.linux.dlfcn;
-pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

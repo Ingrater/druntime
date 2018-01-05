@@ -1,5 +1,4 @@
 module core.internal.arrayop;
-pragma(sharedlibrary, "std");
 import core.internal.traits : Filter, staticMap, TypeTuple, Unqual;
 
 version (GNU) version = GNU_OR_LDC;

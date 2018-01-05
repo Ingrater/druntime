@@ -4,7 +4,6 @@
  * $(LINK2 http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/include/link_elf.h?rev=1.6&content-type=text/x-cvsweb-markup, dlfcn.h)
  */
 module core.sys.openbsd.dlfcn;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.dlfcn;
 

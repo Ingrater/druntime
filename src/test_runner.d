@@ -6,7 +6,6 @@ ModuleInfo* getModuleInfo(string name)
     foreach (m; ModuleInfo)
         if (m.name == name) return m;
     assert(0, "module '"~name~"' not found");
-pragma(sharedlibrary, "std");
 }
 
 UnitTestResult tester()

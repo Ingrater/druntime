@@ -9,7 +9,6 @@
  * Source: $(DRUNTIMESRC src/rt/_aApply.d)
  */
 module rt.aApply;
-pragma(sharedlibrary, "std");
 
 private import rt.util.utf : decode, toUTF8;
 

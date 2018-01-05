@@ -10,7 +10,6 @@
  */
 
 module rt.llmath;
-pragma(sharedlibrary, "std");
 
 extern (C):
 

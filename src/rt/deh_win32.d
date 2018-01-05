@@ -10,7 +10,6 @@
  */
 
 module rt.deh_win32;
-pragma(sharedlibrary, "std");
 
 version (Win32):
 

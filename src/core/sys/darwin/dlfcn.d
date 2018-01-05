@@ -8,7 +8,6 @@
  * Authors:   David Nadlinger
  */
 module core.sys.darwin.dlfcn;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

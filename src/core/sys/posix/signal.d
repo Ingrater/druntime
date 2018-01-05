@@ -10,7 +10,6 @@
  */
 
 module core.sys.posix.signal;
-pragma(sharedlibrary, "std");
 
 private import core.sys.posix.config;
 public import core.stdc.signal;

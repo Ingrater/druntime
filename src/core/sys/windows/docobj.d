@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_docobj.d)
  */
 module core.sys.windows.docobj;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.basetyps, core.sys.windows.oaidl, core.sys.windows.objidl, core.sys.windows.oleidl,

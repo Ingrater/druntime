@@ -9,7 +9,6 @@
  */
 
 module rt.sections_elf_shared;
-pragma(sharedlibrary, "std");
 
 version (CRuntime_Glibc) enum SharedELF = true;
 else version (FreeBSD) enum SharedELF = true;
@@ -427,7 +426,6 @@ extern(C) void _d_dso_registry(CompilerDSOData* data)
             unregisterGCRanges(pdso);
             // run finalizers after module dtors (same order as in rt_term)
             version (Shared) runFinalizers(pdso);
-pragma(sharedlibrary, "std");
         }
 
         version (Shared)
@@ -869,7 +867,6 @@ version (Shared) void* handleForAddr(void* addr) nothrow @nogc
 struct tls_index
 {
     size_t ti_module;
-pragma(sharedlibrary, "std");
     size_t ti_offset;
 }
 

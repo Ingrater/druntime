@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_mswsock.d)
  */
 module core.sys.windows.mswsock;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.winbase, core.sys.windows.windef;

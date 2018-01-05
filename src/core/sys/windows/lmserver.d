@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmserver.d)
  */
 module core.sys.windows.lmserver;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.winsvc;

@@ -15,7 +15,6 @@
  */
 
 module rt.dllinit;
-pragma(sharedlibrary, "std");
 
 version(CRuntime_Microsoft):
 

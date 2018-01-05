@@ -24,7 +24,6 @@
  *                        Don Clugston
  */
 module core.math;
-pragma(sharedlibrary, "std");
 
 public:
 @nogc:

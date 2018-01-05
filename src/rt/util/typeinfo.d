@@ -6,7 +6,6 @@
  * Authors:   Kenji Hara
  */
 module rt.util.typeinfo;
-pragma(sharedlibrary, "std");
 
 template Floating(T)
 if (is(T == float) || is(T == double) || is(T == real))

@@ -4,7 +4,6 @@
  * $(LINK2 http://src.illumos.org/source/xref/illumos-gate/usr/src/uts/common/sys/elf_386.h, illumos sys/elf_386.h)
  */
 module core.sys.solaris.sys.elf;
-pragma(sharedlibrary, "std");
 
 version (Solaris):
 extern (C):

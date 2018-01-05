@@ -10,7 +10,6 @@
  * Source: $(DRUNTIMESRC src/rt/_sections_osx_x86_64.d)
  */
 module rt.sections_osx_x86_64;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

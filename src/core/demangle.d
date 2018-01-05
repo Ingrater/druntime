@@ -11,7 +11,6 @@
  */
 
 module core.demangle;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

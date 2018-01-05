@@ -8,7 +8,6 @@
     Authors:   Kai Nacke
  +/
 module core.sys.solaris.time;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.time;
 

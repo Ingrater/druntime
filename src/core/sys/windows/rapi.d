@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_rapi.d)
  */
 module core.sys.windows.rapi;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 /* Comment from MinGW

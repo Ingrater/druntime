@@ -13,7 +13,6 @@
 
 
 module core.sys.linux.sched;
-pragma(sharedlibrary, "std");
 
 import core.sys.posix.sched;
 import core.sys.posix.config;

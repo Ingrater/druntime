@@ -5,7 +5,6 @@
  */
 
 module core.sys.posix.sys.ioccom;
-pragma(sharedlibrary, "std");
 
 version (Posix):
 

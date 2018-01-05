@@ -13,7 +13,6 @@
  */
 
 module core.stdc.stdint;
-pragma(sharedlibrary, "std");
 
 private import core.stdc.stddef; // for wchar_t
 private import core.stdc.signal; // for sig_atomic_t

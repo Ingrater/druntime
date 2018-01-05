@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmremutl.d)
  */
 module core.sys.windows.lmremutl;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 

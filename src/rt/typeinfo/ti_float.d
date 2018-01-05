@@ -12,7 +12,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.typeinfo.ti_float;
-pragma(sharedlibrary, "std");
 
 private import rt.util.typeinfo;
 

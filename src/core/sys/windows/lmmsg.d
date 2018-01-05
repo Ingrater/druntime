@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmmsg.d)
  */
 module core.sys.windows.lmmsg;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 

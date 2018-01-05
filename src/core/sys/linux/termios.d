@@ -7,7 +7,6 @@
  */
 
 module core.sys.linux.termios;
-pragma(sharedlibrary, "std");
 
 version(linux):
     public import core.sys.posix.termios;

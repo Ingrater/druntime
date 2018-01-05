@@ -11,7 +11,6 @@
  */
 
 module rt.backtrace.dwarf;
-pragma(sharedlibrary, "std");
 
 version(CRuntime_Glibc) version = linux_or_freebsd;
 else version(FreeBSD) version = linux_or_freebsd;

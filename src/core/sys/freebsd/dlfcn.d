@@ -6,7 +6,6 @@
  * Authors:   Martin Nowak
  */
 module core.sys.freebsd.dlfcn;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.dlfcn;
 

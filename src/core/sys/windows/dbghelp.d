@@ -10,7 +10,6 @@
  */
 
 module core.sys.windows.dbghelp;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.windows;

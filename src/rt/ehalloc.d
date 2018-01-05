@@ -10,7 +10,6 @@
  */
 
 module rt.ehalloc;
-pragma(sharedlibrary, "std");
 
 //debug = PRINTF;
 

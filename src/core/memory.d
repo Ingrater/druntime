@@ -104,7 +104,6 @@ pragma(sharedlibrary, "std"); that is, an implementation that stops the world mu
  */
 
 module core.memory;
-pragma(sharedlibrary, "std");
 
 
 private

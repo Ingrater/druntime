@@ -11,7 +11,6 @@
  */
 
 module core.stdc.stdarg;
-pragma(sharedlibrary, "std");
 
 @system:
 //@nogc:    // Not yet, need to make TypeInfo's member functions @nogc first

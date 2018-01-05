@@ -1,5 +1,4 @@
 module core.sys.windows.uuid;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.basetyps;

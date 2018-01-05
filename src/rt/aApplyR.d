@@ -14,7 +14,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module rt.aApplyR;
-pragma(sharedlibrary, "std");
 
 /* This code handles decoding UTF strings for foreach_reverse loops.
  * There are 6 combinations of conversions between char, wchar,

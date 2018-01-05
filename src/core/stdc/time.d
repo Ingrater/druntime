@@ -14,7 +14,6 @@
  */
 
 module core.stdc.time;
-pragma(sharedlibrary, "std");
 
 private import core.stdc.config;
 

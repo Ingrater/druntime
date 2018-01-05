@@ -13,7 +13,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.posix.arpa.inet;
-pragma(sharedlibrary, "std");
 
 private import core.sys.posix.config;
 public import core.stdc.inttypes; // for uint32_t, uint16_t

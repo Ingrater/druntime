@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ipifcons.d)
  */
 module core.sys.windows.ipifcons;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 // FIXME: check types of constants

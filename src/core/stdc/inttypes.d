@@ -13,7 +13,6 @@
  */
 
 module core.stdc.inttypes;
-pragma(sharedlibrary, "std");
 
 public import core.stdc.stddef; // for wchar_t
 public import core.stdc.stdint; // required by spec

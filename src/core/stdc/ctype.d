@@ -13,7 +13,6 @@
  */
 
 module core.stdc.ctype;
-pragma(sharedlibrary, "std");
 
 extern (C):
 @trusted: // All of these operate on integers only.

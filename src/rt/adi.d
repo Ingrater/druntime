@@ -10,7 +10,6 @@
  */
 
 module rt.adi;
-pragma(sharedlibrary, "std");
 
 //debug=adi;            // uncomment to turn on debugging printf's
 

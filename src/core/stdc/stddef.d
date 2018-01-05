@@ -13,7 +13,6 @@
  */
 
 module core.stdc.stddef;
-pragma(sharedlibrary, "std");
 
 extern (C):
 @trusted: // Types only.

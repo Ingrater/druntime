@@ -12,7 +12,6 @@
  */
 
 module core.stdc.math;
-pragma(sharedlibrary, "std");
 
 private import core.stdc.config;
 

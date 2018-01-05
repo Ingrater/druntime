@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ntsecapi.d)
  */
 module core.sys.windows.ntsecapi;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "advapi32");
 

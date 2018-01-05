@@ -8,7 +8,6 @@
  * http://cvsweb.netbsd.org/bsdweb.cgi/~checkout~/src/include/dlfcn.h
  */
 module core.sys.netbsd.dlfcn;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.dlfcn;
 

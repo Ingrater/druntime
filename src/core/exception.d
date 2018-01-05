@@ -10,7 +10,6 @@
  * Source:    $(DRUNTIMESRC core/_exception.d)
  */
 module core.exception;
-pragma(sharedlibrary, "std");
 
 /**
  * Thrown on a range error.

@@ -13,7 +13,6 @@
  */
 
 module core.stdc.tgmath;
-pragma(sharedlibrary, "std");
 
 private import core.stdc.config;
 private static import core.stdc.math;

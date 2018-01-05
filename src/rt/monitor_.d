@@ -6,7 +6,6 @@
  * Authors:   Walter Bright, Sean Kelly, Martin Nowak
  */
 module rt.monitor_;
-pragma(sharedlibrary, "std");
 
 import core.atomic, core.stdc.stdlib, core.stdc.string;
 

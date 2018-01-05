@@ -5,7 +5,6 @@
  * Authors:   Paul O'Neil
  */
 module core.sys.linux.sys.socket;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.sys.socket;
 

@@ -4,7 +4,6 @@
  * $(LINK2 http://src.illumos.org/source/xref/illumos-gate/usr/src/uts/common/sys/elf_SPARC.h, illumos sys/elf_SPARC.h)
  */
 module core.sys.solaris.sys.elf_SPARC;
-pragma(sharedlibrary, "std");
 
 version (Solaris):
 extern (C):

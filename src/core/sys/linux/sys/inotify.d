@@ -5,7 +5,6 @@
  * Authors:   Gary Willoughby
  */
 module core.sys.linux.sys.inotify;
-pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

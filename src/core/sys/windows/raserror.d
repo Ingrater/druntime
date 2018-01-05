@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_raserror.d)
  */
 module core.sys.windows.raserror;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 enum {

@@ -16,7 +16,6 @@
  */
 
 module core.stdc.assert_;
-pragma(sharedlibrary, "std");
 
 extern (C):
 @trusted:

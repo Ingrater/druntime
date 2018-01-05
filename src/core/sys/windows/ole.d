@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_ole.d)
  */
 module core.sys.windows.ole;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "ole32");
 

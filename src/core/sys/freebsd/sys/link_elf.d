@@ -4,7 +4,6 @@
  * $(LINK2 http://svnweb.freebsd.org/base/head/sys/sys/link_elf.h?view=markup, sys/link_elf.h)
  */
 module core.sys.freebsd.sys.link_elf;
-pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C):

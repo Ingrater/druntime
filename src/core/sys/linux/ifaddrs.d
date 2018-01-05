@@ -15,7 +15,6 @@
 *******************************************************************************/
 
 module core.sys.linux.ifaddrs;
-pragma(sharedlibrary, "std");
 
 import core.sys.posix.sys.socket;
 

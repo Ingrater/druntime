@@ -4,7 +4,6 @@
  * Authors: Martin Nowak
  */
 module core.sys.freebsd.sys.cdefs;
-pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 

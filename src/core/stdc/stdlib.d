@@ -13,7 +13,6 @@
  */
 
 module core.stdc.stdlib;
-pragma(sharedlibrary, "std");
 
 private import core.stdc.config;
 public import core.stdc.stddef; // for wchar_t

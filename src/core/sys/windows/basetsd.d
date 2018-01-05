@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_basetsd.d)
  */
 module core.sys.windows.basetsd;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 export:

@@ -12,7 +12,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module gc.impl.conservative.gc;
-pragma(sharedlibrary, "std");
 
 // D Programming Language Garbage Collector implementation
 

@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmalert.d)
  */
 module core.sys.windows.lmalert;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 

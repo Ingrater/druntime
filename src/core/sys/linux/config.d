@@ -4,7 +4,6 @@
  * Authors: Martin Nowak
  */
 module core.sys.linux.config;
-pragma(sharedlibrary, "std");
 
 version (linux):
 

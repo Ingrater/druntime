@@ -9,7 +9,6 @@
  */
 
 module core.atomic;
-pragma(sharedlibrary, "std");
 
 version( D_InlineAsm_X86 )
 {

@@ -8,7 +8,6 @@
     Authors:   Jonathan M Davis
  +/
 module core.sys.linux.netinet.in_;
-pragma(sharedlibrary, "std");
 
 import core.sys.posix.config;
 

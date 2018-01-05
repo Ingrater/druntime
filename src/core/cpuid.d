@@ -56,7 +56,6 @@ pragma(sharedlibrary, "std");tomas@famolsen.dk&gt;
  */
 
 module core.cpuid;
-pragma(sharedlibrary, "std");
 
 @trusted:
 nothrow:

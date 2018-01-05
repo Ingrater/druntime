@@ -10,7 +10,6 @@
  */
 
 module rt.dmain2;
-pragma(sharedlibrary, "std");
 
 private
 {

@@ -6,7 +6,6 @@
  * Authors:   Nemanja Boric
  */
 module core.sys.linux.sys.file;
-pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

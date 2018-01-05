@@ -10,7 +10,6 @@
  */
 
 module core.thread;
-pragma(sharedlibrary, "std");
 
 
 public import core.time; // for Duration
@@ -531,7 +530,6 @@ else
     //       places where version-specific code may be required.  This can be
     //       easily accomlished by searching for 'Windows' or 'Posix'.
     static assert( false, "Unknown threading implementation." );
-pragma(sharedlibrary, "std");
 }
 
 

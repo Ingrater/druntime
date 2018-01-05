@@ -13,7 +13,6 @@
  */
 
 module core.stdc.errno;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

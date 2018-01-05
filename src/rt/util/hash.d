@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/rt/util/_hash.d)
  */
 module rt.util.hash;
-pragma(sharedlibrary, "std");
 
 
 version( X86 )

@@ -8,7 +8,6 @@
     Authors:   Jonathan M Davis
  +/
 module core.sys.linux.time;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.time;
 

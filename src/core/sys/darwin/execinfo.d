@@ -6,7 +6,6 @@
  * Authors:   Martin Nowak
  */
 module core.sys.darwin.execinfo;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

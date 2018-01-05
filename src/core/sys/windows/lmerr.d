@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmerr.d)
  */
 module core.sys.windows.lmerr;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.winerror;

@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC core/internal/_convert.d)
  */
 module core.internal.convert;
-pragma(sharedlibrary, "std");
 import core.internal.traits : Unqual;
 
 @trusted pure nothrow

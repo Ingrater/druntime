@@ -10,7 +10,6 @@
 */
 
 module rt.config;
-pragma(sharedlibrary, "std");
 
 // The default way to configure the runtime is by passing command line arguments
 // starting with "--DRT-" and followed by the option name, e.g. "--DRT-gcopt" to

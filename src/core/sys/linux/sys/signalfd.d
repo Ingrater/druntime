@@ -6,7 +6,6 @@
  * Authors:   Alex Rønne Petersen
  */
 module core.sys.linux.sys.signalfd;
-pragma(sharedlibrary, "std");
 
 import core.sys.posix.signal;
 

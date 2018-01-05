@@ -10,7 +10,6 @@
  */
 
 module rt.cover;
-pragma(sharedlibrary, "std");
 
 private
 {

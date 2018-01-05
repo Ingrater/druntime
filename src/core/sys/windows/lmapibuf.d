@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmapibuf.d)
  */
 module core.sys.windows.lmapibuf;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 

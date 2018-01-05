@@ -6,7 +6,6 @@
   * Authors: Danny Milosavljevic
   */
 module core.sys.linux.stdio;
-pragma(sharedlibrary, "std");
 version (CRuntime_Glibc):
 public import core.sys.posix.stdio;
 import core.sys.posix.sys.types : ssize_t, off64_t = off_t;

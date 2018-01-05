@@ -9,7 +9,6 @@
  */
 
 module rt.sections;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

@@ -11,7 +11,6 @@
  */
 
 module rt.minfo;
-pragma(sharedlibrary, "std");
 
 import core.stdc.stdlib;  // alloca
 import core.stdc.string;  // memcpy

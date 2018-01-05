@@ -7,7 +7,6 @@
  * Authors  : Adil Baig (github.com/adilbaig)
  */
 module core.sys.linux.epoll;
-pragma(sharedlibrary, "std");
 
 version (linux):
 

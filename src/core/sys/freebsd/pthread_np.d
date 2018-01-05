@@ -4,7 +4,6 @@
  * Authors:   Martin Nowak
  */
 module core.sys.freebsd.pthread;
-pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C) nothrow @nogc:

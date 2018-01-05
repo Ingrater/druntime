@@ -4,7 +4,6 @@
  * Authors: Martin Nowak
  */
 module core.sys.freebsd.sys.mman;
-pragma(sharedlibrary, "std");
 
 version (FreeBSD):
 extern (C):

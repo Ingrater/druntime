@@ -20,7 +20,6 @@
  */
 
 module rt.util.utf;
-pragma(sharedlibrary, "std");
 
 extern (C) void onUnicodeError( string msg, size_t idx, string file = __FILE__, size_t line = __LINE__ ) @safe pure;
 

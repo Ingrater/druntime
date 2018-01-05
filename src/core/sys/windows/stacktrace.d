@@ -10,7 +10,6 @@
  */
 
 module core.sys.windows.stacktrace;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.demangle;

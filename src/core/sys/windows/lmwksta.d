@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmwksta.d)
  */
 module core.sys.windows.lmwksta;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 

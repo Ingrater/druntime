@@ -12,7 +12,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module gc.gcinterface;
-pragma(sharedlibrary, "std");
 
 static import core.memory;
 alias BlkAttr = core.memory.GC.BlkAttr;

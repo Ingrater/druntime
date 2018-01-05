@@ -5,7 +5,6 @@
  * Authors:   Martin Nowak
  */
 module core.sys.linux.sys.sysinfo;
-pragma(sharedlibrary, "std");
 
 version(linux) extern(C) @nogc nothrow:
 

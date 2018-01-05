@@ -10,7 +10,6 @@
  */
 
 module rt.alloca;
-pragma(sharedlibrary, "std");
 
 version (Posix)
 {

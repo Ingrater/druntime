@@ -9,7 +9,6 @@
  */
 
 module rt.arraycat;
-pragma(sharedlibrary, "std");
 
 private
 {

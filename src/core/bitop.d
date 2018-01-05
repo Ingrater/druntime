@@ -8,7 +8,6 @@
  */
 
 module core.bitop;
-pragma(sharedlibrary, "std");
 
 nothrow:
 @safe:

@@ -1304,12 +1304,12 @@ $(DRUNTIME): $(OBJS) msvc_$(MODEL).obj msvc_renames_$(MODEL).obj $(SRCS) win64.m
 
 # standalone version of shared druntime
 $(DRUNTIME_SHARED) : $(OBJS) msvc_$(MODEL)_shared.obj $(DLLINIT) $(SRCS) src\rt\dllmain.d win64.mak
-	$(DMD) -of$(DRUNTIME_SHARED_DLL) -version=Shared -shared $(DFLAGS) $(SRCS) src\rt\dllmain.d $(OBJS) msvc_$(MODEL)_shared.obj $(DLLINIT) -L/IMPLIB:tmp\imp_$(DRUNTIME_BASE).lib user32.lib
+	$(DMD) -of$(DRUNTIME_SHARED_DLL) -version=Shared -shared -useshared $(DFLAGS) $(SRCS) src\rt\dllmain.d $(OBJS) msvc_$(MODEL)_shared.obj $(DLLINIT) -L/IMPLIB:tmp\imp_$(DRUNTIME_BASE).lib user32.lib
 	$(AR) /OUT:$(DRUNTIME_SHARED) tmp\imp_$(DRUNTIME_BASE).lib $(DLLINIT)
 
 # shared version to be linked into shared version of phobos
 $(DRUNTIME_SHARED_OBJ) : $(SRCS) src\rt\dllmain.d win64.mak
-	$(DMD) -c -of$(DRUNTIME_SHARED_OBJ) -version=Shared -shared $(DFLAGS) $(SRCS) src\rt\dllmain.d -defaultlib="msvcrt"
+	$(DMD) -c -of$(DRUNTIME_SHARED_OBJ) -version=Shared -shared -useshared $(DFLAGS) $(SRCS) src\rt\dllmain.d -defaultlib="msvcrt"
 
 # Lib file of all C code build in druntime to be linked into shared version of phobos
 # Note DRUNTIME_SHARED_OBJ can not be part of this because the linker treats .lib and .obj

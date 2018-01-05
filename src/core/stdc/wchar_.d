@@ -13,7 +13,6 @@
  */
 
 module core.stdc.wchar_;
-pragma(sharedlibrary, "std");
 
 private import core.stdc.config;
 private import core.stdc.stdarg; // for va_list

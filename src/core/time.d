@@ -76,7 +76,6 @@
     NBSP=&nbsp;
  +/
 module core.time;
-pragma(sharedlibrary, "std");
 
 import core.exception;
 import core.stdc.time;

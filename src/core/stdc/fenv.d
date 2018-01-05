@@ -13,7 +13,6 @@
  */
 
 module core.stdc.fenv;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmchdev.d)
  */
 module core.sys.windows.lmchdev;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 // COMMENT: This file might be deprecated.

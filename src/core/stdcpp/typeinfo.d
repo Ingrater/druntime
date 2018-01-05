@@ -10,7 +10,6 @@
  */
 
 module core.stdcpp.typeinfo;
-pragma(sharedlibrary, "std");
 
 version (CRuntime_DigitalMars)
 {

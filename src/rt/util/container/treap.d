@@ -5,7 +5,6 @@
  * License:   $(WEB www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
  */
 module rt.util.container.treap;
-pragma(sharedlibrary, "std");
 
 static import common = rt.util.container.common;
 import rt.util.random;

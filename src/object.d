@@ -9,7 +9,6 @@
  */
 
 module object;
-pragma(sharedlibrary, "std");
 
 private
 {

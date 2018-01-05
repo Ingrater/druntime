@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_winerror.d)
  */
 module core.sys.windows.winerror;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 /* Comments from the Mingw header:

@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_idispids.d)
  */
 module core.sys.windows.idispids;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 export:

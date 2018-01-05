@@ -5,7 +5,6 @@
 
 
 module core.sys.windows.winsock2;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 pragma(lib, "ws2_32");

@@ -5,7 +5,6 @@
  * Authors:   Nemanja Boric
  */
 module core.sys.linux.sys.eventfd;
-pragma(sharedlibrary, "std");
 
 version (linux):
 extern (C):

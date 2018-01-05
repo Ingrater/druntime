@@ -14,7 +14,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.netbsd.sys.event;
-pragma(sharedlibrary, "std");
 
 version (NetBSD):
 extern (C):

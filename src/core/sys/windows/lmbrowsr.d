@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmbrowsr.d)
  */
 module core.sys.windows.lmbrowsr;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.lmcons, core.sys.windows.windef;

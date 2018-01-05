@@ -12,7 +12,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 
-pragma(sharedlibrary, "std");
 
 /**
  *

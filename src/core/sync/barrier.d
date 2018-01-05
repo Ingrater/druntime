@@ -14,7 +14,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sync.barrier;
-pragma(sharedlibrary, "std");
 
 
 public import core.sync.exception;

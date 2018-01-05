@@ -11,7 +11,6 @@
  */
 
 module rt.sections_win64;
-pragma(sharedlibrary, "std");
 
 version(CRuntime_Microsoft):
 

@@ -14,7 +14,6 @@
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
 module core.sys.posix.syslog;
-pragma(sharedlibrary, "std");
 
 version (OSX)
     version = Darwin;

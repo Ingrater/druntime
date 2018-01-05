@@ -13,7 +13,6 @@
  */
 
 module core.stdc.float_;
-pragma(sharedlibrary, "std");
 
 extern (C):
 @trusted: // Constants only.

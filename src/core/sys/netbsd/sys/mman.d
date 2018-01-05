@@ -6,7 +6,6 @@
  * http://cvsweb.netbsd.org/bsdweb.cgi/~checkout~/src/sys/sys/mman.h
  */
 module core.sys.netbsd.sys.mman;
-pragma(sharedlibrary, "std");
 
 version (NetBSD):
 extern (C):

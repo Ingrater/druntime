@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_exdisp.d)
  */
 module core.sys.windows.exdisp;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 import core.sys.windows.docobj, core.sys.windows.oaidl, core.sys.windows.ocidl;

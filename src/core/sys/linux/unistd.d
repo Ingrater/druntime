@@ -1,5 +1,4 @@
 module core.sys.linux.unistd;
-pragma(sharedlibrary, "std");
 
 public import core.sys.posix.unistd;
 

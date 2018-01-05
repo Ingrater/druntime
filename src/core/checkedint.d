@@ -27,7 +27,6 @@
  */
 
 module core.checkedint;
-pragma(sharedlibrary, "std");
 
 nothrow:
 @safe:

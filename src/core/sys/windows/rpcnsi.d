@@ -9,7 +9,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_rpcnsi.d)
  */
 module core.sys.windows.rpcnsi;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 version (ANSI) {} else version = Unicode;

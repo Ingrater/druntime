@@ -7,7 +7,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_lmstats.d)
  */
 module core.sys.windows.lmstats;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "netapi32");
 

@@ -6,7 +6,6 @@
 */
 
 module gc.config;
-pragma(sharedlibrary, "std");
 
 import core.stdc.stdio;
 import core.internal.parseoptions;

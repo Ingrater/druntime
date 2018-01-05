@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_dde.d)
  */
 module core.sys.windows.dde;
-pragma(sharedlibrary, "std");
 version (Windows):
 pragma(lib, "user32");
 

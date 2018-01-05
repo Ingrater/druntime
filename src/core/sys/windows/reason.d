@@ -8,7 +8,6 @@
  * Source: $(DRUNTIMESRC src/core/sys/windows/_reason.d)
  */
 module core.sys.windows.reason;
-pragma(sharedlibrary, "std");
 version (Windows):
 
 private import core.sys.windows.w32api, core.sys.windows.windef;

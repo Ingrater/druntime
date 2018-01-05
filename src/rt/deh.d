@@ -10,7 +10,6 @@
  */
 
 module rt.deh;
-pragma(sharedlibrary, "std");
 
 extern (C)
 {
