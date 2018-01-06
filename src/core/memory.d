@@ -61,8 +61,7 @@
  *   the $(D GC.BlkAttr.$(LREF NO_SCAN)) attribute.)
  *
  * $(LI Destructors will always be executed while other threads are
- *   active;
-pragma(sharedlibrary, "std"); that is, an implementation that stops the world must not
+ *   active; that is, an implementation that stops the world must not
  *   execute destructors until the world has been resumed.)
  *
  * $(LI A destructor of an object must not access object references

@@ -1178,15 +1178,10 @@ else version( CRuntime_Microsoft )
     ///
     int  vsnprintf(scope char* s, size_t n, scope const char* format, va_list arg);
 
-    // TODO workaround for msvc.c linker comments
-    int _msvc_fputc_nolock(int c, FILE *fp);
-    int _msvc_fgetc_nolock(FILE *fp);
-    alias _fputc_nolock = _msvc_fputc_nolock;
-    alias _fgetc_nolock = _msvc_fgetc_nolock;
     ///
-    //int _fputc_nolock(int c, FILE *fp);
+    int _fputc_nolock(int c, FILE *fp);
     ///
-    //int _fgetc_nolock(FILE *fp);
+    int _fgetc_nolock(FILE *fp);
 
     ///
     int _lock_file(FILE *fp);

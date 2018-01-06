@@ -49,12 +49,6 @@ import rt.deh, rt.minfo;
 
 template isSectionGroup(T)
 {
-    static assert(is(typeof(T.init.modules) == immutable(ModuleInfo*)[]));
-    static assert(is(typeof(T.init.moduleGroup) == ModuleGroup));
-    static assert((!is(typeof(T.init.ehTables)) || is(typeof(T.init.ehTables) == immutable(FuncTable)[])));
-    static assert(is(typeof(T.init.gcRanges) == void[][]));
-    static assert(is(typeof({ foreach (ref T; T) {}})));
-    static assert(is(typeof({ foreach_reverse (ref T; T) {}})));
     enum isSectionGroup =
         is(typeof(T.init.modules) == immutable(ModuleInfo*)[]) &&
         is(typeof(T.init.moduleGroup) == ModuleGroup) &&
