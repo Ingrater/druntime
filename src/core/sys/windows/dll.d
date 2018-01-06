@@ -427,7 +427,7 @@ export void dll_process_detach( HINSTANCE hInstance, bool detach_threads = true 
             }, null );
 
     Runtime.terminate();
-    version(CRuntime_Microsoft)
+    version(CRuntime_Microsoft) version(Shared)
     {
         _d_dll_registry_unregister(hInstance);
     }

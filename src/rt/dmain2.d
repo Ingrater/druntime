@@ -514,7 +514,7 @@ export extern (C) int _d_run_main(int argc, char **argv, MainFunc mainFunc)
         }
     }
     
-    version(Windows) version(Shared)
+    version(CRuntime_Microsoft) version(Shared)
     {
       _d_dll_registry_unregister(null); // hModule = null is the main executable.
     }
