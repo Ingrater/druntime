@@ -3363,7 +3363,7 @@ template RTInfo(T)
 }
 
 // lhs == rhs lowers to __equals(lhs, rhs) for dynamic arrays
-bool __equals(T1, T2)(T1[] lhs, T2[] rhs)
+export bool __equals(T1, T2)(T1[] lhs, T2[] rhs)
 {
     import core.internal.traits : Unqual;
     alias U1 = Unqual!T1;

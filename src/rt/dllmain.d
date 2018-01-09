@@ -8,6 +8,10 @@ import rt.dllinit;
 
 //debug = PRINTF;
 
+// artificial section brackets for dll relocations, as druntime does not have any.
+extern(C) __gshared int _dllrl_beg = 0;
+extern(C) __gshared int _dllrl_end = 0;
+
 /**
  * Special version of DllMain for druntime / phobos. 
  * Behaves slighty differently from the default implementation to fit the special initialization needs of druntime.
