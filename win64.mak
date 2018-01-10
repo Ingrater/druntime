@@ -237,8 +237,8 @@ copy: $(COPY)
 
 $(IMPDIR)\druntime.d : win64.mak mak\IMPORTS mak\COPY
 	echo module druntime; > $@
-	powershell -nologo "(Get-Content mak\COPY) -split '`n' -replace '^.*\$$\(IMPDIR\)\\','public import ' -replace ' \\$$',';' -replace '\.d','' -replace '\\','.' | Where {$$_ -like '*public import*'} | Add-Content $@"
-	powershell -nologo "(Get-Content mak\IMPORTS) -split '`n' -replace '^.*\$$\(IMPDIR\)\\','public import ' -replace ' \\$$',';' -replace '\.di','' -replace '\\','.' | Where {$$_ -like '*public import*'} | Add-Content $@"
+	powershell -nologo "(Get-Content mak\COPY) -split '`n' -replace '^.*\$$\(IMPDIR\)\\','public import ' -replace ' \\$$','' -replace '\.d',';' -replace '\\','.' | Where {$$_ -like '*public import*' -and $$_ -notlike '*.darwin.*' -and $$_ -notlike '*.posix.*' -and $$_ -notlike '*.solaris.*' -and $$_ -notlike '*.linux.*' -and $$_ -notlike '*.osx.*' -and $$_ -notlike '*.freebsd.*' -and $$_ -notlike '*.openbsd.*' } | Add-Content $@"
+	powershell -nologo "(Get-Content mak\IMPORTS) -split '`n' -replace '^.*\$$\(IMPDIR\)\\','public import ' -replace ' \\$$','' -replace '\.di',';' -replace '\\','.' | Where {$$_ -like '*public import*'} | Add-Content $@"
 
 $(IMPDIR)\object.d : src\object.d
 	copy $** $@
