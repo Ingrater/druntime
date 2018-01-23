@@ -300,7 +300,6 @@ SRCS=\
 	src\rt\deh.d \
 	src\rt\deh_win32.d \
 	src\rt\deh_win64_posix.d \
-	src\rt\dllinit.d \
 	src\rt\dmain2.d \
 	src\rt\dwarfeh.d \
 	src\rt\ehalloc.d \
